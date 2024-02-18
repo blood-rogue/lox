@@ -9,6 +9,7 @@ typedef enum
     OP_CONSTANT,
     OP_INDEX,
     OP_LIST,
+    OP_MAP,
     OP_NIL,
     OP_TRUE,
     OP_FALSE,

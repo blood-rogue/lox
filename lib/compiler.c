@@ -401,7 +401,7 @@ static uint8_t expressionList(TokenType terminator)
 
             if (expressionCount == 255)
             {
-                error("Can't have more than 255 arguments.");
+                error("Can't have more than 255 expressions.");
             }
 
             expressionCount++;
@@ -409,6 +409,30 @@ static uint8_t expressionList(TokenType terminator)
     }
 
     consume(terminator, "Invalid terminator.");
+    return expressionCount;
+}
+
+static uint8_t mapPairList()
+{
+    uint8_t expressionCount = 0;
+    if (!check(TOKEN_RIGHT_BRACE))
+    {
+        do
+        {
+            expression();
+            consume(TOKEN_COLON, "Expected ':' after key.");
+            expression();
+
+            if (expressionCount == 255)
+            {
+                error("Can't have more than 255 expressions.");
+            }
+
+            expressionCount++;
+        } while (match(TOKEN_COMMA));
+    }
+
+    consume(TOKEN_RIGHT_BRACE, "Invalid map terminator.");
     return expressionCount;
 }
 
@@ -468,6 +492,13 @@ static void list(bool canAssign)
 {
     uint8_t elemCount = expressionList(TOKEN_RIGHT_SQUARE);
     emitBytes(OP_LIST, elemCount);
+}
+
+static void map(bool canAssign)
+{
+    consume(TOKEN_LEFT_BRACE, "Expected '{' after map keyword.");
+    uint8_t pairCount = mapPairList();
+    emitBytes(OP_MAP, pairCount);
 }
 
 static void index_(bool canAssign)
@@ -656,6 +687,7 @@ ParseRule rules[] = {
     [TOKEN_TRUE] = {literal, NULL, PREC_NONE},
     [TOKEN_VAR] = {NULL, NULL, PREC_NONE},
     [TOKEN_WHILE] = {NULL, NULL, PREC_NONE},
+    [TOKEN_MAP] = {map, NULL, PREC_CALL},
     [TOKEN_ERROR] = {NULL, NULL, PREC_NONE},
     [TOKEN_EOF] = {NULL, NULL, PREC_NONE},
 };

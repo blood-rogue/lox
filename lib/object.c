@@ -20,6 +20,22 @@ static Obj *allocateObject(size_t size, ObjType type)
     return object;
 }
 
+ObjMap *newMap(Value *elems, int pairCount)
+{
+    ObjMap *map = ALLOCATE_OBJ(ObjMap, OBJ_MAP);
+    initTable(&map->table);
+    map->keyCount = pairCount;
+    map->keys = ALLOCATE(ObjString *, pairCount);
+
+    for (int i = 0; i < pairCount; i++)
+    {
+        map->keys[i] = AS_STRING(elems[i * 2]);
+        tableSet(&map->table, AS_STRING(elems[i * 2]), elems[i * 2 + 1]);
+    }
+
+    return map;
+}
+
 ObjList *newList(Value *elems, int elemCount)
 {
     ObjList *list = ALLOCATE_OBJ(ObjList, OBJ_LIST);
@@ -173,29 +189,58 @@ static void printFunction(ObjFunction *function)
     printf("<fn %s>", function->name->chars);
 }
 
-static void printList(ValueArray elems)
+static void printList(ValueArray *elems)
 {
-    Value *arr = elems.values;
+    Value *values = elems->values;
 
     printf("[");
-    if (elems.count > 0)
+    if (elems->count > 0)
     {
-        printValue(arr[0]);
-        for (int i = 1; i < elems.count; i++)
+        printValue(values[0]);
+        for (int i = 1; i < elems->count; i++)
         {
             printf(", ");
-            printValue(arr[i]);
+            printValue(values[i]);
         }
     }
     printf("]");
+}
+
+static void printMap(ObjMap *map)
+{
+    printf("{");
+    if (map->keyCount > 0)
+    {
+        printf("\"%s\"", map->keys[0]->chars);
+        printf(":");
+
+        Value value;
+        tableGet(&map->table, map->keys[0], &value);
+        printValue(value);
+
+        for (int i = 1; i < map->keyCount; i++)
+        {
+            printf(", ");
+
+            printf("\"%s\"", map->keys[i]->chars);
+            printf(":");
+
+            tableGet(&map->table, map->keys[i], &value);
+            printValue(value);
+        }
+    }
+    printf("}");
 }
 
 void printObject(Value value)
 {
     switch (OBJ_TYPE(value))
     {
+    case OBJ_MAP:
+        printMap(AS_MAP(value));
+        break;
     case OBJ_LIST:
-        printList(AS_LIST(value)->elems);
+        printList(&AS_LIST(value)->elems);
         break;
     case OBJ_BOUND_METHOD:
         printFunction(AS_BOUND_METHOD(value)->method->function);

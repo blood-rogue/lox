@@ -161,6 +161,8 @@ static TokenType identifierType()
         break;
     case 'i':
         return checkKeyword(1, 1, "f", TOKEN_IF);
+    case 'm':
+        return checkKeyword(1, 2, "ap", TOKEN_MAP);
     case 'n':
         return checkKeyword(1, 2, "il", TOKEN_NIL);
     case 'o':
@@ -259,6 +261,8 @@ Token scanToken()
         return makeToken(TOKEN_LEFT_SQUARE);
     case ']':
         return makeToken(TOKEN_RIGHT_SQUARE);
+    case ':':
+        return makeToken(TOKEN_COLON);
     case ';':
         return makeToken(TOKEN_SEMICOLON);
     case ',':

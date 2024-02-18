@@ -34,14 +34,26 @@ static void freeObject(Obj *object)
 {
     switch (object->type)
     {
+    case OBJ_MAP:
+    {
+        ObjMap *map = (ObjMap *)object;
+        freeTable(&map->table);
+        FREE_ARRAY(ObjString *, map->keys, map->keyCount);
+        FREE(ObjMap, object);
+        break;
+    }
     case OBJ_LIST:
+    {
         ObjList *list = (ObjList *)object;
         freeValueArray(&list->elems);
         FREE(ObjList, object);
         break;
+    }
     case OBJ_BOUND_METHOD:
+    {
         FREE(ObjBoundMethod, object);
         break;
+    }
     case OBJ_CLASS:
     {
         ObjClass *klass = (ObjClass *)object;
@@ -78,11 +90,15 @@ static void freeObject(Obj *object)
         break;
     }
     case OBJ_NATIVE:
+    {
         FREE(ObjNative, object);
         break;
+    }
     case OBJ_UPVALUE:
+    {
         FREE(ObjUpvalue, object);
         break;
+    }
     }
 }
 
@@ -139,6 +155,16 @@ static void blackenObject(Obj *object)
 {
     switch (object->type)
     {
+    case OBJ_MAP:
+    {
+        ObjMap *map = (ObjMap *)object;
+        markTable(&map->table);
+        for (int i = 0; i < map->keyCount; i++)
+        {
+            markObject((Obj *)map->keys[i]);
+        }
+        break;
+    }
     case OBJ_LIST:
     {
         ObjList *list = (ObjList *)object;

@@ -16,6 +16,7 @@
 #define IS_NATIVE(value) isObjType(value, OBJ_NATIVE)
 #define IS_STRING(value) isObjType(value, OBJ_STRING)
 #define IS_LIST(value) isObjType(value, OBJ_LIST)
+#define IS_MAP(value) isObjType(value, OBJ_MAP)
 
 #define AS_BOUND_METHOD(value) ((ObjBoundMethod *)AS_OBJ(value))
 #define AS_CLASS(value) ((ObjClass *)AS_OBJ(value))
@@ -25,6 +26,7 @@
 #define AS_NATIVE(value) (((ObjNative *)AS_OBJ(value)))
 #define AS_STRING(value) ((ObjString *)AS_OBJ(value))
 #define AS_LIST(value) ((ObjList *)AS_OBJ(value))
+#define AS_MAP(value) ((ObjMap *)AS_OBJ(value))
 
 typedef enum
 {
@@ -37,6 +39,7 @@ typedef enum
     OBJ_STRING,
     OBJ_UPVALUE,
     OBJ_LIST,
+    OBJ_MAP,
 } ObjType;
 
 struct Obj
@@ -114,6 +117,15 @@ typedef struct
     ValueArray elems;
 } ObjList;
 
+typedef struct
+{
+    Obj obj;
+    int keyCount;
+    ObjString **keys;
+    Table table;
+} ObjMap;
+
+ObjMap *newMap(Value *elems, int pairCount);
 ObjList *newList(Value *elems, int elemCount);
 ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method);
 ObjClass *newClass(ObjString *name);

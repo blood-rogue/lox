@@ -105,9 +105,6 @@ bool tableSet(Table *table, ObjString *key, Value value)
     if (isNewKey && IS_NIL(entry->value))
         table->count++;
 
-    if (isNewKey)
-        table->count++;
-
     entry->key = key;
     entry->value = value;
     return isNewKey;

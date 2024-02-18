@@ -335,41 +335,74 @@ static InterpretResult run()
 
             break;
         }
+        case OP_MAP:
+        {
+            int pairCount = READ_BYTE();
+            ObjMap *map = newMap(vm.stackTop - pairCount * 2, pairCount);
+            vm.stackTop -= pairCount * 2;
+            push(OBJ_VAL(map));
+
+            break;
+        }
         case OP_INDEX:
         {
             Value indexValue = pop();
             Value value = pop();
 
-            if (!IS_LIST(value))
+            if (IS_LIST(value))
             {
-                runtimeError("Only lists can be indexed.");
+                if (!IS_NUMBER(indexValue))
+                {
+                    runtimeError("Lists can only be indexed using numbers.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                double number = AS_NUMBER(indexValue);
+
+                if (rint(number) != number)
+                {
+                    runtimeError("Cannot index using floating point numbers.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                int index = (int)number;
+                ObjList *list = AS_LIST(value);
+
+                if (index >= list->elems.count)
+                {
+                    runtimeError("Index out of bounds.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                push(list->elems.values[index]);
+            }
+            else if (IS_MAP(value))
+            {
+                if (!IS_STRING(indexValue))
+                {
+                    runtimeError("Maps can only be indexed using strings.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                ObjString *index = AS_STRING(indexValue);
+                ObjMap *map = AS_MAP(value);
+
+                Value mapValue;
+                if (tableGet(&map->table, index, &mapValue))
+                {
+                    push(mapValue);
+                }
+                else
+                {
+                    runtimeError("Key not found.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+            }
+            else
+            {
+                runtimeError("Only lists and maps can be indexed.");
                 return INTERPRET_RUNTIME_ERROR;
             }
-
-            if (!IS_NUMBER(indexValue))
-            {
-                runtimeError("Lists can only be indexed using numbers.");
-                return INTERPRET_RUNTIME_ERROR;
-            }
-
-            double number = AS_NUMBER(indexValue);
-
-            if (rint(number) != number)
-            {
-                runtimeError("Cannot index using floating point numbers.");
-                return INTERPRET_RUNTIME_ERROR;
-            }
-
-            int index = (int)number;
-            ObjList *list = AS_LIST(value);
-
-            if (index >= list->elems.count)
-            {
-                runtimeError("Index out of bounds.");
-                return INTERPRET_RUNTIME_ERROR;
-            }
-
-            push(list->elems.values[index]);
 
             break;
         }
