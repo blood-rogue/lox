@@ -6,6 +6,12 @@
 #include "table.h"
 #include "value.h"
 
+typedef struct
+{
+    Value value;
+    char *error;
+} NativeResult;
+
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
@@ -74,7 +80,7 @@ typedef struct
     ObjString *name;
 } ObjFunction;
 
-typedef Value (*NativeFn)(int argCount, Value *args);
+typedef NativeResult (*NativeFn)(int argCount, Value *args);
 
 typedef struct
 {

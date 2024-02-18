@@ -5,27 +5,44 @@
 
 #include "builtins.h"
 
-Value clockNative(int argCount, Value *args)
+#define ERR(err) \
+    (NativeResult) { .error = err, .value = NIL_VAL }
+#define OK(ok) \
+    (NativeResult) { .value = ok, .error = NULL }
+
+#define CHECK_ARG_COUNT(expected)                                             \
+    if (argCount != expected)                                                 \
+    {                                                                         \
+        char buf[50];                                                         \
+        sprintf(buf, "Expected %d arguments but got %d", expected, argCount); \
+        return ERR(buf);                                                      \
+    }
+
+NativeResult clockNative(int argCount, Value *args)
 {
-    return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
+    CHECK_ARG_COUNT(0)
+    return OK(NUMBER_VAL((double)clock() / CLOCKS_PER_SEC));
 }
 
-Value exitNative(int argCount, Value *args)
+NativeResult exitNative(int argCount, Value *args)
 {
-    if (argCount == 0)
-    {
-        exit(0);
-    }
-    else if (argCount == 1 && IS_NUMBER(args[0]))
+
+    CHECK_ARG_COUNT(1)
+
+    if (IS_NUMBER(args[0]))
     {
         int exitCode = AS_NUMBER(args[0]);
         exit(exitCode);
     }
+    else
+    {
+        return ERR("Cannot exit with non integer exit code");
+    }
 
-    return NIL_VAL;
+    return OK(NIL_VAL);
 }
 
-Value printNative(int argCount, Value *args)
+NativeResult printNative(int argCount, Value *args)
 {
     for (int i = 0; i < argCount; i++)
     {
@@ -34,19 +51,16 @@ Value printNative(int argCount, Value *args)
     }
 
     printf("\n");
-    return NIL_VAL;
+    return OK(NIL_VAL);
 }
 
-Value inputNative(int argCount, Value *args)
+NativeResult inputNative(int argCount, Value *args)
 {
     if (argCount > 0)
-    {
         printValue(args[0]);
-    }
 
-    size_t block_size = 256 * sizeof(char);
-    char *s = (char *)malloc(block_size);
-    int capacity = block_size;
+    int capacity = 8;
+    char *s = (char *)malloc(capacity);
     int len = 0;
 
     char c;
@@ -54,40 +68,41 @@ Value inputNative(int argCount, Value *args)
     for (;;)
     {
         if (++len == capacity)
-        {
-            capacity += block_size;
-            s = (char *)realloc(s, capacity);
-            if (s == NULL)
-            {
-                printf("Couldn't take input");
-            }
-        }
+            s = (char *)realloc(s, (capacity *= 2));
 
         c = (char)getchar();
         if (c == '\n' || c == EOF)
-        {
-            len--;
             break;
-        }
         else
-        {
             s[len - 1] = c;
-        }
     }
 
-    if (len > 0)
-    {
-        s = (char *)realloc(s, len);
-    }
-
-    return OBJ_VAL(newString(s, len));
+    s[len - 1] = '\0';
+    return OK(OBJ_VAL(takeString(s, len)));
 }
 
-Value lenNative(int argCount, Value *args)
+NativeResult lenNative(int argCount, Value *args)
 {
-    if (argCount != 0)
+    CHECK_ARG_COUNT(1)
+
+    if (IS_OBJ(args[0]))
     {
+        Obj *obj = AS_OBJ(args[0]);
+        switch (obj->type)
+        {
+        case OBJ_LIST:
+            ObjList *list = (ObjList *)(obj);
+            return OK(NUMBER_VAL(list->elems.count));
+        case OBJ_MAP:
+            ObjMap *map = (ObjMap *)(obj);
+            return OK(NUMBER_VAL(map->keyCount));
+        case OBJ_STRING:
+            ObjString *string = (ObjString *)(obj);
+            return OK(NUMBER_VAL(string->length));
+        default:
+            return ERR("len() is not defined for the type");
+        }
     }
 
-    return NIL_VAL;
+    return ERR("len() is not defined for the type");
 }

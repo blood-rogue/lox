@@ -4,7 +4,7 @@
 #include "common.h"
 #include "object.h"
 
-#define DEFINE_NATIVE(name) Value name##Native(int argCount, Value *args)
+#define DEFINE_NATIVE(name) NativeResult name##Native(int argCount, Value *args)
 
 DEFINE_NATIVE(clock);
 DEFINE_NATIVE(exit);

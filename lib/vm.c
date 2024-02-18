@@ -162,9 +162,16 @@ static bool callValue(Value callee, int argCount)
         case OBJ_NATIVE:
         {
             NativeFn native = AS_NATIVE(callee)->function;
-            Value result = native(argCount, vm.stackTop - argCount);
+            NativeResult result = native(argCount, vm.stackTop - argCount);
+
+            if (result.error != NULL)
+            {
+                runtimeError(result.error);
+                return false;
+            }
+
             vm.stackTop -= argCount + 1;
-            push(result);
+            push(result.value);
             return true;
         }
         default:
