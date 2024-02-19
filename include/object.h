@@ -6,40 +6,37 @@
 #include "table.h"
 #include "value.h"
 
-typedef struct
-{
-    Value value;
-    char *error;
-} NativeResult;
+#define OBJ_VAL(value) ((Obj *)(value))
 
-#define OBJ_TYPE(value) (AS_OBJ(value)->type)
+#define IS_NIL(value) (value->type == OBJ_NIL)
+#define IS_INT(value) (value->type == OBJ_INT)
+#define IS_BOOL(value) (value->type == OBJ_BOOL)
+#define IS_BOUND_METHOD(value) (value->type == OBJ_BOUND_METHOD)
+#define IS_CLASS(value) (value->type == OBJ_CLASS)
+#define IS_CLOSURE(value) (value->type == OBJ_CLOSURE)
+#define IS_INSTANCE(value) (value->type == OBJ_INSTANCE)
+#define IS_FUNCTION(value) (value->type == OBJ_FUNCTION)
+#define IS_NATIVE(value) (value->type == OBJ_NATIVE)
+#define IS_STRING(value) (value->type == OBJ_STRING)
+#define IS_LIST(value) (value->type == OBJ_LIST)
+#define IS_MAP(value) (value->type == OBJ_MAP)
 
-#define IS_INT(value) isObjType(value, OBJ_INT)
-#define IS_BOOL(value) isObjType(value, OBJ_BOOL)
-#define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
-#define IS_CLASS(value) isObjType(value, OBJ_CLASS)
-#define IS_CLOSURE(value) isObjType(value, OBJ_CLOSURE)
-#define IS_INSTANCE(value) isObjType(value, OBJ_INSTANCE)
-#define IS_FUNCTION(value) isObjType(value, OBJ_FUNCTION)
-#define IS_NATIVE(value) isObjType(value, OBJ_NATIVE)
-#define IS_STRING(value) isObjType(value, OBJ_STRING)
-#define IS_LIST(value) isObjType(value, OBJ_LIST)
-#define IS_MAP(value) isObjType(value, OBJ_MAP)
-
-#define AS_INT(value) ((ObjInt *)AS_OBJ(value))
-#define AS_BOOL(value) ((ObjBool *)AS_OBJ(value))
-#define AS_BOUND_METHOD(value) ((ObjBoundMethod *)AS_OBJ(value))
-#define AS_CLASS(value) ((ObjClass *)AS_OBJ(value))
-#define AS_INSTANCE(value) ((ObjInstance *)AS_OBJ(value))
-#define AS_CLOSURE(value) ((ObjClosure *)AS_OBJ(value))
-#define AS_FUNCTION(value) ((ObjFunction *)AS_OBJ(value))
-#define AS_NATIVE(value) (((ObjNative *)AS_OBJ(value)))
-#define AS_STRING(value) ((ObjString *)AS_OBJ(value))
-#define AS_LIST(value) ((ObjList *)AS_OBJ(value))
-#define AS_MAP(value) ((ObjMap *)AS_OBJ(value))
+#define AS_NIL(value) ((ObjNil *)(value))
+#define AS_INT(value) ((ObjInt *)(value))
+#define AS_BOOL(value) ((ObjBool *)(value))
+#define AS_BOUND_METHOD(value) ((ObjBoundMethod *)(value))
+#define AS_CLASS(value) ((ObjClass *)(value))
+#define AS_INSTANCE(value) ((ObjInstance *)(value))
+#define AS_CLOSURE(value) ((ObjClosure *)(value))
+#define AS_FUNCTION(value) ((ObjFunction *)(value))
+#define AS_NATIVE(value) (((ObjNative *)(value)))
+#define AS_STRING(value) ((ObjString *)(value))
+#define AS_LIST(value) ((ObjList *)(value))
+#define AS_MAP(value) ((ObjMap *)(value))
 
 typedef enum
 {
+    OBJ_NIL,
     OBJ_INT,
     OBJ_BOOL,
     OBJ_BOUND_METHOD,
@@ -61,19 +58,19 @@ struct Obj
     struct Obj *next;
 };
 
-struct ObjString
+typedef struct
 {
     Obj obj;
     int length;
     char *chars;
     uint32_t hash;
-};
+} ObjString;
 
 typedef struct ObjUpvalue
 {
     Obj obj;
-    Value *location;
-    Value closed;
+    Obj **location;
+    Obj *closed;
     struct ObjUpvalue *next;
 } ObjUpvalue;
 
@@ -87,7 +84,13 @@ typedef struct
     bool isStatic;
 } ObjFunction;
 
-typedef NativeResult (*NativeFn)(int, Value *);
+typedef struct
+{
+    Obj *value;
+    char *error;
+} NativeResult;
+
+typedef NativeResult (*NativeFn)(int argCount, Obj **args);
 
 typedef struct
 {
@@ -120,7 +123,7 @@ typedef struct
 typedef struct
 {
     Obj obj;
-    Value receiver;
+    Obj *receiver;
     ObjClosure *method;
 } ObjBoundMethod;
 
@@ -148,27 +151,30 @@ typedef struct
     int64_t value;
 } ObjInt;
 
+typedef struct
+{
+    Obj obj;
+} ObjNil;
+
+ObjNil *newNil();
 ObjInt *newInt(int64_t);
 ObjBool *newBool(bool);
-ObjMap *newMap(Value *, int);
-ObjList *newList(Value *, int);
-ObjBoundMethod *newBoundMethod(Value, ObjClosure *);
+ObjMap *newMap(Obj **, int);
+ObjList *newList(Obj **, int);
+ObjBoundMethod *newBoundMethod(Obj *, ObjClosure *);
 ObjClass *newClass(ObjString *);
 ObjInstance *newInstance(ObjClass *);
 ObjClosure *newClosure(ObjFunction *);
 ObjFunction *newFunction();
 ObjNative *newNative(NativeFn);
 ObjString *newString(const char *, int);
-ObjUpvalue *newUpvalue(Value *);
+ObjUpvalue *newUpvalue(Obj **);
 ObjString *takeString(char *, int);
 
-void printObject(Value);
-void reprObject(Value);
+void printObject(Obj *);
+void reprObject(Obj *);
 uint32_t getHash(Obj *);
 
-static inline bool isObjType(Value value, ObjType type)
-{
-    return IS_OBJ(value) && AS_OBJ(value)->type == type;
-}
+bool objEqual(Obj *, Obj *);
 
 #endif // clox_object_h

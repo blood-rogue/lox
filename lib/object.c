@@ -3,7 +3,6 @@
 
 #include "memory.h"
 #include "object.h"
-#include "value.h"
 #include "vm.h"
 
 #define ALLOCATE_OBJ(type, objectType) (type *)allocateObject(sizeof(type), objectType)
@@ -18,6 +17,11 @@ static Obj *allocateObject(size_t size, ObjType type)
     vm.objects = object;
 
     return object;
+}
+
+ObjNil *newNil()
+{
+    return ALLOCATE_OBJ(ObjNil, OBJ_NIL);
 }
 
 ObjInt *newInt(int64_t value)
@@ -36,7 +40,7 @@ ObjBool *newBool(bool value)
     return boolean;
 }
 
-ObjMap *newMap(Value *elems, int pairCount)
+ObjMap *newMap(Obj **elems, int pairCount)
 {
     ObjMap *map = ALLOCATE_OBJ(ObjMap, OBJ_MAP);
     initTable(&map->table);
@@ -44,13 +48,13 @@ ObjMap *newMap(Value *elems, int pairCount)
 
     for (int i = 0; i < pairCount; i++)
     {
-        tableSet(&map->table, AS_OBJ(elems[i * 2]), elems[i * 2 + 1]);
+        tableSet(&map->table, elems[i * 2], elems[i * 2 + 1]);
     }
 
     return map;
 }
 
-ObjList *newList(Value *elems, int elemCount)
+ObjList *newList(Obj **elems, int elemCount)
 {
     ObjList *list = ALLOCATE_OBJ(ObjList, OBJ_LIST);
 
@@ -67,7 +71,7 @@ ObjList *newList(Value *elems, int elemCount)
     return list;
 }
 
-ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method)
+ObjBoundMethod *newBoundMethod(Obj *receiver, ObjClosure *method)
 {
     ObjBoundMethod *bound = ALLOCATE_OBJ(ObjBoundMethod, OBJ_BOUND_METHOD);
     bound->receiver = receiver;
@@ -138,7 +142,7 @@ static ObjString *allocateString(char *chars, int length, uint32_t hash)
     string->hash = hash;
 
     push(OBJ_VAL(string));
-    tableSet(&vm.strings, (Obj *)string, NIL_VAL);
+    tableSet(&vm.strings, (Obj *)string, OBJ_VAL(newNil()));
     pop();
 
     return string;
@@ -183,10 +187,10 @@ ObjString *newString(const char *chars, int length)
     return allocateString(heapChars, length, hash);
 }
 
-ObjUpvalue *newUpvalue(Value *slot)
+ObjUpvalue *newUpvalue(Obj **slot)
 {
     ObjUpvalue *upvalue = ALLOCATE_OBJ(ObjUpvalue, OBJ_UPVALUE);
-    upvalue->closed = NIL_VAL;
+    upvalue->closed = OBJ_VAL(newNil());
     upvalue->location = slot;
 
     upvalue->next = NULL;
@@ -205,16 +209,16 @@ static void printFunction(ObjFunction *function)
 
 static void printList(ValueArray *elems)
 {
-    Value *values = elems->values;
+    Obj **values = elems->values;
 
     printf("[");
     if (elems->count > 0)
     {
-        printValue(values[0]);
+        printObject(values[0]);
         for (int i = 1; i < elems->count; i++)
         {
             printf(", ");
-            printValue(values[i]);
+            printObject(values[i]);
         }
     }
     printf("]");
@@ -223,7 +227,7 @@ static void printList(ValueArray *elems)
 static void printMap(ObjMap *map)
 {
     int count = map->table.count;
-    Value value;
+    Obj *value;
 
     printf("{");
     for (int i = 0; i < map->table.capacity && count > 0; i++)
@@ -236,7 +240,7 @@ static void printMap(ObjMap *map)
         reprObject(OBJ_VAL(entry->key));
         printf(": ");
         tableGet(&map->table, (Obj *)entry->key, &value);
-        reprValue(value);
+        reprObject(value);
         printf(",");
 
         count--;
@@ -245,10 +249,13 @@ static void printMap(ObjMap *map)
     printf("}");
 }
 
-void printObject(Value value)
+void printObject(Obj *value)
 {
-    switch (OBJ_TYPE(value))
+    switch (value->type)
     {
+    case OBJ_NIL:
+        printf("(nil)");
+        break;
     case OBJ_INT:
         printf("%ld", AS_INT(value)->value);
         break;
@@ -288,9 +295,9 @@ void printObject(Value value)
     }
 }
 
-void reprObject(Value value)
+void reprObject(Obj *value)
 {
-    switch (OBJ_TYPE(value))
+    switch (value->type)
     {
     case OBJ_STRING:
         printf("\"%s\"", AS_STRING(value)->chars);
@@ -309,5 +316,31 @@ uint32_t getHash(Obj *obj)
         return ((ObjString *)obj)->hash;
     default:
         return 0;
+    }
+}
+
+bool objEqual(Obj *a, Obj *b)
+{
+    if (a->type != b->type)
+        return false;
+
+    switch (a->type)
+    {
+    case OBJ_BOOL:
+    {
+        ObjBool *a = AS_BOOL(a);
+        ObjBool *b = AS_BOOL(b);
+        return a->value == b->value;
+    }
+    case OBJ_NIL:
+        return true;
+    case OBJ_INT:
+    {
+        ObjInt *a = AS_INT(a);
+        ObjInt *b = AS_INT(b);
+        return a->value == b->value;
+    }
+    default:
+        return false;
     }
 }

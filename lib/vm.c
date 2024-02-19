@@ -19,19 +19,19 @@ static void resetStack()
     vm.openUpvalues = NULL;
 }
 
-void push(Value value)
+void push(Obj *value)
 {
     *vm.stackTop = value;
     vm.stackTop++;
 }
 
-Value pop()
+Obj *pop()
 {
     vm.stackTop--;
     return *vm.stackTop;
 }
 
-static Value peek(int distance)
+static Obj *peek(int distance)
 {
     return vm.stackTop[-1 - distance];
 }
@@ -40,7 +40,7 @@ static void defineNative(const char *name, NativeFn function)
 {
     push(OBJ_VAL(newString(name, (int)strlen(name))));
     push(OBJ_VAL(newNative(function)));
-    tableSet(&vm.globals, AS_OBJ(vm.stack[0]), vm.stack[1]);
+    tableSet(&vm.globals, vm.stack[0], vm.stack[1]);
     pop();
     pop();
 }
@@ -127,65 +127,60 @@ static bool call(ObjClosure *closure, int argCount)
     return true;
 }
 
-static bool callValue(Value callee, int argCount)
+static bool callValue(Obj *callee, int argCount)
 {
-    if (IS_OBJ(callee))
+    switch (callee->type)
     {
-        switch (OBJ_TYPE(callee))
-        {
-        case OBJ_BOUND_METHOD:
-        {
-            ObjBoundMethod *bound = AS_BOUND_METHOD(callee);
-            vm.stackTop[-argCount - 1] = bound->receiver;
-            return call(bound->method, argCount);
-        }
-        case OBJ_CLASS:
-        {
-            ObjClass *klass = AS_CLASS(callee);
-            vm.stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
-
-            Value initializer;
-            if (tableGet(&klass->methods, (Obj *)vm.initString, &initializer))
-            {
-                return call(AS_CLOSURE(initializer), argCount);
-            }
-            else if (argCount != 0)
-            {
-                runtimeError("Expected 0 arguments but got %d.", argCount);
-                return false;
-            }
-
-            return true;
-        }
-        case OBJ_CLOSURE:
-            return call(AS_CLOSURE(callee), argCount);
-        case OBJ_NATIVE:
-        {
-            NativeFn native = AS_NATIVE(callee)->function;
-            NativeResult result = native(argCount, vm.stackTop - argCount);
-
-            if (result.error != NULL)
-            {
-                runtimeError(result.error);
-                return false;
-            }
-
-            vm.stackTop -= argCount + 1;
-            push(result.value);
-            return true;
-        }
-        default:
-            break;
-        }
+    case OBJ_BOUND_METHOD:
+    {
+        ObjBoundMethod *bound = AS_BOUND_METHOD(callee);
+        vm.stackTop[-argCount - 1] = bound->receiver;
+        return call(bound->method, argCount);
     }
+    case OBJ_CLASS:
+    {
+        ObjClass *klass = AS_CLASS(callee);
+        vm.stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
 
-    runtimeError("Can only call functions and classes.");
-    return false;
+        Obj *initializer;
+        if (tableGet(&klass->methods, (Obj *)vm.initString, &initializer))
+        {
+            return call(AS_CLOSURE(initializer), argCount);
+        }
+        else if (argCount != 0)
+        {
+            runtimeError("Expected 0 arguments but got %d.", argCount);
+            return false;
+        }
+
+        return true;
+    }
+    case OBJ_CLOSURE:
+        return call(AS_CLOSURE(callee), argCount);
+    case OBJ_NATIVE:
+    {
+        NativeFn native = AS_NATIVE(callee)->function;
+        NativeResult result = native(argCount, vm.stackTop - argCount);
+
+        if (result.error != NULL)
+        {
+            runtimeError(result.error);
+            return false;
+        }
+
+        vm.stackTop -= argCount + 1;
+        push(result.value);
+        return true;
+    }
+    default:
+        runtimeError("Can only call functions and classes.");
+        return false;
+    }
 }
 
 static bool invokeFromClass(ObjClass *klass, ObjString *name, int argCount)
 {
-    Value method;
+    Obj *method;
     if (!tableGet(&klass->methods, (Obj *)name, &method))
     {
         runtimeError("Undefined property '%s'.", name->chars);
@@ -197,13 +192,13 @@ static bool invokeFromClass(ObjClass *klass, ObjString *name, int argCount)
 
 static bool invoke(ObjString *name, int argCount)
 {
-    Value receiver = peek(argCount);
+    Obj *receiver = peek(argCount);
 
     if (IS_INSTANCE(receiver))
     {
         ObjInstance *instance = AS_INSTANCE(receiver);
 
-        Value value;
+        Obj *value;
         if (tableGet(&instance->fields, (Obj *)name, &value))
         {
             vm.stackTop[-argCount - 1] = value;
@@ -216,7 +211,7 @@ static bool invoke(ObjString *name, int argCount)
     {
         ObjClass *klass = AS_CLASS(receiver);
 
-        Value method;
+        Obj *method;
         if (!tableGet(&klass->methods, (Obj *)name, &method))
         {
             runtimeError("Undefined method '%s'.", name->chars);
@@ -240,7 +235,7 @@ static bool invoke(ObjString *name, int argCount)
 
 static bool bindMethod(ObjClass *klass, ObjString *name)
 {
-    Value method;
+    Obj *method;
     if (!tableGet(&klass->methods, (Obj *)name, &method))
     {
         runtimeError("Undefined property '%s'.", name->chars);
@@ -253,7 +248,7 @@ static bool bindMethod(ObjClass *klass, ObjString *name)
     return true;
 }
 
-static ObjUpvalue *captureUpvalue(Value *local)
+static ObjUpvalue *captureUpvalue(Obj **local)
 {
     ObjUpvalue *prevUpvalue = NULL;
     ObjUpvalue *upvalue = vm.openUpvalues;
@@ -284,7 +279,7 @@ static ObjUpvalue *captureUpvalue(Value *local)
     return createdUpvalue;
 }
 
-static void closeUpvalues(Value *last)
+static void closeUpvalues(Obj **last)
 {
     while (vm.openUpvalues != NULL &&
            vm.openUpvalues->location >= last)
@@ -298,13 +293,13 @@ static void closeUpvalues(Value *last)
 
 static void defineMethod(ObjString *name)
 {
-    Value method = peek(0);
+    Obj *method = peek(0);
     ObjClass *klass = AS_CLASS(peek(1));
     tableSet(&klass->methods, (Obj *)name, method);
     pop();
 }
 
-static bool isFalsey(Value value)
+static bool isFalsey(Obj *value)
 {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
@@ -352,7 +347,7 @@ static InterpretResult run()
         {
         case OP_CONSTANT:
         {
-            Value constant = READ_CONSTANT();
+            Obj *constant = READ_CONSTANT();
             push(constant);
             break;
         }
@@ -376,10 +371,10 @@ static InterpretResult run()
         }
         case OP_GET_INDEX:
         {
-            Value indexValue = pop();
-            Value value = pop();
+            Obj *indexValue = pop();
+            Obj *value = pop();
 
-            Value indexed;
+            Obj *indexed;
             if (IS_LIST(value))
             {
                 if (!IS_INT(indexValue))
@@ -427,9 +422,9 @@ static InterpretResult run()
         }
         case OP_SET_INDEX:
         {
-            Value toBeAssigned = peek(0);
-            Value indexValue = peek(1);
-            Value value = peek(2);
+            Obj *toBeAssigned = peek(0);
+            Obj *indexValue = peek(1);
+            Obj *value = peek(2);
 
             if (IS_LIST(value))
             {
@@ -479,7 +474,7 @@ static InterpretResult run()
         }
         case OP_NIL:
         {
-            push(NIL_VAL);
+            push(OBJ_VAL(newNil()));
             break;
         }
         case OP_TRUE:
@@ -512,7 +507,7 @@ static InterpretResult run()
         case OP_GET_GLOBAL:
         {
             ObjString *name = READ_STRING();
-            Value value;
+            Obj *value;
             if (!tableGet(&vm.globals, (Obj *)name, &value))
             {
                 runtimeError("Undefined variable '%s'.", name->chars);
@@ -562,7 +557,7 @@ static InterpretResult run()
             ObjInstance *instance = AS_INSTANCE(peek(0));
             ObjString *name = READ_STRING();
 
-            Value value;
+            Obj *value;
             if (tableGet(&instance->fields, (Obj *)name, &value))
             {
                 pop();
@@ -586,7 +581,7 @@ static InterpretResult run()
 
             ObjInstance *instance = AS_INSTANCE(peek(1));
             tableSet(&instance->fields, (Obj *)READ_STRING(), peek(0));
-            Value value = pop();
+            Obj *value = pop();
             pop();
             push(value);
             break;
@@ -604,9 +599,9 @@ static InterpretResult run()
         }
         case OP_EQUAL:
         {
-            Value b = pop();
-            Value a = pop();
-            push(OBJ_VAL(newBool(valuesEqual(a, b))));
+            Obj *b = pop();
+            Obj *a = pop();
+            push(OBJ_VAL(newBool(objEqual(a, b))));
             break;
         }
         case OP_GREATER:
@@ -745,7 +740,7 @@ static InterpretResult run()
             break;
         case OP_RETURN:
         {
-            Value result = pop();
+            Obj *result = pop();
             closeUpvalues(frame->slots);
             vm.frameCount--;
             if (vm.frameCount == 0)
@@ -764,7 +759,7 @@ static InterpretResult run()
             break;
         case OP_INHERIT:
         {
-            Value superclass = peek(1);
+            Obj *superclass = peek(1);
 
             if (!IS_CLASS(superclass))
             {

@@ -12,13 +12,13 @@ void initValueArray(ValueArray *array)
     array->count = 0;
 }
 
-void writeValueArray(ValueArray *array, Value value)
+void writeValueArray(ValueArray *array, Obj *value)
 {
     if (array->capacity < array->count + 1)
     {
         int oldCapacity = array->capacity;
         array->capacity = GROW_CAPACITY(oldCapacity);
-        array->values = GROW_ARRAY(Value, array->values, oldCapacity, array->capacity);
+        array->values = GROW_ARRAY(Obj *, array->values, oldCapacity, array->capacity);
     }
 
     array->values[array->count] = value;
@@ -27,47 +27,6 @@ void writeValueArray(ValueArray *array, Value value)
 
 void freeValueArray(ValueArray *array)
 {
-    FREE_ARRAY(Value, array->values, array->capacity);
+    FREE_ARRAY(Obj *, array->values, array->capacity);
     initValueArray(array);
-}
-
-void printValue(Value value)
-{
-    switch (value.type)
-    {
-    case VAL_NIL:
-        printf("nil");
-        break;
-    case VAL_OBJ:
-        printObject(value);
-        break;
-    }
-}
-
-void reprValue(Value value)
-{
-    switch (value.type)
-    {
-    case VAL_OBJ:
-        reprObject(value);
-        break;
-    default:
-        printValue(value);
-        break;
-    }
-}
-
-bool valuesEqual(Value a, Value b)
-{
-    if (a.type != b.type)
-        return false;
-    switch (a.type)
-    {
-    case VAL_NIL:
-        return true;
-    case VAL_OBJ:
-        return AS_OBJ(a) == AS_OBJ(b);
-    default:
-        return false;
-    }
 }

@@ -3,7 +3,6 @@
 
 #include "object.h"
 #include "table.h"
-#include "value.h"
 
 #define FRAMES_MAX 64
 #define STACK_MAX (FRAMES_MAX * UINT8_COUNT)
@@ -12,7 +11,7 @@ typedef struct
 {
     ObjClosure *closure;
     uint8_t *ip;
-    Value *slots;
+    Obj **slots;
 } CallFrame;
 
 typedef struct
@@ -20,8 +19,8 @@ typedef struct
     CallFrame frames[FRAMES_MAX];
     int frameCount;
 
-    Value stack[STACK_MAX];
-    Value *stackTop;
+    Obj *stack[STACK_MAX];
+    Obj **stackTop;
 
     Table globals;
     Table strings;
@@ -51,7 +50,7 @@ extern VM vm;
 void initVM();
 void freeVM();
 InterpretResult interpret(const char *);
-void push(Value);
-Value pop();
+void push(Obj *);
+Obj *pop();
 
 #endif // clox_vm_h

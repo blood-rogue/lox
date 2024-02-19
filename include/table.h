@@ -2,12 +2,11 @@
 #define clox_table_h
 
 #include "common.h"
-#include "value.h"
 
 typedef struct
 {
     Obj *key;
-    Value value;
+    Obj *value;
 } Entry;
 
 typedef struct
@@ -20,8 +19,8 @@ typedef struct
 void initTable(Table *);
 void freeTable(Table *);
 
-bool tableGet(Table *, Obj *, Value *);
-bool tableSet(Table *, Obj *, Value);
+bool tableGet(Table *, Obj *, Obj **);
+bool tableSet(Table *, Obj *, Obj *);
 bool tableDelete(Table *, Obj *);
 
 void tableAddAll(Table *, Table *);

@@ -132,7 +132,7 @@ static void emitReturn()
     emitByte(OP_RETURN);
 }
 
-static uint8_t makeConstant(Value value)
+static uint8_t makeConstant(Obj* value)
 {
     int constant = addConstant(currentChunk(), value);
     if (constant > UINT8_MAX)
@@ -257,7 +257,7 @@ static void declareVariable()
     addLocal(*name);
 }
 
-static void emitConstant(Value value)
+static void emitConstant(Obj* value)
 {
     emitBytes(OP_CONSTANT, makeConstant(value));
 }

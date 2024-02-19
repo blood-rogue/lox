@@ -14,7 +14,6 @@ void *reallocate(void *, size_t, size_t);
 void markObject(Obj *);
 void freeObjects();
 
-void markValue(Value);
 void collectGarbage();
 
 #endif // clox_memory_h

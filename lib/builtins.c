@@ -6,7 +6,7 @@
 #include "builtins.h"
 
 #define ERR(err) \
-    (NativeResult) { .error = err, .value = NIL_VAL }
+    (NativeResult) { .error = err, .value = OBJ_VAL(newNil()) }
 #define OK(ok) \
     (NativeResult) { .value = ok, .error = NULL }
 
@@ -18,13 +18,13 @@
         return ERR(buf);                                                      \
     }
 
-NativeResult clockNative(int argCount, Value *args)
+NativeResult clockNative(int argCount, Obj **args)
 {
     CHECK_ARG_COUNT(0)
     return OK(OBJ_VAL(newInt(clock() / CLOCKS_PER_SEC)));
 }
 
-NativeResult exitNative(int argCount, Value *args)
+NativeResult exitNative(int argCount, Obj **args)
 {
 
     CHECK_ARG_COUNT(1)
@@ -39,25 +39,25 @@ NativeResult exitNative(int argCount, Value *args)
         return ERR("Cannot exit with non integer exit code");
     }
 
-    return OK(NIL_VAL);
+    return OK(OBJ_VAL(newNil()));
 }
 
-NativeResult printNative(int argCount, Value *args)
+NativeResult printNative(int argCount, Obj **args)
 {
     for (int i = 0; i < argCount; i++)
     {
-        printValue(args[i]);
+        printObject(args[i]);
         printf(" ");
     }
 
     printf("\n");
-    return OK(NIL_VAL);
+    return OK(OBJ_VAL(newNil()));
 }
 
-NativeResult inputNative(int argCount, Value *args)
+NativeResult inputNative(int argCount, Obj **args)
 {
     if (argCount > 0)
-        printValue(args[0]);
+        printObject(args[0]);
 
     int capacity = 8;
     char *s = (char *)malloc(capacity);
@@ -81,34 +81,29 @@ NativeResult inputNative(int argCount, Value *args)
     return OK(OBJ_VAL(takeString(s, len)));
 }
 
-NativeResult lenNative(int argCount, Value *args)
+NativeResult lenNative(int argCount, Obj **args)
 {
     CHECK_ARG_COUNT(1)
 
-    if (IS_OBJ(args[0]))
+    Obj *obj = args[0];
+    switch (obj->type)
     {
-        Obj *obj = AS_OBJ(args[0]);
-        switch (obj->type)
-        {
-        case OBJ_LIST:
-        {
-            ObjList *list = (ObjList *)(obj);
-            return OK(OBJ_VAL(newInt(list->elems.count)));
-        }
-        case OBJ_MAP:
-        {
-            ObjMap *map = (ObjMap *)(obj);
-            return OK(OBJ_VAL(newInt(map->table.count)));
-        }
-        case OBJ_STRING:
-        {
-            ObjString *string = (ObjString *)(obj);
-            return OK(OBJ_VAL(newInt(string->length)));
-        }
-        default:
-            return ERR("len() is not defined for the type");
-        }
+    case OBJ_LIST:
+    {
+        ObjList *list = (ObjList *)(obj);
+        return OK(OBJ_VAL(newInt(list->elems.count)));
     }
-
-    return ERR("len() is not defined for the type");
+    case OBJ_MAP:
+    {
+        ObjMap *map = (ObjMap *)(obj);
+        return OK(OBJ_VAL(newInt(map->table.count)));
+    }
+    case OBJ_STRING:
+    {
+        ObjString *string = (ObjString *)(obj);
+        return OK(OBJ_VAL(newInt(string->length)));
+    }
+    default:
+        return ERR("len() is not defined for the type");
+    }
 }

@@ -34,6 +34,11 @@ static void freeObject(Obj *object)
 {
     switch (object->type)
     {
+    case OBJ_NIL:
+    {
+        FREE(ObjNil, object);
+        break;
+    }
     case OBJ_INT:
     {
         FREE(ObjInt, object);
@@ -146,17 +151,11 @@ void markObject(Obj *object)
     vm.grayStack[vm.grayCount++] = object;
 }
 
-void markValue(Value value)
-{
-    if (IS_OBJ(value))
-        markObject(AS_OBJ(value));
-}
-
 static void markArray(ValueArray *array)
 {
     for (int i = 0; i < array->count; i++)
     {
-        markValue(array->values[i]);
+        markObject(array->values[i]);
     }
 }
 
@@ -179,7 +178,7 @@ static void blackenObject(Obj *object)
     case OBJ_BOUND_METHOD:
     {
         ObjBoundMethod *bound = (ObjBoundMethod *)object;
-        markValue(bound->receiver);
+        markObject(bound->receiver);
         markObject((Obj *)bound->method);
         break;
     }
@@ -215,21 +214,22 @@ static void blackenObject(Obj *object)
         break;
     }
     case OBJ_UPVALUE:
-        markValue(((ObjUpvalue *)object)->closed);
+        markObject(((ObjUpvalue *)object)->closed);
         break;
     case OBJ_NATIVE:
     case OBJ_STRING:
     case OBJ_BOOL:
     case OBJ_INT:
+    case OBJ_NIL:
         break;
     }
 }
 
 static void markRoots()
 {
-    for (Value *slot = vm.stack; slot < vm.stackTop; slot++)
+    for (Obj **slot = vm.stack; slot < vm.stackTop; slot++)
     {
-        markValue(*slot);
+        markObject(*slot);
     }
 
     for (int i = 0; i < vm.frameCount; i++)

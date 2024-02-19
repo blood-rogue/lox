@@ -7,4 +7,6 @@
 
 #define UINT8_COUNT (UINT8_MAX + 1)
 
+typedef struct Obj Obj;
+
 #endif // clox_common_h

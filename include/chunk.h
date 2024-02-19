@@ -61,6 +61,6 @@ void initChunk(Chunk *);
 void freeChunk(Chunk *);
 void writeChunk(Chunk *, uint8_t, int);
 
-int addConstant(Chunk *, Value);
+int addConstant(Chunk *, Obj *);
 
 #endif // clox_chunk_h

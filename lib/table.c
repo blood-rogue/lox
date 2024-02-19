@@ -4,7 +4,6 @@
 #include "memory.h"
 #include "object.h"
 #include "table.h"
-#include "value.h"
 
 #define TABLE_MAX_LOAD 0.75
 
@@ -57,7 +56,7 @@ static void adjustCapacity(Table *table, int capacity)
     for (int i = 0; i < capacity; i++)
     {
         entries[i].key = NULL;
-        entries[i].value = NIL_VAL;
+        entries[i].value = OBJ_VAL(newNil());
     }
 
     table->count = 0;
@@ -78,7 +77,7 @@ static void adjustCapacity(Table *table, int capacity)
     table->capacity = capacity;
 }
 
-bool tableGet(Table *table, Obj *key, Value *value)
+bool tableGet(Table *table, Obj *key, Obj **value)
 {
     if (table->count == 0)
         return false;
@@ -91,7 +90,7 @@ bool tableGet(Table *table, Obj *key, Value *value)
     return true;
 }
 
-bool tableSet(Table *table, Obj *key, Value value)
+bool tableSet(Table *table, Obj *key, Obj *value)
 {
     if (table->count + 1 > table->capacity * TABLE_MAX_LOAD)
     {
@@ -177,6 +176,6 @@ void markTable(Table *table)
     {
         Entry *entry = &table->entries[i];
         markObject((Obj *)entry->key);
-        markValue(entry->value);
+        markObject(entry->value);
     }
 }
