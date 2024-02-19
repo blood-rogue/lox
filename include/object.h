@@ -137,13 +137,14 @@ ObjClass *newClass(ObjString *);
 ObjInstance *newInstance(ObjClass *);
 ObjClosure *newClosure(ObjFunction *);
 ObjFunction *newFunction();
-ObjNative *newNative(NativeFn function);
-ObjString *newString(const char *chars, int length);
+ObjNative *newNative(NativeFn);
+ObjString *newString(const char *, int);
 ObjUpvalue *newUpvalue(Value *);
-ObjString *takeString(char *chars, int length);
+ObjString *takeString(char *, int);
 
-void printObject(Value value);
-void reprObject(Value value);
+void printObject(Value);
+void reprObject(Value);
+uint32_t getHash(Obj *);
 
 static inline bool isObjType(Value value, ObjType type)
 {

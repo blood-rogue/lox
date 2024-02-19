@@ -6,7 +6,7 @@
 
 typedef struct
 {
-    ObjString *key;
+    Obj *key;
     Value value;
 } Entry;
 
@@ -20,12 +20,12 @@ typedef struct
 void initTable(Table *);
 void freeTable(Table *);
 
-bool tableGet(Table *, ObjString *, Value *);
-bool tableSet(Table *, ObjString *, Value);
-bool tableDelete(Table *, ObjString *);
+bool tableGet(Table *, Obj *, Value *);
+bool tableSet(Table *, Obj *, Value);
+bool tableDelete(Table *, Obj *);
 
 void tableAddAll(Table *, Table *);
-ObjString *tableFindString(Table *, const char *, int, uint32_t);
+Obj *tableFindString(Table *, const char *, int, uint32_t);
 void tableRemoveWhite(Table *);
 
 void markTable(Table *);

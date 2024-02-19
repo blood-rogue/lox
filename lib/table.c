@@ -21,9 +21,9 @@ void freeTable(Table *table)
     initTable(table);
 }
 
-static Entry *findEntry(Entry *entries, int capacity, ObjString *key)
+static Entry *findEntry(Entry *entries, int capacity, Obj *key)
 {
-    uint32_t index = key->hash & (capacity - 1);
+    uint32_t index = getHash(key) & (capacity - 1);
     Entry *tombstone = NULL;
 
     for (;;)
@@ -78,7 +78,7 @@ static void adjustCapacity(Table *table, int capacity)
     table->capacity = capacity;
 }
 
-bool tableGet(Table *table, ObjString *key, Value *value)
+bool tableGet(Table *table, Obj *key, Value *value)
 {
     if (table->count == 0)
         return false;
@@ -91,7 +91,7 @@ bool tableGet(Table *table, ObjString *key, Value *value)
     return true;
 }
 
-bool tableSet(Table *table, ObjString *key, Value value)
+bool tableSet(Table *table, Obj *key, Value value)
 {
     if (table->count + 1 > table->capacity * TABLE_MAX_LOAD)
     {
@@ -110,7 +110,7 @@ bool tableSet(Table *table, ObjString *key, Value value)
     return isNewKey;
 }
 
-bool tableDelete(Table *table, ObjString *key)
+bool tableDelete(Table *table, Obj *key)
 {
     if (table->count == 0)
         return false;
@@ -136,7 +136,7 @@ void tableAddAll(Table *from, Table *to)
     }
 }
 
-ObjString *tableFindString(Table *table, const char *chars, int length, uint32_t hash)
+Obj *tableFindString(Table *table, const char *chars, int length, uint32_t hash)
 {
     if (table->count == 0)
         return NULL;
@@ -150,9 +150,7 @@ ObjString *tableFindString(Table *table, const char *chars, int length, uint32_t
             if (IS_NIL(entry->value))
                 return NULL;
         }
-        else if (entry->key->length == length &&
-                 entry->key->hash == hash &&
-                 memcmp(entry->key->chars, chars, length) == 0)
+        else if (getHash(entry->key) == hash)
         {
             return entry->key;
         }
@@ -166,7 +164,7 @@ void tableRemoveWhite(Table *table)
     for (int i = 0; i < table->capacity; i++)
     {
         Entry *entry = &table->entries[i];
-        if (entry->key != NULL && !entry->key->obj.isMarked)
+        if (entry->key != NULL && !entry->key->isMarked)
         {
             tableDelete(table, entry->key);
         }

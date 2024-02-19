@@ -28,7 +28,7 @@ ObjMap *newMap(Value *elems, int pairCount)
 
     for (int i = 0; i < pairCount; i++)
     {
-        tableSet(&map->table, AS_STRING(elems[i * 2]), elems[i * 2 + 1]);
+        tableSet(&map->table, AS_OBJ(elems[i * 2]), elems[i * 2 + 1]);
     }
 
     return map;
@@ -122,7 +122,7 @@ static ObjString *allocateString(char *chars, int length, uint32_t hash)
     string->hash = hash;
 
     push(OBJ_VAL(string));
-    tableSet(&vm.strings, string, NIL_VAL);
+    tableSet(&vm.strings, (Obj *)string, NIL_VAL);
     pop();
 
     return string;
@@ -142,11 +142,11 @@ static uint32_t hashString(const char *key, int length)
 ObjString *takeString(char *chars, int length)
 {
     uint32_t hash = hashString(chars, length);
-    ObjString *interned = tableFindString(&vm.strings, chars, length, hash);
-    if (interned != NULL)
+    Obj *interned = tableFindString(&vm.strings, chars, length, hash);
+    if (interned != NULL && interned->type == OBJ_STRING)
     {
         FREE_ARRAY(char, chars, length + 1);
-        return interned;
+        return (ObjString *)interned;
     }
 
     return allocateString(chars, length, hash);
@@ -156,10 +156,10 @@ ObjString *newString(const char *chars, int length)
 {
     uint32_t hash = hashString(chars, length);
 
-    ObjString *interned = tableFindString(&vm.strings, chars, length, hash);
+    Obj *interned = tableFindString(&vm.strings, chars, length, hash);
 
-    if (interned != NULL)
-        return interned;
+    if (interned != NULL && interned->type == OBJ_STRING)
+        return (ObjString *)interned;
 
     char *heapChars = ALLOCATE(char, length + 1);
     memcpy(heapChars, chars, length);
@@ -206,29 +206,27 @@ static void printList(ValueArray *elems)
 
 static void printMap(ObjMap *map)
 {
-    printf("{");
     int count = map->table.count;
     Value value;
 
-    while (count > 0)
+    printf("{");
+    for (int i = 0; i < map->table.capacity && count > 0; i++)
     {
-        for (int i = 0; i < map->table.capacity; i++)
-        {
-            Entry *entry = &map->table.entries[i];
+        Entry *entry = &map->table.entries[i];
 
-            if (entry->key == NULL)
-                continue;
+        if (entry->key == NULL)
+            continue;
 
-            printf("\n\t\"%s\": ", entry->key->chars);
-            tableGet(&map->table, entry->key, &value);
-            reprValue(value);
-            printf(",");
+        reprObject(OBJ_VAL(entry->key));
+        printf(": ");
+        tableGet(&map->table, (Obj *)entry->key, &value);
+        reprValue(value);
+        printf(",");
 
-            count--;
-        }
+        count--;
     }
 
-    printf("\n}");
+    printf("}");
 }
 
 void printObject(Value value)
@@ -278,5 +276,16 @@ void reprObject(Value value)
     default:
         printObject(value);
         break;
+    }
+}
+
+uint32_t getHash(Obj *obj)
+{
+    switch (obj->type)
+    {
+    case OBJ_STRING:
+        return ((ObjString *)obj)->hash;
+    default:
+        return 0;
     }
 }

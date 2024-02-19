@@ -40,7 +40,7 @@ static void defineNative(const char *name, NativeFn function)
 {
     push(OBJ_VAL(newString(name, (int)strlen(name))));
     push(OBJ_VAL(newNative(function)));
-    tableSet(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
+    tableSet(&vm.globals, AS_OBJ(vm.stack[0]), vm.stack[1]);
     pop();
     pop();
 }
@@ -145,7 +145,7 @@ static bool callValue(Value callee, int argCount)
             vm.stackTop[-argCount - 1] = OBJ_VAL(newInstance(klass));
 
             Value initializer;
-            if (tableGet(&klass->methods, vm.initString, &initializer))
+            if (tableGet(&klass->methods, (Obj *)vm.initString, &initializer))
             {
                 return call(AS_CLOSURE(initializer), argCount);
             }
@@ -186,7 +186,7 @@ static bool callValue(Value callee, int argCount)
 static bool invokeFromClass(ObjClass *klass, ObjString *name, int argCount)
 {
     Value method;
-    if (!tableGet(&klass->methods, name, &method))
+    if (!tableGet(&klass->methods, (Obj *)name, &method))
     {
         runtimeError("Undefined property '%s'.", name->chars);
         return false;
@@ -204,7 +204,7 @@ static bool invoke(ObjString *name, int argCount)
         ObjInstance *instance = AS_INSTANCE(receiver);
 
         Value value;
-        if (tableGet(&instance->fields, name, &value))
+        if (tableGet(&instance->fields, (Obj *)name, &value))
         {
             vm.stackTop[-argCount - 1] = value;
             return callValue(value, argCount);
@@ -217,7 +217,7 @@ static bool invoke(ObjString *name, int argCount)
         ObjClass *klass = AS_CLASS(receiver);
 
         Value method;
-        if (!tableGet(&klass->methods, name, &method))
+        if (!tableGet(&klass->methods, (Obj *)name, &method))
         {
             runtimeError("Undefined method '%s'.", name->chars);
             return false;
@@ -241,7 +241,7 @@ static bool invoke(ObjString *name, int argCount)
 static bool bindMethod(ObjClass *klass, ObjString *name)
 {
     Value method;
-    if (!tableGet(&klass->methods, name, &method))
+    if (!tableGet(&klass->methods, (Obj *)name, &method))
     {
         runtimeError("Undefined property '%s'.", name->chars);
         return false;
@@ -300,7 +300,7 @@ static void defineMethod(ObjString *name)
 {
     Value method = peek(0);
     ObjClass *klass = AS_CLASS(peek(1));
-    tableSet(&klass->methods, name, method);
+    tableSet(&klass->methods, (Obj *)name, method);
     pop();
 }
 
@@ -418,7 +418,7 @@ static InterpretResult run()
                 ObjString *index = AS_STRING(indexValue);
                 ObjMap *map = AS_MAP(value);
 
-                if (!tableGet(&map->table, index, &indexed))
+                if (!tableGet(&map->table, (Obj *)index, &indexed))
                 {
                     runtimeError("Key not found.");
                     return INTERPRET_RUNTIME_ERROR;
@@ -477,7 +477,7 @@ static InterpretResult run()
                 ObjString *index = AS_STRING(indexValue);
                 ObjMap *map = AS_MAP(value);
 
-                tableSet(&map->table, index, toBeAssigned);
+                tableSet(&map->table, (Obj *)index, toBeAssigned);
             }
             else
             {
@@ -529,7 +529,7 @@ static InterpretResult run()
         {
             ObjString *name = READ_STRING();
             Value value;
-            if (!tableGet(&vm.globals, name, &value))
+            if (!tableGet(&vm.globals, (Obj *)name, &value))
             {
                 runtimeError("Undefined variable '%s'.", name->chars);
                 return INTERPRET_RUNTIME_ERROR;
@@ -540,16 +540,16 @@ static InterpretResult run()
         case OP_DEFINE_GLOBAL:
         {
             ObjString *name = READ_STRING();
-            tableSet(&vm.globals, name, peek(0));
+            tableSet(&vm.globals, (Obj *)name, peek(0));
             pop();
             break;
         }
         case OP_SET_GLOBAL:
         {
             ObjString *name = READ_STRING();
-            if (tableSet(&vm.globals, name, peek(0)))
+            if (tableSet(&vm.globals, (Obj *)name, peek(0)))
             {
-                tableDelete(&vm.globals, name);
+                tableDelete(&vm.globals, (Obj *)name);
                 runtimeError("Undefined variable '%s'.", name->chars);
                 return INTERPRET_RUNTIME_ERROR;
             }
@@ -579,7 +579,7 @@ static InterpretResult run()
             ObjString *name = READ_STRING();
 
             Value value;
-            if (tableGet(&instance->fields, name, &value))
+            if (tableGet(&instance->fields, (Obj *)name, &value))
             {
                 pop();
                 push(value);
@@ -601,7 +601,7 @@ static InterpretResult run()
             }
 
             ObjInstance *instance = AS_INSTANCE(peek(1));
-            tableSet(&instance->fields, READ_STRING(), peek(0));
+            tableSet(&instance->fields, (Obj *)READ_STRING(), peek(0));
             Value value = pop();
             pop();
             push(value);
