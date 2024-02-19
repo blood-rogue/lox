@@ -46,12 +46,13 @@ typedef struct
     Value *values;
 } ValueArray;
 
-bool valuesEqual(Value a, Value b);
+bool valuesEqual(Value, Value);
 
-void initValueArray(ValueArray *array);
-void writeValueArray(ValueArray *array, Value value);
-void freeValueArray(ValueArray *array);
+void initValueArray(ValueArray *);
+void writeValueArray(ValueArray *, Value);
+void freeValueArray(ValueArray *);
 
-void printValue(Value value);
+void printValue(Value);
+void reprValue(Value);
 
 #endif // clox_value_h

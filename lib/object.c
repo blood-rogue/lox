@@ -24,12 +24,10 @@ ObjMap *newMap(Value *elems, int pairCount)
 {
     ObjMap *map = ALLOCATE_OBJ(ObjMap, OBJ_MAP);
     initTable(&map->table);
-    map->keyCount = pairCount;
-    map->keys = ALLOCATE(ObjString *, pairCount);
+    map->table.count = pairCount;
 
     for (int i = 0; i < pairCount; i++)
     {
-        map->keys[i] = AS_STRING(elems[i * 2]);
         tableSet(&map->table, AS_STRING(elems[i * 2]), elems[i * 2 + 1]);
     }
 
@@ -209,27 +207,28 @@ static void printList(ValueArray *elems)
 static void printMap(ObjMap *map)
 {
     printf("{");
-    if (map->keyCount > 0)
+    int count = map->table.count;
+    Value value;
+
+    while (count > 0)
     {
-        printf("\"%s\"", map->keys[0]->chars);
-        printf(":");
-
-        Value value;
-        tableGet(&map->table, map->keys[0], &value);
-        printValue(value);
-
-        for (int i = 1; i < map->keyCount; i++)
+        for (int i = 0; i < map->table.capacity; i++)
         {
-            printf(", ");
+            Entry *entry = &map->table.entries[i];
 
-            printf("\"%s\"", map->keys[i]->chars);
-            printf(":");
+            if (entry->key == NULL)
+                continue;
 
-            tableGet(&map->table, map->keys[i], &value);
-            printValue(value);
+            printf("\n\t\"%s\": ", entry->key->chars);
+            tableGet(&map->table, entry->key, &value);
+            reprValue(value);
+            printf(",");
+
+            count--;
         }
     }
-    printf("}");
+
+    printf("\n}");
 }
 
 void printObject(Value value)
@@ -265,6 +264,19 @@ void printObject(Value value)
         break;
     case OBJ_UPVALUE:
         printf("upvalue");
+        break;
+    }
+}
+
+void reprObject(Value value)
+{
+    switch (OBJ_TYPE(value))
+    {
+    case OBJ_STRING:
+        printf("\"%s\"", AS_STRING(value)->chars);
+        break;
+    default:
+        printObject(value);
         break;
     }
 }

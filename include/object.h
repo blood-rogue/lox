@@ -78,9 +78,10 @@ typedef struct
     int upvalueCount;
     Chunk chunk;
     ObjString *name;
+    bool isStatic;
 } ObjFunction;
 
-typedef NativeResult (*NativeFn)(int argCount, Value *args);
+typedef NativeResult (*NativeFn)(int, Value *);
 
 typedef struct
 {
@@ -126,24 +127,23 @@ typedef struct
 typedef struct
 {
     Obj obj;
-    int keyCount;
-    ObjString **keys;
     Table table;
 } ObjMap;
 
-ObjMap *newMap(Value *elems, int pairCount);
-ObjList *newList(Value *elems, int elemCount);
-ObjBoundMethod *newBoundMethod(Value receiver, ObjClosure *method);
-ObjClass *newClass(ObjString *name);
-ObjInstance *newInstance(ObjClass *klass);
-ObjClosure *newClosure(ObjFunction *function);
+ObjMap *newMap(Value *, int);
+ObjList *newList(Value *, int);
+ObjBoundMethod *newBoundMethod(Value, ObjClosure *);
+ObjClass *newClass(ObjString *);
+ObjInstance *newInstance(ObjClass *);
+ObjClosure *newClosure(ObjFunction *);
 ObjFunction *newFunction();
 ObjNative *newNative(NativeFn function);
 ObjString *newString(const char *chars, int length);
-ObjUpvalue *newUpvalue(Value *slot);
+ObjUpvalue *newUpvalue(Value *);
 ObjString *takeString(char *chars, int length);
 
 void printObject(Value value);
+void reprObject(Value value);
 
 static inline bool isObjType(Value value, ObjType type)
 {

@@ -91,14 +91,20 @@ NativeResult lenNative(int argCount, Value *args)
         switch (obj->type)
         {
         case OBJ_LIST:
+        {
             ObjList *list = (ObjList *)(obj);
             return OK(NUMBER_VAL(list->elems.count));
+        }
         case OBJ_MAP:
+        {
             ObjMap *map = (ObjMap *)(obj);
-            return OK(NUMBER_VAL(map->keyCount));
+            return OK(NUMBER_VAL(map->table.count));
+        }
         case OBJ_STRING:
+        {
             ObjString *string = (ObjString *)(obj);
             return OK(NUMBER_VAL(string->length));
+        }
         default:
             return ERR("len() is not defined for the type");
         }

@@ -170,7 +170,17 @@ static TokenType identifierType()
     case 'r':
         return checkKeyword(1, 5, "eturn", TOKEN_RETURN);
     case 's':
-        return checkKeyword(1, 4, "uper", TOKEN_SUPER);
+        if (scanner.current - scanner.start > 1)
+        {
+            switch (scanner.start[1])
+            {
+            case 't':
+                return checkKeyword(2, 4, "atic", TOKEN_STATIC);
+            case 'u':
+                return checkKeyword(2, 3, "per", TOKEN_SUPER);
+            }
+        }
+        break;
     case 't':
         if (scanner.current - scanner.start > 1)
         {

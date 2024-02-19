@@ -178,6 +178,7 @@ static bool callValue(Value callee, int argCount)
             break;
         }
     }
+
     runtimeError("Can only call functions and classes.");
     return false;
 }
@@ -190,6 +191,7 @@ static bool invokeFromClass(ObjClass *klass, ObjString *name, int argCount)
         runtimeError("Undefined property '%s'.", name->chars);
         return false;
     }
+
     return call(AS_CLOSURE(method), argCount);
 }
 
@@ -197,22 +199,43 @@ static bool invoke(ObjString *name, int argCount)
 {
     Value receiver = peek(argCount);
 
-    if (!IS_INSTANCE(receiver))
+    if (IS_INSTANCE(receiver))
     {
-        runtimeError("Only instances have methods.");
+        ObjInstance *instance = AS_INSTANCE(receiver);
+
+        Value value;
+        if (tableGet(&instance->fields, name, &value))
+        {
+            vm.stackTop[-argCount - 1] = value;
+            return callValue(value, argCount);
+        }
+
+        return invokeFromClass(instance->klass, name, argCount);
+    }
+    else if (IS_CLASS(receiver))
+    {
+        ObjClass *klass = AS_CLASS(receiver);
+
+        Value method;
+        if (!tableGet(&klass->methods, name, &method))
+        {
+            runtimeError("Undefined method '%s'.", name->chars);
+            return false;
+        }
+
+        ObjClosure *closure = AS_CLOSURE(method);
+
+        if (closure->function->isStatic)
+        {
+            return call(AS_CLOSURE(method), argCount);
+        }
+
+        runtimeError("Can only call static methods from classes");
         return false;
     }
 
-    ObjInstance *instance = AS_INSTANCE(receiver);
-
-    Value value;
-    if (tableGet(&instance->fields, name, &value))
-    {
-        vm.stackTop[-argCount - 1] = value;
-        return callValue(value, argCount);
-    }
-
-    return invokeFromClass(instance->klass, name, argCount);
+    runtimeError("Only instances have methods.");
+    return false;
 }
 
 static bool bindMethod(ObjClass *klass, ObjString *name)
@@ -351,10 +374,70 @@ static InterpretResult run()
 
             break;
         }
-        case OP_INDEX:
+        case OP_GET_INDEX:
         {
             Value indexValue = pop();
             Value value = pop();
+
+            Value indexed;
+            if (IS_LIST(value))
+            {
+                if (!IS_NUMBER(indexValue))
+                {
+                    runtimeError("Lists can only be indexed using numbers.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                double number = AS_NUMBER(indexValue);
+
+                if (rint(number) != number)
+                {
+                    runtimeError("Cannot index using floating point numbers.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                int index = (int)number;
+                ObjList *list = AS_LIST(value);
+
+                if (index >= list->elems.count)
+                {
+                    runtimeError("Index out of bounds.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                indexed = list->elems.values[index];
+            }
+            else if (IS_MAP(value))
+            {
+                if (!IS_STRING(indexValue))
+                {
+                    runtimeError("Maps can only be indexed using strings.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+
+                ObjString *index = AS_STRING(indexValue);
+                ObjMap *map = AS_MAP(value);
+
+                if (!tableGet(&map->table, index, &indexed))
+                {
+                    runtimeError("Key not found.");
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+            }
+            else
+            {
+                runtimeError("Only lists and maps can be indexed.");
+                return INTERPRET_RUNTIME_ERROR;
+            }
+
+            push(indexed);
+            break;
+        }
+        case OP_SET_INDEX:
+        {
+            Value toBeAssigned = peek(0);
+            Value indexValue = peek(1);
+            Value value = peek(2);
 
             if (IS_LIST(value))
             {
@@ -381,7 +464,7 @@ static InterpretResult run()
                     return INTERPRET_RUNTIME_ERROR;
                 }
 
-                push(list->elems.values[index]);
+                list->elems.values[index] = toBeAssigned;
             }
             else if (IS_MAP(value))
             {
@@ -394,22 +477,19 @@ static InterpretResult run()
                 ObjString *index = AS_STRING(indexValue);
                 ObjMap *map = AS_MAP(value);
 
-                Value mapValue;
-                if (tableGet(&map->table, index, &mapValue))
-                {
-                    push(mapValue);
-                }
-                else
-                {
-                    runtimeError("Key not found.");
-                    return INTERPRET_RUNTIME_ERROR;
-                }
+                tableSet(&map->table, index, toBeAssigned);
             }
             else
             {
                 runtimeError("Only lists and maps can be indexed.");
                 return INTERPRET_RUNTIME_ERROR;
             }
+
+            pop();
+            pop();
+            pop();
+
+            push(value);
 
             break;
         }

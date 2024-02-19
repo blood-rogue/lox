@@ -38,7 +38,6 @@ static void freeObject(Obj *object)
     {
         ObjMap *map = (ObjMap *)object;
         freeTable(&map->table);
-        FREE_ARRAY(ObjString *, map->keys, map->keyCount);
         FREE(ObjMap, object);
         break;
     }
@@ -159,10 +158,6 @@ static void blackenObject(Obj *object)
     {
         ObjMap *map = (ObjMap *)object;
         markTable(&map->table);
-        for (int i = 0; i < map->keyCount; i++)
-        {
-            markObject((Obj *)map->keys[i]);
-        }
         break;
     }
     case OBJ_LIST:

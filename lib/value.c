@@ -50,6 +50,19 @@ void printValue(Value value)
     }
 }
 
+void reprValue(Value value)
+{
+    switch (value.type)
+    {
+    case VAL_OBJ:
+        reprObject(value);
+        break;
+    default:
+        printValue(value);
+        break;
+    }
+}
+
 bool valuesEqual(Value a, Value b)
 {
     if (a.type != b.type)

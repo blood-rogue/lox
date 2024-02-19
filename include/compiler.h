@@ -32,7 +32,8 @@ typedef enum
     TYPE_FUNCTION,
     TYPE_INITIALIZER,
     TYPE_METHOD,
-    TYPE_SCRIPT
+    TYPE_SCRIPT,
+    TYPE_STATIC_METHOD,
 } FunctionType;
 
 typedef struct Compiler
@@ -76,7 +77,7 @@ typedef struct
     Precedence precedence;
 } ParseRule;
 
-ObjFunction *compile(const char *source);
+ObjFunction *compile(const char *);
 void markCompilerRoots();
 
 #endif // clox_compiler_h

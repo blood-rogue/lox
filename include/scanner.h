@@ -48,6 +48,7 @@ typedef enum
     TOKEN_VAR,
     TOKEN_WHILE,
     TOKEN_MAP,
+    TOKEN_STATIC,
 
     TOKEN_ERROR,
     TOKEN_EOF
@@ -61,7 +62,7 @@ typedef struct
     int line;
 } Token;
 
-void initScanner(const char *source);
+void initScanner(const char *);
 Token scanToken();
 
 #endif // clox_scanner_h

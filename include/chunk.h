@@ -7,7 +7,8 @@
 typedef enum
 {
     OP_CONSTANT,
-    OP_INDEX,
+    OP_GET_INDEX,
+    OP_SET_INDEX,
     OP_LIST,
     OP_MAP,
     OP_NIL,
@@ -56,10 +57,10 @@ typedef struct
     ValueArray constants;
 } Chunk;
 
-void initChunk(Chunk *chunk);
-void freeChunk(Chunk *chunk);
-void writeChunk(Chunk *chunk, uint8_t byte, int line);
+void initChunk(Chunk *);
+void freeChunk(Chunk *);
+void writeChunk(Chunk *, uint8_t, int);
 
-int addConstant(Chunk *chunk, Value value);
+int addConstant(Chunk *, Value);
 
 #endif // clox_chunk_h

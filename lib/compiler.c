@@ -295,7 +295,8 @@ static void initCompiler(Compiler *compiler, FunctionType type)
     Local *local = &current->locals[current->localCount++];
     local->depth = 0;
     local->isCaptured = false;
-    if (type != TYPE_FUNCTION)
+
+    if (type == TYPE_INITIALIZER && type == TYPE_METHOD)
     {
         local->name.start = "this";
         local->name.length = 4;
@@ -505,7 +506,14 @@ static void index_(bool canAssign)
 {
     expression();
     consume(TOKEN_RIGHT_SQUARE, "Expect ']' after index");
-    emitByte(OP_INDEX);
+
+    if (canAssign && match(TOKEN_EQUAL))
+    {
+        expression();
+        emitByte(OP_SET_INDEX);
+    }
+    else
+        emitByte(OP_GET_INDEX);
 }
 
 static void number(bool canAssign)
@@ -794,29 +802,42 @@ static void function(FunctionType type)
     block();
 
     ObjFunction *function = endCompiler();
+
+    if (type == TYPE_STATIC_METHOD)
+    {
+        function->isStatic = true;
+    }
+    else
+    {
+        function->isStatic = false;
+    }
+
     emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
 
     for (int i = 0; i < function->upvalueCount; i++)
     {
-        emitByte(compiler.upvalues[i].isLocal ? 1 : 0);
-        emitByte(compiler.upvalues[i].index);
+        emitBytes(compiler.upvalues[i].isLocal ? 1 : 0, compiler.upvalues[i].index);
     }
 }
 
 static void method()
 {
+    FunctionType type;
+
+    if (match(TOKEN_STATIC))
+        type = TYPE_STATIC_METHOD;
+    else
+        type = TYPE_METHOD;
+
     consume(TOKEN_IDENTIFIER, "Expect method name.");
     uint8_t constant = identifierConstant(&parser.previous);
 
-    FunctionType type = TYPE_METHOD;
-
-    if (parser.previous.length == 4 && memcmp(parser.previous.start, "init", 4) == 0)
+    if (parser.previous.length == 4 && memcmp(parser.previous.start, "init", 4) == 0 && type != TYPE_STATIC_METHOD)
     {
         type = TYPE_INITIALIZER;
     }
 
     function(type);
-
     emitBytes(OP_METHOD, constant);
 }
 
