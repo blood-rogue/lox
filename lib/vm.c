@@ -334,16 +334,16 @@ static InterpretResult run()
 #define READ_SHORT() (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
 #define READ_CONSTANT() (frame->closure->function->chunk.constants.values[READ_BYTE()])
 #define READ_STRING() AS_STRING(READ_CONSTANT())
-#define BINARY_OP(valueType, op)                        \
-    {                                                   \
-        if (!IS_NUMBER(peek(0)) || !IS_NUMBER(peek(1))) \
-        {                                               \
-            runtimeError("Operands must be numbers.");  \
-            return INTERPRET_RUNTIME_ERROR;             \
-        }                                               \
-        double b = AS_NUMBER(pop());                    \
-        double a = AS_NUMBER(pop());                    \
-        push(valueType(a op b));                        \
+#define BINARY_OP_OBJ(valueType, op)                   \
+    {                                                  \
+        if (!IS_INT(peek(0)) || !IS_INT(peek(1)))      \
+        {                                              \
+            runtimeError("Operands must be numbers."); \
+            return INTERPRET_RUNTIME_ERROR;            \
+        }                                              \
+        int64_t b = AS_INT(pop())->value;              \
+        int64_t a = AS_INT(pop())->value;              \
+        push(OBJ_VAL(valueType(a op b)));              \
     }
 
     for (;;)
@@ -382,21 +382,13 @@ static InterpretResult run()
             Value indexed;
             if (IS_LIST(value))
             {
-                if (!IS_NUMBER(indexValue))
+                if (!IS_INT(indexValue))
                 {
                     runtimeError("Lists can only be indexed using numbers.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
 
-                double number = AS_NUMBER(indexValue);
-
-                if (rint(number) != number)
-                {
-                    runtimeError("Cannot index using floating point numbers.");
-                    return INTERPRET_RUNTIME_ERROR;
-                }
-
-                int index = (int)number;
+                int64_t index = AS_INT(indexValue)->value;
                 ObjList *list = AS_LIST(value);
 
                 if (index >= list->elems.count)
@@ -441,21 +433,13 @@ static InterpretResult run()
 
             if (IS_LIST(value))
             {
-                if (!IS_NUMBER(indexValue))
+                if (!IS_INT(indexValue))
                 {
                     runtimeError("Lists can only be indexed using numbers.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
 
-                double number = AS_NUMBER(indexValue);
-
-                if (rint(number) != number)
-                {
-                    runtimeError("Cannot index using floating point numbers.");
-                    return INTERPRET_RUNTIME_ERROR;
-                }
-
-                int index = (int)number;
+                int64_t index = AS_INT(indexValue)->value;
                 ObjList *list = AS_LIST(value);
 
                 if (index >= list->elems.count)
@@ -500,12 +484,12 @@ static InterpretResult run()
         }
         case OP_TRUE:
         {
-            push(BOOL_VAL(true));
+            push(OBJ_VAL(newBool(true)));
             break;
         }
         case OP_FALSE:
         {
-            push(BOOL_VAL(false));
+            push(OBJ_VAL(newBool(false)));
             break;
         }
         case OP_POP:
@@ -622,14 +606,14 @@ static InterpretResult run()
         {
             Value b = pop();
             Value a = pop();
-            push(BOOL_VAL(valuesEqual(a, b)));
+            push(OBJ_VAL(newBool(valuesEqual(a, b))));
             break;
         }
         case OP_GREATER:
-            BINARY_OP(BOOL_VAL, >);
+            BINARY_OP_OBJ(newBool, >);
             break;
         case OP_LESS:
-            BINARY_OP(BOOL_VAL, <);
+            BINARY_OP_OBJ(newBool, <);
             break;
         case OP_ADD:
         {
@@ -637,11 +621,11 @@ static InterpretResult run()
             {
                 concatenate();
             }
-            else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1)))
+            else if (IS_INT(peek(0)) && IS_INT(peek(1)))
             {
-                double b = AS_NUMBER(pop());
-                double a = AS_NUMBER(pop());
-                push(NUMBER_VAL(a + b));
+                int64_t b = AS_INT(pop())->value;
+                int64_t a = AS_INT(pop())->value;
+                push(OBJ_VAL(newInt(a + b)));
             }
             else
             {
@@ -653,32 +637,32 @@ static InterpretResult run()
         }
         case OP_SUBTRACT:
         {
-            BINARY_OP(NUMBER_VAL, -);
+            BINARY_OP_OBJ(newInt, -);
             break;
         }
         case OP_MULTIPLY:
         {
-            BINARY_OP(NUMBER_VAL, *);
+            BINARY_OP_OBJ(newInt, *);
             break;
         }
         case OP_DIVIDE:
         {
-            BINARY_OP(NUMBER_VAL, /);
+            BINARY_OP_OBJ(newInt, /);
             break;
         }
         case OP_NOT:
         {
-            push(BOOL_VAL(isFalsey(pop())));
+            push(OBJ_VAL(newBool(isFalsey(pop()))));
             break;
         }
         case OP_NEGATE:
         {
-            if (!IS_NUMBER(peek(0)))
+            if (!IS_INT(peek(0)))
             {
                 runtimeError("Operand must be a number.");
                 return INTERPRET_RUNTIME_ERROR;
             }
-            push(NUMBER_VAL(-AS_NUMBER(pop())));
+            push(OBJ_VAL(newInt(-(AS_INT(pop())->value))));
             break;
         }
         case OP_JUMP:
@@ -803,7 +787,7 @@ static InterpretResult run()
 #undef READ_SHORT
 #undef READ_CONSTANT
 #undef READ_STRING
-#undef BINARY_OP
+#undef BINARY_OP_OBJ
 }
 
 InterpretResult interpret(const char *source)

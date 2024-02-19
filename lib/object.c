@@ -20,6 +20,22 @@ static Obj *allocateObject(size_t size, ObjType type)
     return object;
 }
 
+ObjInt *newInt(int64_t value)
+{
+    ObjInt *integer = ALLOCATE_OBJ(ObjInt, OBJ_INT);
+    integer->value = value;
+
+    return integer;
+}
+
+ObjBool *newBool(bool value)
+{
+    ObjBool *boolean = ALLOCATE_OBJ(ObjBool, OBJ_BOOL);
+    boolean->value = value;
+
+    return boolean;
+}
+
 ObjMap *newMap(Value *elems, int pairCount)
 {
     ObjMap *map = ALLOCATE_OBJ(ObjMap, OBJ_MAP);
@@ -233,6 +249,12 @@ void printObject(Value value)
 {
     switch (OBJ_TYPE(value))
     {
+    case OBJ_INT:
+        printf("%ld", AS_INT(value)->value);
+        break;
+    case OBJ_BOOL:
+        printf(AS_BOOL(value)->value ? "true" : "false");
+        break;
     case OBJ_MAP:
         printMap(AS_MAP(value));
         break;

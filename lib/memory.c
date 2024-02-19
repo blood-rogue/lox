@@ -34,6 +34,16 @@ static void freeObject(Obj *object)
 {
     switch (object->type)
     {
+    case OBJ_INT:
+    {
+        FREE(ObjInt, object);
+        break;
+    }
+    case OBJ_BOOL:
+    {
+        FREE(ObjBool, object);
+        break;
+    }
     case OBJ_MAP:
     {
         ObjMap *map = (ObjMap *)object;
@@ -209,6 +219,8 @@ static void blackenObject(Obj *object)
         break;
     case OBJ_NATIVE:
     case OBJ_STRING:
+    case OBJ_BOOL:
+    case OBJ_INT:
         break;
     }
 }

@@ -120,7 +120,7 @@ bool tableDelete(Table *table, Obj *key)
         return false;
 
     entry->key = NULL;
-    entry->value = BOOL_VAL(true);
+    entry->value = OBJ_VAL(newBool(true));
     return true;
 }
 

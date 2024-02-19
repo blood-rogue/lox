@@ -21,7 +21,7 @@
 NativeResult clockNative(int argCount, Value *args)
 {
     CHECK_ARG_COUNT(0)
-    return OK(NUMBER_VAL((double)clock() / CLOCKS_PER_SEC));
+    return OK(OBJ_VAL(newInt(clock() / CLOCKS_PER_SEC)));
 }
 
 NativeResult exitNative(int argCount, Value *args)
@@ -29,9 +29,9 @@ NativeResult exitNative(int argCount, Value *args)
 
     CHECK_ARG_COUNT(1)
 
-    if (IS_NUMBER(args[0]))
+    if (IS_INT(args[0]))
     {
-        int exitCode = AS_NUMBER(args[0]);
+        int exitCode = AS_INT(args[0])->value;
         exit(exitCode);
     }
     else
@@ -93,17 +93,17 @@ NativeResult lenNative(int argCount, Value *args)
         case OBJ_LIST:
         {
             ObjList *list = (ObjList *)(obj);
-            return OK(NUMBER_VAL(list->elems.count));
+            return OK(OBJ_VAL(newInt(list->elems.count)));
         }
         case OBJ_MAP:
         {
             ObjMap *map = (ObjMap *)(obj);
-            return OK(NUMBER_VAL(map->table.count));
+            return OK(OBJ_VAL(newInt(map->table.count)));
         }
         case OBJ_STRING:
         {
             ObjString *string = (ObjString *)(obj);
-            return OK(NUMBER_VAL(string->length));
+            return OK(OBJ_VAL(newInt(string->length)));
         }
         default:
             return ERR("len() is not defined for the type");

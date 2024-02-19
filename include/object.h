@@ -14,6 +14,8 @@ typedef struct
 
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
+#define IS_INT(value) isObjType(value, OBJ_INT)
+#define IS_BOOL(value) isObjType(value, OBJ_BOOL)
 #define IS_BOUND_METHOD(value) isObjType(value, OBJ_BOUND_METHOD)
 #define IS_CLASS(value) isObjType(value, OBJ_CLASS)
 #define IS_CLOSURE(value) isObjType(value, OBJ_CLOSURE)
@@ -24,6 +26,8 @@ typedef struct
 #define IS_LIST(value) isObjType(value, OBJ_LIST)
 #define IS_MAP(value) isObjType(value, OBJ_MAP)
 
+#define AS_INT(value) ((ObjInt *)AS_OBJ(value))
+#define AS_BOOL(value) ((ObjBool *)AS_OBJ(value))
 #define AS_BOUND_METHOD(value) ((ObjBoundMethod *)AS_OBJ(value))
 #define AS_CLASS(value) ((ObjClass *)AS_OBJ(value))
 #define AS_INSTANCE(value) ((ObjInstance *)AS_OBJ(value))
@@ -36,6 +40,8 @@ typedef struct
 
 typedef enum
 {
+    OBJ_INT,
+    OBJ_BOOL,
     OBJ_BOUND_METHOD,
     OBJ_CLASS,
     OBJ_CLOSURE,
@@ -130,6 +136,20 @@ typedef struct
     Table table;
 } ObjMap;
 
+typedef struct
+{
+    Obj obj;
+    bool value;
+} ObjBool;
+
+typedef struct
+{
+    Obj obj;
+    int64_t value;
+} ObjInt;
+
+ObjInt *newInt(int64_t);
+ObjBool *newBool(bool);
 ObjMap *newMap(Value *, int);
 ObjList *newList(Value *, int);
 ObjBoundMethod *newBoundMethod(Value, ObjClosure *);
