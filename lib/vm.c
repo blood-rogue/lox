@@ -179,10 +179,10 @@ static bool call_value(Obj *callee, int arg_count)
     }
 }
 
-static bool invoke_fromClass(ObjClass *klass, ObjString *name, int arg_count)
+static bool invoke_from_class(ObjClass *klass, ObjString *name, int arg_count)
 {
     Obj *method;
-    if (!table_get(&klass->methods, (Obj *)name, &method))
+    if (!table_get(&klass->methods, (Obj *)name, &method) && !table_get(&klass->statics, (Obj *)name, &method))
     {
         runtime_error("Undefined property '%s'.", name->chars);
         return false;
@@ -206,28 +206,20 @@ static bool invoke(ObjString *name, int arg_count)
             return call_value(value, arg_count);
         }
 
-        return invoke_fromClass(instance->klass, name, arg_count);
+        return invoke_from_class(instance->klass, name, arg_count);
     }
     else if (IS_CLASS(receiver))
     {
         ObjClass *klass = AS_CLASS(receiver);
 
         Obj *method;
-        if (!table_get(&klass->methods, (Obj *)name, &method))
+        if (!table_get(&klass->statics, (Obj *)name, &method))
         {
             runtime_error("Undefined method '%s'.", name->chars);
             return false;
         }
 
-        ObjClosure *closure = AS_CLOSURE(method);
-
-        if (closure->function->is_static)
-        {
-            return call(AS_CLOSURE(method), arg_count);
-        }
-
-        runtime_error("Can only call static methods from classes");
-        return false;
+        return call(AS_CLOSURE(method), arg_count);
     }
 
     runtime_error("Only instances have methods.");
@@ -292,11 +284,15 @@ static void close_upvalues(Obj **last)
     }
 }
 
-static void define_method(ObjString *name)
+static void define_method(ObjString *name, bool is_static)
 {
     Obj *method = peek(0);
     ObjClass *klass = AS_CLASS(peek(1));
-    table_set(&klass->methods, (Obj *)name, method);
+    if (is_static)
+        table_set(&klass->statics, (Obj *)name, method);
+    else
+        table_set(&klass->methods, (Obj *)name, method);
+
     pop();
 }
 
@@ -330,16 +326,21 @@ static InterpretResult run()
 #define READ_SHORT() (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
 #define READ_CONSTANT() (frame->closure->function->chunk.constants.values[READ_BYTE()])
 #define READ_STRING() AS_STRING(READ_CONSTANT())
-#define BINARY_OP_OBJ(value_type, op)                   \
-    {                                                   \
-        if (!IS_INT(peek(0)) || !IS_INT(peek(1)))       \
-        {                                               \
-            runtime_error("Operands must be numbers."); \
-            return INTERPRET_RUNTIME_ERROR;             \
-        }                                               \
-        int64_t b = AS_INT(pop())->value;               \
-        int64_t a = AS_INT(pop())->value;               \
-        push(OBJ_VAL(value_type(a op b)));              \
+#define BINARY_OP(new_func_int, new_func_float, op)                                          \
+    {                                                                                        \
+        if (IS_INT(peek(0)) && IS_INT(peek(1)))                                              \
+        {                                                                                    \
+            push(OBJ_VAL(new_func_int(AS_INT(pop())->value op AS_INT(pop())->value)));       \
+        }                                                                                    \
+        else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1)))                                     \
+        {                                                                                    \
+            push(OBJ_VAL(new_func_float(AS_FLOAT(pop())->value op AS_FLOAT(pop())->value))); \
+        }                                                                                    \
+        else                                                                                 \
+        {                                                                                    \
+            runtime_error("Operands must be numbers.");                                      \
+            return INTERPRET_RUNTIME_ERROR;                                                  \
+        }                                                                                    \
     }
 
     for (;;)
@@ -606,10 +607,10 @@ static InterpretResult run()
             break;
         }
         case OP_GREATER:
-            BINARY_OP_OBJ(new_bool, >);
+            BINARY_OP(new_bool, new_bool, >);
             break;
         case OP_LESS:
-            BINARY_OP_OBJ(new_bool, <);
+            BINARY_OP(new_bool, new_bool, <);
             break;
         case OP_ADD:
         {
@@ -619,9 +620,11 @@ static InterpretResult run()
             }
             else if (IS_INT(peek(0)) && IS_INT(peek(1)))
             {
-                int64_t b = AS_INT(pop())->value;
-                int64_t a = AS_INT(pop())->value;
-                push(OBJ_VAL(new_int(a + b)));
+                push(OBJ_VAL(new_int(AS_INT(pop())->value + AS_INT(pop())->value)));
+            }
+            else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1)))
+            {
+                push(OBJ_VAL(new_float(AS_FLOAT(pop())->value + AS_FLOAT(pop())->value)));
             }
             else
             {
@@ -633,17 +636,17 @@ static InterpretResult run()
         }
         case OP_SUBTRACT:
         {
-            BINARY_OP_OBJ(new_int, -);
+            BINARY_OP(new_int, new_float, -);
             break;
         }
         case OP_MULTIPLY:
         {
-            BINARY_OP_OBJ(new_int, *);
+            BINARY_OP(new_int, new_float, *);
             break;
         }
         case OP_DIVIDE:
         {
-            BINARY_OP_OBJ(new_int, /);
+            BINARY_OP(new_int, new_float, /);
             break;
         }
         case OP_NOT:
@@ -706,7 +709,7 @@ static InterpretResult run()
             ObjString *method = READ_STRING();
             int arg_count = READ_BYTE();
             ObjClass *superclass = AS_CLASS(pop());
-            if (!invoke_fromClass(superclass, method, arg_count))
+            if (!invoke_from_class(superclass, method, arg_count))
             {
                 return INTERPRET_RUNTIME_ERROR;
             }
@@ -774,7 +777,10 @@ static InterpretResult run()
             break;
         }
         case OP_METHOD:
-            define_method(READ_STRING());
+            define_method(READ_STRING(), false);
+            break;
+        case OP_STATIC_METHOD:
+            define_method(READ_STRING(), true);
             break;
         }
     }

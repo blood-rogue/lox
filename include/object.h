@@ -8,6 +8,7 @@
 
 #define OBJ_VAL(value) ((Obj *)(value))
 
+#define IS_FLOAT(value) (value->type == OBJ_FLOAT)
 #define IS_NIL(value) (value->type == OBJ_NIL)
 #define IS_INT(value) (value->type == OBJ_INT)
 #define IS_BOOL(value) (value->type == OBJ_BOOL)
@@ -21,6 +22,7 @@
 #define IS_LIST(value) (value->type == OBJ_LIST)
 #define IS_MAP(value) (value->type == OBJ_MAP)
 
+#define AS_FLOAT(value) ((ObjFloat *)(value))
 #define AS_NIL(value) ((ObjNil *)(value))
 #define AS_INT(value) ((ObjInt *)(value))
 #define AS_BOOL(value) ((ObjBool *)(value))
@@ -33,10 +35,20 @@
 #define AS_STRING(value) ((ObjString *)(value))
 #define AS_LIST(value) ((ObjList *)(value))
 #define AS_MAP(value) ((ObjMap *)(value))
+#define AS_UPVALUE(value) ((ObjUpvalue *)(value))
+
+typedef struct
+{
+    Obj *value;
+    char *error;
+} BuiltinResult;
+
+typedef BuiltinResult (*BuiltinFn)(int, Obj **);
 
 typedef enum
 {
     OBJ_NIL,
+    OBJ_FLOAT,
     OBJ_INT,
     OBJ_BOOL,
     OBJ_BOUND_METHOD,
@@ -81,16 +93,7 @@ typedef struct
     int upvalue_count;
     Chunk chunk;
     ObjString *name;
-    bool is_static;
 } ObjFunction;
-
-typedef struct
-{
-    Obj *value;
-    char *error;
-} BuiltinResult;
-
-typedef BuiltinResult (*BuiltinFn)(int, Obj **);
 
 typedef struct
 {
@@ -111,6 +114,7 @@ typedef struct
     Obj obj;
     ObjString *name;
     Table methods;
+    Table statics;
 } ObjClass;
 
 typedef struct
@@ -154,9 +158,16 @@ typedef struct
 typedef struct
 {
     Obj obj;
+    double value;
+} ObjFloat;
+
+typedef struct
+{
+    Obj obj;
 } ObjNil;
 
 ObjNil *new_nil();
+ObjFloat *new_float(double);
 ObjInt *new_int(int64_t);
 ObjBool *new_bool(bool);
 ObjMap *new_map(Obj **, int);

@@ -221,8 +221,12 @@ static Token number()
         while (is_digit(peek()))
             advance();
     }
+    else
+    {
+        return make_token(TOKEN_INT);
+    }
 
-    return make_token(TOKEN_NUMBER);
+    return make_token(TOKEN_FLOAT);
 }
 
 static Token string()

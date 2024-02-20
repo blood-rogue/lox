@@ -24,6 +24,14 @@ ObjNil *new_nil()
     return ALLOCATE_OBJ(ObjNil, OBJ_NIL);
 }
 
+ObjFloat *new_float(double value)
+{
+    ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
+    float_->value = value;
+
+    return float_;
+}
+
 ObjInt *new_int(int64_t value)
 {
     ObjInt *integer = ALLOCATE_OBJ(ObjInt, OBJ_INT);
@@ -85,6 +93,7 @@ ObjClass *new_class(ObjString *name)
     ObjClass *klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
     klass->name = name;
     init_table(&klass->methods);
+    init_table(&klass->statics);
 
     return klass;
 }
@@ -166,7 +175,7 @@ ObjString *take_string(char *chars, int length)
     if (interned != NULL && interned->type == OBJ_STRING)
     {
         FREE_ARRAY(char, chars, length + 1);
-        return (ObjString *)interned;
+        return AS_STRING(interned);
     }
 
     return allocate_string(chars, length, hash);
@@ -179,7 +188,7 @@ ObjString *new_string(const char *chars, int length)
     Obj *interned = table_findString(&vm.strings, chars, length, hash);
 
     if (interned != NULL && interned->type == OBJ_STRING)
-        return (ObjString *)interned;
+        return AS_STRING(interned);
 
     char *heap_chars = ALLOCATE(char, length + 1);
     memcpy(heap_chars, chars, length);
@@ -256,6 +265,9 @@ void print_object(Obj *value)
     case OBJ_NIL:
         printf("(nil)");
         break;
+    case OBJ_FLOAT:
+        printf("%g", AS_FLOAT(value)->value);
+        break;
     case OBJ_INT:
         printf("%ld", AS_INT(value)->value);
         break;
@@ -313,7 +325,7 @@ uint32_t get_hash(Obj *obj)
     switch (obj->type)
     {
     case OBJ_STRING:
-        return ((ObjString *)obj)->hash;
+        return AS_STRING(obj)->hash;
     default:
         return 0;
     }
@@ -341,7 +353,7 @@ bool obj_equal(Obj *a, Obj *b)
         return a->value == b->value;
     }
     default:
-        return false;
+        return a == b;
     }
 }
 

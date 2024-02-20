@@ -39,6 +39,11 @@ static void free_object(Obj *object)
         FREE(ObjNil, object);
         break;
     }
+    case OBJ_FLOAT:
+    {
+        FREE(ObjFloat, object);
+        break;
+    }
     case OBJ_INT:
     {
         FREE(ObjInt, object);
@@ -51,14 +56,14 @@ static void free_object(Obj *object)
     }
     case OBJ_MAP:
     {
-        ObjMap *map = (ObjMap *)object;
+        ObjMap *map = AS_MAP(object);
         free_table(&map->table);
         FREE(ObjMap, object);
         break;
     }
     case OBJ_LIST:
     {
-        ObjList *list = (ObjList *)object;
+        ObjList *list = AS_LIST(object);
         free_array(&list->elems);
         FREE(ObjList, object);
         break;
@@ -70,35 +75,36 @@ static void free_object(Obj *object)
     }
     case OBJ_CLASS:
     {
-        ObjClass *klass = (ObjClass *)object;
+        ObjClass *klass = AS_CLASS(object);
         free_table(&klass->methods);
+        free_table(&klass->statics);
         FREE(ObjClass, object);
         break;
     }
     case OBJ_CLOSURE:
     {
-        ObjClosure *closure = (ObjClosure *)object;
+        ObjClosure *closure = AS_CLOSURE(object);
         FREE_ARRAY(ObjUpvalue *, closure->upvalues, closure->upvalue_count);
         FREE(ObjClosure, object);
         break;
     }
     case OBJ_STRING:
     {
-        ObjString *string = (ObjString *)object;
+        ObjString *string = AS_STRING(object);
         FREE_ARRAY(char, string->chars, string->length + 1);
         FREE(ObjString, object);
         break;
     }
     case OBJ_FUNCTION:
     {
-        ObjFunction *function = (ObjFunction *)object;
+        ObjFunction *function = AS_FUNCTION(object);
         free_chunk(&function->chunk);
         FREE(ObjFunction, object);
         break;
     }
     case OBJ_INSTANCE:
     {
-        ObjInstance *instance = (ObjInstance *)object;
+        ObjInstance *instance = AS_INSTANCE(object);
         free_table(&instance->fields);
         FREE(ObjInstance, object);
         break;
@@ -165,33 +171,34 @@ static void blacken_object(Obj *object)
     {
     case OBJ_MAP:
     {
-        ObjMap *map = (ObjMap *)object;
+        ObjMap *map = AS_MAP(object);
         mark_table(&map->table);
         break;
     }
     case OBJ_LIST:
     {
-        ObjList *list = (ObjList *)object;
+        ObjList *list = AS_LIST(object);
         mark_array(&list->elems);
         break;
     }
     case OBJ_BOUND_METHOD:
     {
-        ObjBoundMethod *bound = (ObjBoundMethod *)object;
+        ObjBoundMethod *bound = AS_BOUND_METHOD(object);
         mark_object(bound->receiver);
         mark_object((Obj *)bound->method);
         break;
     }
     case OBJ_CLASS:
     {
-        ObjClass *klass = (ObjClass *)object;
+        ObjClass *klass = AS_CLASS(object);
         mark_object((Obj *)klass->name);
         mark_table(&klass->methods);
+        mark_table(&klass->statics);
         break;
     }
     case OBJ_CLOSURE:
     {
-        ObjClosure *closure = (ObjClosure *)object;
+        ObjClosure *closure = AS_CLOSURE(object);
         mark_object((Obj *)closure->function);
         for (int i = 0; i < closure->upvalue_count; i++)
         {
@@ -201,26 +208,27 @@ static void blacken_object(Obj *object)
     }
     case OBJ_FUNCTION:
     {
-        ObjFunction *function = (ObjFunction *)object;
+        ObjFunction *function = AS_FUNCTION(object);
         mark_object((Obj *)function->name);
         mark_array(&function->chunk.constants);
         break;
     }
     case OBJ_INSTANCE:
     {
-        ObjInstance *instance = (ObjInstance *)object;
+        ObjInstance *instance = AS_INSTANCE(object);
         mark_object((Obj *)instance->klass);
         mark_table(&instance->fields);
         break;
     }
     case OBJ_UPVALUE:
-        mark_object(((ObjUpvalue *)object)->closed);
+        mark_object(AS_UPVALUE(object)->closed);
         break;
     case OBJ_NATIVE:
     case OBJ_STRING:
     case OBJ_BOOL:
     case OBJ_INT:
     case OBJ_NIL:
+    case OBJ_FLOAT:
         break;
     }
 }

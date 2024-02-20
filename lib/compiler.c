@@ -296,7 +296,7 @@ static void init_compiler(Compiler *compiler, FunctionType type)
     local->depth = 0;
     local->is_captured = false;
 
-    if (type == TYPE_INITIALIZER && type == TYPE_METHOD)
+    if (type != TYPE_FUNCTION)
     {
         local->name.start = "this";
         local->name.length = 4;
@@ -516,9 +516,15 @@ static void index_(bool can_assign)
         emit_byte(OP_GET_INDEX);
 }
 
-static void number(bool can_assign)
+static void float_(bool can_assign)
 {
     double value = strtod(parser.previous.start, NULL);
+    emit_constant(OBJ_VAL(new_float(value)));
+}
+
+static void int_(bool can_assign)
+{
+    int64_t value = strtol(parser.previous.start, NULL, 10);
     emit_constant(OBJ_VAL(new_int(value)));
 }
 
@@ -651,6 +657,11 @@ static void this(bool can_assign)
         error("Can't use 'this' outside of a class.");
         return;
     }
+    else if (current->type == TYPE_METHOD_STATIC)
+    {
+        error("Can't use 'this' inside static methods.");
+        return;
+    }
 
     variable(false);
 }
@@ -679,7 +690,8 @@ ParseRule rules[] = {
     [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_COMPARISON},
     [TOKEN_IDENTIFIER] = {variable, NULL, PREC_NONE},
     [TOKEN_STRING] = {string, NULL, PREC_NONE},
-    [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
+    [TOKEN_INT] = {int_, NULL, PREC_NONE},
+    [TOKEN_FLOAT] = {float_, NULL, PREC_NONE},
     [TOKEN_AND] = {NULL, and, PREC_AND},
     [TOKEN_CLASS] = {NULL, NULL, PREC_NONE},
     [TOKEN_ELSE] = {NULL, NULL, PREC_NONE},
@@ -802,16 +814,6 @@ static void function(FunctionType type)
     block();
 
     ObjFunction *function = end_compiler();
-
-    if (type == TYPE_STATIC_METHOD)
-    {
-        function->is_static = true;
-    }
-    else
-    {
-        function->is_static = false;
-    }
-
     emit_bytes(OP_CLOSURE, make_constant(OBJ_VAL(function)));
 
     for (int i = 0; i < function->upvalue_count; i++)
@@ -822,23 +824,30 @@ static void function(FunctionType type)
 
 static void method()
 {
+    OpCode op_code;
     FunctionType type;
 
     if (match(TOKEN_STATIC))
-        type = TYPE_STATIC_METHOD;
+    {
+        op_code = OP_STATIC_METHOD;
+        type = TYPE_METHOD_STATIC;
+    }
     else
+    {
+        op_code = OP_METHOD;
         type = TYPE_METHOD;
+    }
 
     consume(TOKEN_IDENTIFIER, "Expect method name.");
     uint8_t constant = identifier_constant(&parser.previous);
 
-    if (parser.previous.length == 4 && memcmp(parser.previous.start, "init", 4) == 0 && type != TYPE_STATIC_METHOD)
+    if (parser.previous.length == 4 && memcmp(parser.previous.start, "init", 4) == 0)
     {
         type = TYPE_INITIALIZER;
     }
 
     function(type);
-    emit_bytes(OP_METHOD, constant);
+    emit_bytes(op_code, constant);
 }
 
 static void class_declaration()

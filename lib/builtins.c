@@ -90,17 +90,17 @@ BuiltinResult len_builtin(int arg_count, Obj **args)
     {
     case OBJ_LIST:
     {
-        ObjList *list = (ObjList *)(obj);
+        ObjList *list = AS_LIST(obj);
         return OK(OBJ_VAL(new_int(list->elems.count)));
     }
     case OBJ_MAP:
     {
-        ObjMap *map = (ObjMap *)(obj);
+        ObjMap *map = AS_MAP(obj);
         return OK(OBJ_VAL(new_int(map->table.count)));
     }
     case OBJ_STRING:
     {
-        ObjString *string = (ObjString *)(obj);
+        ObjString *string = AS_STRING(obj);
         return OK(OBJ_VAL(new_int(string->length)));
     }
     default:
