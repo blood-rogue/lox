@@ -9,4 +9,7 @@
 
 typedef struct Obj Obj;
 
+extern int _argc;
+extern const char **_argv;
+
 #endif // clox_common_h

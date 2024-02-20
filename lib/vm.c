@@ -36,10 +36,10 @@ static Obj *peek(int distance)
     return vm.stack_top[-1 - distance];
 }
 
-static void define_native(const char *name, NativeFn function)
+static void define_builtin(const char *name, BuiltinFn function)
 {
     push(OBJ_VAL(new_string(name, (int)strlen(name))));
-    push(OBJ_VAL(new_native(function)));
+    push(OBJ_VAL(new_builtin(function)));
     table_set(&vm.globals, vm.stack[0], vm.stack[1]);
     pop();
     pop();
@@ -89,11 +89,12 @@ void init_vm()
     vm.init_string = NULL;
     vm.init_string = new_string("init", 4);
 
-    define_native("clock", clock_native);
-    define_native("exit", exit_native);
-    define_native("print", print_native);
-    define_native("input", input_native);
-    define_native("len", len_native);
+    define_builtin("clock", clock_builtin);
+    define_builtin("exit", exit_builtin);
+    define_builtin("print", print_builtin);
+    define_builtin("input", input_builtin);
+    define_builtin("len", len_builtin);
+    define_builtin("argv", argv_builtin);
 }
 
 void free_vm()
@@ -159,8 +160,8 @@ static bool call_value(Obj *callee, int arg_count)
         return call(AS_CLOSURE(callee), arg_count);
     case OBJ_NATIVE:
     {
-        NativeFn native = AS_NATIVE(callee)->function;
-        NativeResult result = native(arg_count, vm.stack_top - arg_count);
+        BuiltinFn builtin = AS_NATIVE(callee)->function;
+        BuiltinResult result = builtin(arg_count, vm.stack_top - arg_count);
 
         if (result.error != NULL)
         {

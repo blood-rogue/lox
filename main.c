@@ -6,6 +6,9 @@
 #include "chunk.h"
 #include "vm.h"
 
+int _argc;
+const char **_argv;
+
 static void repl()
 {
     char line[1024];
@@ -68,22 +71,20 @@ static void run_file(const char *path)
         exit(70);
 }
 
-int main(int argc, const char *argv[])
+int main(int argc, const char **argv)
 {
     init_vm();
+
+    _argc = argc - 1;
+    _argv = argv + 1;
 
     if (argc == 1)
     {
         repl();
     }
-    else if (argc == 2)
+    else if (argc >= 2)
     {
         run_file(argv[1]);
-    }
-    else
-    {
-        fprintf(stderr, "Usage: clox [path]\n");
-        exit(64);
     }
 
     free_vm();

@@ -25,7 +25,7 @@ $(BUILD_DIR)/%.o: $(LIB_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(BUILD_DIR) $(TARGET)
+	rm -rf $(BUILD_DIR) $(TARGET) *.lox
 
 strip: $(TARGET)
 	strip $(STRIP_FLAGS) $(TARGET)

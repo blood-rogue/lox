@@ -6,9 +6,9 @@
 #include "builtins.h"
 
 #define ERR(err) \
-    (NativeResult) { .error = err, .value = OBJ_VAL(new_nil()) }
+    (BuiltinResult) { .error = err, .value = OBJ_VAL(new_nil()) }
 #define OK(ok) \
-    (NativeResult) { .value = ok, .error = NULL }
+    (BuiltinResult) { .value = ok, .error = NULL }
 
 #define CHECK_ARG_COUNT(expected)                                              \
     if (arg_count != expected)                                                 \
@@ -18,13 +18,13 @@
         return ERR(buf);                                                       \
     }
 
-NativeResult clock_native(int arg_count, Obj **args)
+BuiltinResult clock_builtin(int arg_count, Obj **args)
 {
     CHECK_ARG_COUNT(0)
     return OK(OBJ_VAL(new_int(clock() / CLOCKS_PER_SEC)));
 }
 
-NativeResult exit_native(int arg_count, Obj **args)
+BuiltinResult exit_builtin(int arg_count, Obj **args)
 {
 
     CHECK_ARG_COUNT(1)
@@ -42,7 +42,7 @@ NativeResult exit_native(int arg_count, Obj **args)
     return OK(OBJ_VAL(new_nil()));
 }
 
-NativeResult print_native(int arg_count, Obj **args)
+BuiltinResult print_builtin(int arg_count, Obj **args)
 {
     for (int i = 0; i < arg_count; i++)
     {
@@ -54,7 +54,7 @@ NativeResult print_native(int arg_count, Obj **args)
     return OK(OBJ_VAL(new_nil()));
 }
 
-NativeResult input_native(int arg_count, Obj **args)
+BuiltinResult input_builtin(int arg_count, Obj **args)
 {
     if (arg_count > 0)
         print_object(args[0]);
@@ -81,7 +81,7 @@ NativeResult input_native(int arg_count, Obj **args)
     return OK(OBJ_VAL(take_string(s, len)));
 }
 
-NativeResult len_native(int arg_count, Obj **args)
+BuiltinResult len_builtin(int arg_count, Obj **args)
 {
     CHECK_ARG_COUNT(1)
 
@@ -106,4 +106,12 @@ NativeResult len_native(int arg_count, Obj **args)
     default:
         return ERR("len() is not defined for the type");
     }
+}
+
+BuiltinResult argv_builtin(int arg_count, Obj **args)
+{
+    CHECK_ARG_COUNT(0)
+
+    ObjList *argv = argv_list(_argc, _argv);
+    return OK(OBJ_VAL(argv));
 }

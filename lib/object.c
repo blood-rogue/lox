@@ -126,11 +126,11 @@ ObjFunction *new_function()
     return function;
 }
 
-ObjNative *new_native(NativeFn function)
+ObjBuiltin *new_builtin(BuiltinFn function)
 {
-    ObjNative *native = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
-    native->function = function;
-    return native;
+    ObjBuiltin *builtin = ALLOCATE_OBJ(ObjBuiltin, OBJ_NATIVE);
+    builtin->function = function;
+    return builtin;
 }
 
 static ObjString *allocate_string(char *chars, int length, uint32_t hash)
@@ -214,11 +214,11 @@ static void print_list(Array *elems)
     printf("[");
     if (elems->count > 0)
     {
-        print_object(values[0]);
+        repr_object(values[0]);
         for (int i = 1; i < elems->count; i++)
         {
             printf(", ");
-            print_object(values[i]);
+            repr_object(values[i]);
         }
     }
     printf("]");
@@ -284,7 +284,7 @@ void print_object(Obj *value)
         printf("<'%s' instance>", AS_INSTANCE(value)->klass->name->chars);
         break;
     case OBJ_NATIVE:
-        printf("<native fn>");
+        printf("<builtin fn>");
         break;
     case OBJ_FUNCTION:
         print_function(AS_FUNCTION(value));
@@ -343,4 +343,21 @@ bool obj_equal(Obj *a, Obj *b)
     default:
         return false;
     }
+}
+
+ObjList *argv_list(int argc, const char **argv)
+{
+    ObjList *list = ALLOCATE_OBJ(ObjList, OBJ_LIST);
+
+    Array arr;
+    init_array(&arr);
+
+    for (int i = 0; i < argc; i++)
+    {
+        write_array(&arr, (Obj *)new_string(argv[i], strlen(argv[i])));
+    }
+
+    list->elems = arr;
+
+    return list;
 }

@@ -29,7 +29,7 @@
 #define AS_INSTANCE(value) ((ObjInstance *)(value))
 #define AS_CLOSURE(value) ((ObjClosure *)(value))
 #define AS_FUNCTION(value) ((ObjFunction *)(value))
-#define AS_NATIVE(value) (((ObjNative *)(value)))
+#define AS_NATIVE(value) (((ObjBuiltin *)(value)))
 #define AS_STRING(value) ((ObjString *)(value))
 #define AS_LIST(value) ((ObjList *)(value))
 #define AS_MAP(value) ((ObjMap *)(value))
@@ -88,15 +88,15 @@ typedef struct
 {
     Obj *value;
     char *error;
-} NativeResult;
+} BuiltinResult;
 
-typedef NativeResult (*NativeFn)(int, Obj **);
+typedef BuiltinResult (*BuiltinFn)(int, Obj **);
 
 typedef struct
 {
     Obj obj;
-    NativeFn function;
-} ObjNative;
+    BuiltinFn function;
+} ObjBuiltin;
 
 typedef struct
 {
@@ -166,10 +166,11 @@ ObjClass *new_class(ObjString *);
 ObjInstance *new_instance(ObjClass *);
 ObjClosure *new_closure(ObjFunction *);
 ObjFunction *new_function();
-ObjNative *new_native(NativeFn);
+ObjBuiltin *new_builtin(BuiltinFn);
 ObjString *new_string(const char *, int);
 ObjUpvalue *new_upvalue(Obj **);
 
+ObjList *argv_list(int, const char **);
 ObjString *take_string(char *, int);
 
 void print_object(Obj *);

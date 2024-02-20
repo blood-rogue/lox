@@ -105,7 +105,7 @@ static void free_object(Obj *object)
     }
     case OBJ_NATIVE:
     {
-        FREE(ObjNative, object);
+        FREE(ObjBuiltin, object);
         break;
     }
     case OBJ_UPVALUE:

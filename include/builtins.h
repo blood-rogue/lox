@@ -1,15 +1,16 @@
-#ifndef clox_native_h
-#define clox_native_h
+#ifndef clox_builtin_h
+#define clox_builtin_h
 
 #include "common.h"
 #include "object.h"
 
-#define DEFINE_NATIVE(name) NativeResult name##_native(int, Obj **)
+#define DEFINE_BUILTIN(name) BuiltinResult name##_builtin(int, Obj **)
 
-DEFINE_NATIVE(clock);
-DEFINE_NATIVE(exit);
-DEFINE_NATIVE(print);
-DEFINE_NATIVE(input);
-DEFINE_NATIVE(len);
+DEFINE_BUILTIN(clock);
+DEFINE_BUILTIN(exit);
+DEFINE_BUILTIN(print);
+DEFINE_BUILTIN(input);
+DEFINE_BUILTIN(len);
+DEFINE_BUILTIN(argv);
 
-#endif // clox_native_h
+#endif // clox_builtin_h
