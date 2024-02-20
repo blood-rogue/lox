@@ -5,13 +5,13 @@
 #include "object.h"
 #include "vm.h"
 
-#define ALLOCATE_OBJ(type, objectType) (type *)allocateObject(sizeof(type), objectType)
+#define ALLOCATE_OBJ(type, object_type) (type *)allocate_object(sizeof(type), object_type)
 
-static Obj *allocateObject(size_t size, ObjType type)
+static Obj *allocate_object(size_t size, ObjType type)
 {
     Obj *object = (Obj *)reallocate(NULL, 0, size);
     object->type = type;
-    object->isMarked = false;
+    object->is_marked = false;
 
     object->next = vm.objects;
     vm.objects = object;
@@ -19,12 +19,12 @@ static Obj *allocateObject(size_t size, ObjType type)
     return object;
 }
 
-ObjNil *newNil()
+ObjNil *new_nil()
 {
     return ALLOCATE_OBJ(ObjNil, OBJ_NIL);
 }
 
-ObjInt *newInt(int64_t value)
+ObjInt *new_int(int64_t value)
 {
     ObjInt *integer = ALLOCATE_OBJ(ObjInt, OBJ_INT);
     integer->value = value;
@@ -32,7 +32,7 @@ ObjInt *newInt(int64_t value)
     return integer;
 }
 
-ObjBool *newBool(bool value)
+ObjBool *new_bool(bool value)
 {
     ObjBool *boolean = ALLOCATE_OBJ(ObjBool, OBJ_BOOL);
     boolean->value = value;
@@ -40,30 +40,30 @@ ObjBool *newBool(bool value)
     return boolean;
 }
 
-ObjMap *newMap(Obj **elems, int pairCount)
+ObjMap *new_map(Obj **elems, int pair_count)
 {
     ObjMap *map = ALLOCATE_OBJ(ObjMap, OBJ_MAP);
-    initTable(&map->table);
-    map->table.count = pairCount;
+    init_table(&map->table);
+    map->table.count = pair_count;
 
-    for (int i = 0; i < pairCount; i++)
+    for (int i = 0; i < pair_count; i++)
     {
-        tableSet(&map->table, elems[i * 2], elems[i * 2 + 1]);
+        table_set(&map->table, elems[i * 2], elems[i * 2 + 1]);
     }
 
     return map;
 }
 
-ObjList *newList(Obj **elems, int elemCount)
+ObjList *new_list(Obj **elems, int elem_count)
 {
     ObjList *list = ALLOCATE_OBJ(ObjList, OBJ_LIST);
 
-    ValueArray arr;
-    initValueArray(&arr);
+    Array arr;
+    init_array(&arr);
 
-    for (int i = 0; i < elemCount; i++)
+    for (int i = 0; i < elem_count; i++)
     {
-        writeValueArray(&arr, elems[i]);
+        write_array(&arr, elems[i]);
     }
 
     list->elems = arr;
@@ -71,7 +71,7 @@ ObjList *newList(Obj **elems, int elemCount)
     return list;
 }
 
-ObjBoundMethod *newBoundMethod(Obj *receiver, ObjClosure *method)
+ObjBoundMethod *new_bound_method(Obj *receiver, ObjClosure *method)
 {
     ObjBoundMethod *bound = ALLOCATE_OBJ(ObjBoundMethod, OBJ_BOUND_METHOD);
     bound->receiver = receiver;
@@ -80,28 +80,28 @@ ObjBoundMethod *newBoundMethod(Obj *receiver, ObjClosure *method)
     return bound;
 }
 
-ObjClass *newClass(ObjString *name)
+ObjClass *new_class(ObjString *name)
 {
     ObjClass *klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
     klass->name = name;
-    initTable(&klass->methods);
+    init_table(&klass->methods);
 
     return klass;
 }
 
-ObjInstance *newInstance(ObjClass *klass)
+ObjInstance *new_instance(ObjClass *klass)
 {
     ObjInstance *instance = ALLOCATE_OBJ(ObjInstance, OBJ_INSTANCE);
     instance->klass = klass;
-    initTable(&instance->fields);
+    init_table(&instance->fields);
 
     return instance;
 }
 
-ObjClosure *newClosure(ObjFunction *function)
+ObjClosure *new_closure(ObjFunction *function)
 {
-    ObjUpvalue **upvalues = ALLOCATE(ObjUpvalue *, function->upvalueCount);
-    for (int i = 0; i < function->upvalueCount; i++)
+    ObjUpvalue **upvalues = ALLOCATE(ObjUpvalue *, function->upvalue_count);
+    for (int i = 0; i < function->upvalue_count; i++)
     {
         upvalues[i] = NULL;
     }
@@ -110,30 +110,30 @@ ObjClosure *newClosure(ObjFunction *function)
     closure->function = function;
 
     closure->upvalues = upvalues;
-    closure->upvalueCount = function->upvalueCount;
+    closure->upvalue_count = function->upvalue_count;
 
     return closure;
 }
 
-ObjFunction *newFunction()
+ObjFunction *new_function()
 {
     ObjFunction *function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
     function->arity = 0;
     function->name = NULL;
-    function->upvalueCount = 0;
+    function->upvalue_count = 0;
 
-    initChunk(&function->chunk);
+    init_chunk(&function->chunk);
     return function;
 }
 
-ObjNative *newNative(NativeFn function)
+ObjNative *new_native(NativeFn function)
 {
     ObjNative *native = ALLOCATE_OBJ(ObjNative, OBJ_NATIVE);
     native->function = function;
     return native;
 }
 
-static ObjString *allocateString(char *chars, int length, uint32_t hash)
+static ObjString *allocate_string(char *chars, int length, uint32_t hash)
 {
     ObjString *string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
 
@@ -142,13 +142,13 @@ static ObjString *allocateString(char *chars, int length, uint32_t hash)
     string->hash = hash;
 
     push(OBJ_VAL(string));
-    tableSet(&vm.strings, (Obj *)string, OBJ_VAL(newNil()));
+    table_set(&vm.strings, (Obj *)string, OBJ_VAL(new_nil()));
     pop();
 
     return string;
 }
 
-static uint32_t hashString(const char *key, int length)
+static uint32_t hash_string(const char *key, int length)
 {
     uint32_t hash = 2166136261u;
     for (int i = 0; i < length; i++)
@@ -159,45 +159,45 @@ static uint32_t hashString(const char *key, int length)
     return hash;
 }
 
-ObjString *takeString(char *chars, int length)
+ObjString *take_string(char *chars, int length)
 {
-    uint32_t hash = hashString(chars, length);
-    Obj *interned = tableFindString(&vm.strings, chars, length, hash);
+    uint32_t hash = hash_string(chars, length);
+    Obj *interned = table_findString(&vm.strings, chars, length, hash);
     if (interned != NULL && interned->type == OBJ_STRING)
     {
         FREE_ARRAY(char, chars, length + 1);
         return (ObjString *)interned;
     }
 
-    return allocateString(chars, length, hash);
+    return allocate_string(chars, length, hash);
 }
 
-ObjString *newString(const char *chars, int length)
+ObjString *new_string(const char *chars, int length)
 {
-    uint32_t hash = hashString(chars, length);
+    uint32_t hash = hash_string(chars, length);
 
-    Obj *interned = tableFindString(&vm.strings, chars, length, hash);
+    Obj *interned = table_findString(&vm.strings, chars, length, hash);
 
     if (interned != NULL && interned->type == OBJ_STRING)
         return (ObjString *)interned;
 
-    char *heapChars = ALLOCATE(char, length + 1);
-    memcpy(heapChars, chars, length);
-    heapChars[length] = '\0';
-    return allocateString(heapChars, length, hash);
+    char *heap_chars = ALLOCATE(char, length + 1);
+    memcpy(heap_chars, chars, length);
+    heap_chars[length] = '\0';
+    return allocate_string(heap_chars, length, hash);
 }
 
-ObjUpvalue *newUpvalue(Obj **slot)
+ObjUpvalue *new_upvalue(Obj **slot)
 {
     ObjUpvalue *upvalue = ALLOCATE_OBJ(ObjUpvalue, OBJ_UPVALUE);
-    upvalue->closed = OBJ_VAL(newNil());
+    upvalue->closed = OBJ_VAL(new_nil());
     upvalue->location = slot;
 
     upvalue->next = NULL;
     return upvalue;
 }
 
-static void printFunction(ObjFunction *function)
+static void print_function(ObjFunction *function)
 {
     if (function->name == NULL)
     {
@@ -207,24 +207,24 @@ static void printFunction(ObjFunction *function)
     printf("<fn %s>", function->name->chars);
 }
 
-static void printList(ValueArray *elems)
+static void print_list(Array *elems)
 {
     Obj **values = elems->values;
 
     printf("[");
     if (elems->count > 0)
     {
-        printObject(values[0]);
+        print_object(values[0]);
         for (int i = 1; i < elems->count; i++)
         {
             printf(", ");
-            printObject(values[i]);
+            print_object(values[i]);
         }
     }
     printf("]");
 }
 
-static void printMap(ObjMap *map)
+static void print_map(ObjMap *map)
 {
     int count = map->table.count;
     Obj *value;
@@ -237,10 +237,10 @@ static void printMap(ObjMap *map)
         if (entry->key == NULL)
             continue;
 
-        reprObject(OBJ_VAL(entry->key));
+        repr_object(OBJ_VAL(entry->key));
         printf(": ");
-        tableGet(&map->table, (Obj *)entry->key, &value);
-        reprObject(value);
+        table_get(&map->table, (Obj *)entry->key, &value);
+        repr_object(value);
         printf(",");
 
         count--;
@@ -249,7 +249,7 @@ static void printMap(ObjMap *map)
     printf("}");
 }
 
-void printObject(Obj *value)
+void print_object(Obj *value)
 {
     switch (value->type)
     {
@@ -263,19 +263,19 @@ void printObject(Obj *value)
         printf(AS_BOOL(value)->value ? "true" : "false");
         break;
     case OBJ_MAP:
-        printMap(AS_MAP(value));
+        print_map(AS_MAP(value));
         break;
     case OBJ_LIST:
-        printList(&AS_LIST(value)->elems);
+        print_list(&AS_LIST(value)->elems);
         break;
     case OBJ_BOUND_METHOD:
-        printFunction(AS_BOUND_METHOD(value)->method->function);
+        print_function(AS_BOUND_METHOD(value)->method->function);
         break;
     case OBJ_CLASS:
         printf("<class '%s'>", AS_CLASS(value)->name->chars);
         break;
     case OBJ_CLOSURE:
-        printFunction(AS_CLOSURE(value)->function);
+        print_function(AS_CLOSURE(value)->function);
         break;
     case OBJ_STRING:
         printf("%s", AS_STRING(value)->chars);
@@ -287,7 +287,7 @@ void printObject(Obj *value)
         printf("<native fn>");
         break;
     case OBJ_FUNCTION:
-        printFunction(AS_FUNCTION(value));
+        print_function(AS_FUNCTION(value));
         break;
     case OBJ_UPVALUE:
         printf("upvalue");
@@ -295,7 +295,7 @@ void printObject(Obj *value)
     }
 }
 
-void reprObject(Obj *value)
+void repr_object(Obj *value)
 {
     switch (value->type)
     {
@@ -303,12 +303,12 @@ void reprObject(Obj *value)
         printf("\"%s\"", AS_STRING(value)->chars);
         break;
     default:
-        printObject(value);
+        print_object(value);
         break;
     }
 }
 
-uint32_t getHash(Obj *obj)
+uint32_t get_hash(Obj *obj)
 {
     switch (obj->type)
     {
@@ -319,7 +319,7 @@ uint32_t getHash(Obj *obj)
     }
 }
 
-bool objEqual(Obj *a, Obj *b)
+bool obj_equal(Obj *a, Obj *b)
 {
     if (a->type != b->type)
         return false;

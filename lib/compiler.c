@@ -8,18 +8,18 @@
 
 Parser parser;
 Compiler *current = NULL;
-ClassCompiler *currentClass = NULL;
+ClassCompiler *current_class = NULL;
 
-static Chunk *currentChunk()
+static Chunk *current_chunk()
 {
     return &current->function->chunk;
 }
 
-static void errorAt(Token *token, const char *message)
+static void error_at(Token *token, const char *message)
 {
-    if (parser.panicMode)
+    if (parser.panic_mode)
         return;
-    parser.panicMode = true;
+    parser.panic_mode = true;
 
     fprintf(stderr, "[line %d] Error", token->line);
 
@@ -36,17 +36,17 @@ static void errorAt(Token *token, const char *message)
     }
 
     fprintf(stderr, ": %s\n", message);
-    parser.hadError = true;
+    parser.had_error = true;
 }
 
-static void errorAtCurrent(const char *message)
+static void error_atCurrent(const char *message)
 {
-    errorAt(&parser.current, message);
+    error_at(&parser.current, message);
 }
 
 static void error(const char *message)
 {
-    errorAt(&parser.previous, message);
+    error_at(&parser.previous, message);
 }
 
 static void advance()
@@ -55,11 +55,11 @@ static void advance()
 
     for (;;)
     {
-        parser.current = scanToken();
+        parser.current = scan_token();
         if (parser.current.type != TOKEN_ERROR)
             break;
 
-        errorAtCurrent(parser.current.start);
+        error_atCurrent(parser.current.start);
     }
 }
 
@@ -71,7 +71,7 @@ static void consume(TokenType type, const char *message)
         return;
     }
 
-    errorAtCurrent(message);
+    error_atCurrent(message);
 }
 
 static bool check(TokenType type)
@@ -87,54 +87,54 @@ static bool match(TokenType type)
     return true;
 }
 
-static void emitByte(uint8_t byte)
+static void emit_byte(uint8_t byte)
 {
-    writeChunk(currentChunk(), byte, parser.previous.line);
+    write_chunk(current_chunk(), byte, parser.previous.line);
 }
 
-static void emitBytes(uint8_t byte1, uint8_t byte2)
+static void emit_bytes(uint8_t byte1, uint8_t byte2)
 {
-    emitByte(byte1);
-    emitByte(byte2);
+    emit_byte(byte1);
+    emit_byte(byte2);
 }
 
-static void emitLoop(int loopStart)
+static void emit_loop(int loop_start)
 {
-    emitByte(OP_LOOP);
+    emit_byte(OP_LOOP);
 
-    int offset = currentChunk()->count - loopStart + 2;
+    int offset = current_chunk()->count - loop_start + 2;
     if (offset > UINT16_MAX)
         error("Loop body too large.");
 
-    emitByte((offset >> 8) & 0xff);
-    emitByte(offset & 0xff);
+    emit_byte((offset >> 8) & 0xff);
+    emit_byte(offset & 0xff);
 }
 
-static int emitJump(uint8_t instruction)
+static int emit_jump(uint8_t instruction)
 {
-    emitByte(instruction);
-    emitByte(0xff);
-    emitByte(0xff);
-    return currentChunk()->count - 2;
+    emit_byte(instruction);
+    emit_byte(0xff);
+    emit_byte(0xff);
+    return current_chunk()->count - 2;
 }
 
-static void emitReturn()
+static void emit_return()
 {
     if (current->type == TYPE_INITIALIZER)
     {
-        emitBytes(OP_GET_LOCAL, 0);
+        emit_bytes(OP_GET_LOCAL, 0);
     }
     else
     {
-        emitByte(OP_NIL);
+        emit_byte(OP_NIL);
     }
 
-    emitByte(OP_RETURN);
+    emit_byte(OP_RETURN);
 }
 
-static uint8_t makeConstant(Obj* value)
+static uint8_t make_constant(Obj *value)
 {
-    int constant = addConstant(currentChunk(), value);
+    int constant = add_constant(current_chunk(), value);
     if (constant > UINT8_MAX)
     {
         error("Too many constants in one chunk.");
@@ -144,24 +144,24 @@ static uint8_t makeConstant(Obj* value)
     return (uint8_t)constant;
 }
 
-static uint8_t identifierConstant(Token *name)
+static uint8_t identifier_constant(Token *name)
 {
-    return makeConstant(OBJ_VAL(newString(name->start, name->length)));
+    return make_constant(OBJ_VAL(new_string(name->start, name->length)));
 }
 
-static bool identifiersEqual(Token *a, Token *b)
+static bool identifiers_equal(Token *a, Token *b)
 {
     if (a->length != b->length)
         return false;
     return memcmp(a->start, b->start, a->length) == 0;
 }
 
-static int resolveLocal(Compiler *compiler, Token *name)
+static int resolve_local(Compiler *compiler, Token *name)
 {
-    for (int i = compiler->localCount - 1; i >= 0; i--)
+    for (int i = compiler->local_count - 1; i >= 0; i--)
     {
         Local *local = &compiler->locals[i];
-        if (identifiersEqual(name, &local->name))
+        if (identifiers_equal(name, &local->name))
         {
             if (local->depth == -1)
             {
@@ -174,127 +174,127 @@ static int resolveLocal(Compiler *compiler, Token *name)
     return -1;
 }
 
-static int addUpvalue(Compiler *compiler, uint8_t index, bool isLocal)
+static int add_upvalue(Compiler *compiler, uint8_t index, bool is_local)
 {
-    int upvalueCount = compiler->function->upvalueCount;
+    int upvalue_count = compiler->function->upvalue_count;
 
-    for (int i = 0; i < upvalueCount; i++)
+    for (int i = 0; i < upvalue_count; i++)
     {
         Upvalue *upvalue = &compiler->upvalues[i];
-        if (upvalue->index == index && upvalue->isLocal == isLocal)
+        if (upvalue->index == index && upvalue->is_local == is_local)
         {
             return i;
         }
     }
 
-    if (upvalueCount == UINT8_COUNT)
+    if (upvalue_count == UINT8_COUNT)
     {
         error("Too many closure variables in function.");
         return 0;
     }
 
-    compiler->upvalues[upvalueCount].isLocal = isLocal;
-    compiler->upvalues[upvalueCount].index = index;
-    return compiler->function->upvalueCount++;
+    compiler->upvalues[upvalue_count].is_local = is_local;
+    compiler->upvalues[upvalue_count].index = index;
+    return compiler->function->upvalue_count++;
 }
 
-static int resolveUpvalue(Compiler *compiler, Token *name)
+static int resolve_upvalue(Compiler *compiler, Token *name)
 {
     if (compiler->enclosing == NULL)
         return -1;
 
-    int local = resolveLocal(compiler->enclosing, name);
+    int local = resolve_local(compiler->enclosing, name);
     if (local != -1)
     {
-        compiler->enclosing->locals[local].isCaptured = true;
-        return addUpvalue(compiler, (uint8_t)local, true);
+        compiler->enclosing->locals[local].is_captured = true;
+        return add_upvalue(compiler, (uint8_t)local, true);
     }
 
-    int upvalue = resolveUpvalue(compiler->enclosing, name);
+    int upvalue = resolve_upvalue(compiler->enclosing, name);
     if (upvalue != -1)
     {
-        return addUpvalue(compiler, (uint8_t)upvalue, false);
+        return add_upvalue(compiler, (uint8_t)upvalue, false);
     }
 
     return -1;
 }
 
-static void addLocal(Token name)
+static void add_local(Token name)
 {
-    if (current->localCount == UINT8_COUNT)
+    if (current->local_count == UINT8_COUNT)
     {
         error("Too many local variables in function.");
         return;
     }
 
-    Local *local = &current->locals[current->localCount++];
+    Local *local = &current->locals[current->local_count++];
     local->name = name;
     local->depth = -1;
-    local->isCaptured = false;
+    local->is_captured = false;
 }
 
-static void declareVariable()
+static void declare_variable()
 {
-    if (current->scopeDepth == 0)
+    if (current->scope_depth == 0)
         return;
 
     Token *name = &parser.previous;
 
-    for (int i = current->localCount - 1; i >= 0; i--)
+    for (int i = current->local_count - 1; i >= 0; i--)
     {
         Local *local = &current->locals[i];
-        if (local->depth != -1 && local->depth < current->scopeDepth)
+        if (local->depth != -1 && local->depth < current->scope_depth)
         {
             break;
         }
 
-        if (identifiersEqual(name, &local->name))
+        if (identifiers_equal(name, &local->name))
         {
             error("Already a variable with this name in this scope.");
         }
     }
 
-    addLocal(*name);
+    add_local(*name);
 }
 
-static void emitConstant(Obj* value)
+static void emit_constant(Obj *value)
 {
-    emitBytes(OP_CONSTANT, makeConstant(value));
+    emit_bytes(OP_CONSTANT, make_constant(value));
 }
 
-static void patchJump(int offset)
+static void patch_jump(int offset)
 {
-    int jump = currentChunk()->count - offset - 2;
+    int jump = current_chunk()->count - offset - 2;
 
     if (jump > UINT16_MAX)
     {
         error("Too much code to jump over.");
     }
 
-    currentChunk()->code[offset] = (jump >> 8) & 0xff;
-    currentChunk()->code[offset + 1] = jump & 0xff;
+    current_chunk()->code[offset] = (jump >> 8) & 0xff;
+    current_chunk()->code[offset + 1] = jump & 0xff;
 }
 
-static void initCompiler(Compiler *compiler, FunctionType type)
+static void init_compiler(Compiler *compiler, FunctionType type)
 {
     compiler->enclosing = current;
     compiler->function = NULL;
     compiler->type = type;
 
-    compiler->localCount = 0;
-    compiler->scopeDepth = 0;
+    compiler->local_count = 0;
+    compiler->scope_depth = 0;
 
-    compiler->function = newFunction();
+    compiler->function = new_function();
     current = compiler;
 
     if (type != TYPE_SCRIPT)
     {
-        current->function->name = newString(parser.previous.start, parser.previous.length);
+        current->function->name = new_string(parser.previous.start, parser.previous.length);
     }
 
-    Local *local = &current->locals[current->localCount++];
+    Local *local = &current->locals[current->local_count++];
     local->depth = 0;
-    local->isCaptured = false;
+    local->is_captured = false;
 
     if (type == TYPE_INITIALIZER && type == TYPE_METHOD)
     {
@@ -308,114 +308,114 @@ static void initCompiler(Compiler *compiler, FunctionType type)
     }
 }
 
-static ObjFunction *endCompiler()
+static ObjFunction *end_compiler()
 {
-    emitReturn();
+    emit_return();
     ObjFunction *function = current->function;
 
     current = current->enclosing;
     return function;
 }
 
-static void beginScope()
+static void begin_scope()
 {
-    current->scopeDepth++;
+    current->scope_depth++;
 }
 
-static void endScope()
+static void end_scope()
 {
-    current->scopeDepth--;
+    current->scope_depth--;
 
-    while (current->localCount > 0 &&
-           current->locals[current->localCount - 1].depth >
-               current->scopeDepth)
+    while (current->local_count > 0 &&
+           current->locals[current->local_count - 1].depth >
+               current->scope_depth)
     {
-        if (current->locals[current->localCount - 1].isCaptured)
+        if (current->locals[current->local_count - 1].is_captured)
         {
-            emitByte(OP_CLOSE_UPVALUE);
+            emit_byte(OP_CLOSE_UPVALUE);
         }
         else
         {
-            emitByte(OP_POP);
+            emit_byte(OP_POP);
         }
-        current->localCount--;
+        current->local_count--;
     }
 }
 
 static void expression();
 static void statement();
 static void declaration();
-static ParseRule *getRule(TokenType type);
-static void parsePrecedence(Precedence precedence);
+static ParseRule *get_rule(TokenType type);
+static void parse_precedence(Precedence precedence);
 
-static void binary(bool canAssign)
+static void binary(bool can_assign)
 {
-    TokenType operatorType = parser.previous.type;
-    ParseRule *rule = getRule(operatorType);
-    parsePrecedence((Precedence)(rule->precedence + 1));
+    TokenType operator_type = parser.previous.type;
+    ParseRule *rule = get_rule(operator_type);
+    parse_precedence((Precedence)(rule->precedence + 1));
 
-    switch (operatorType)
+    switch (operator_type)
     {
     case TOKEN_BANG_EQUAL:
-        emitBytes(OP_EQUAL, OP_NOT);
+        emit_bytes(OP_EQUAL, OP_NOT);
         break;
     case TOKEN_EQUAL_EQUAL:
-        emitByte(OP_EQUAL);
+        emit_byte(OP_EQUAL);
         break;
     case TOKEN_GREATER:
-        emitByte(OP_GREATER);
+        emit_byte(OP_GREATER);
         break;
     case TOKEN_GREATER_EQUAL:
-        emitBytes(OP_LESS, OP_NOT);
+        emit_bytes(OP_LESS, OP_NOT);
         break;
     case TOKEN_LESS:
-        emitByte(OP_LESS);
+        emit_byte(OP_LESS);
         break;
     case TOKEN_LESS_EQUAL:
-        emitBytes(OP_GREATER, OP_NOT);
+        emit_bytes(OP_GREATER, OP_NOT);
         break;
     case TOKEN_PLUS:
-        emitByte(OP_ADD);
+        emit_byte(OP_ADD);
         break;
     case TOKEN_MINUS:
-        emitByte(OP_SUBTRACT);
+        emit_byte(OP_SUBTRACT);
         break;
     case TOKEN_STAR:
-        emitByte(OP_MULTIPLY);
+        emit_byte(OP_MULTIPLY);
         break;
     case TOKEN_SLASH:
-        emitByte(OP_DIVIDE);
+        emit_byte(OP_DIVIDE);
         break;
     default:
         return;
     }
 }
 
-static uint8_t expressionList(TokenType terminator)
+static uint8_t expression_list(TokenType terminator)
 {
-    uint8_t expressionCount = 0;
+    uint8_t expression_count = 0;
     if (!check(terminator))
     {
         do
         {
             expression();
 
-            if (expressionCount == 255)
+            if (expression_count == 255)
             {
                 error("Can't have more than 255 expressions.");
             }
 
-            expressionCount++;
+            expression_count++;
         } while (match(TOKEN_COMMA));
     }
 
     consume(terminator, "Invalid terminator.");
-    return expressionCount;
+    return expression_count;
 }
 
-static uint8_t mapPairList()
+static uint8_t map_pairList()
 {
-    uint8_t expressionCount = 0;
+    uint8_t expression_count = 0;
     if (!check(TOKEN_RIGHT_BRACE))
     {
         do
@@ -424,188 +424,188 @@ static uint8_t mapPairList()
             consume(TOKEN_COLON, "Expected ':' after key.");
             expression();
 
-            if (expressionCount == 255)
+            if (expression_count == 255)
             {
                 error("Can't have more than 255 expressions.");
             }
 
-            expressionCount++;
+            expression_count++;
         } while (match(TOKEN_COMMA));
     }
 
     consume(TOKEN_RIGHT_BRACE, "Invalid map terminator.");
-    return expressionCount;
+    return expression_count;
 }
 
-static void call(bool canAssign)
+static void call(bool can_assign)
 {
-    uint8_t argCount = expressionList(TOKEN_RIGHT_PAREN);
-    emitBytes(OP_CALL, argCount);
+    uint8_t arg_count = expression_list(TOKEN_RIGHT_PAREN);
+    emit_bytes(OP_CALL, arg_count);
 }
 
-static void dot(bool canAssign)
+static void dot(bool can_assign)
 {
     consume(TOKEN_IDENTIFIER, "Expect property name after '.'.");
-    uint8_t name = identifierConstant(&parser.previous);
+    uint8_t name = identifier_constant(&parser.previous);
 
-    if (canAssign && match(TOKEN_EQUAL))
+    if (can_assign && match(TOKEN_EQUAL))
     {
         expression();
-        emitBytes(OP_SET_PROPERTY, name);
+        emit_bytes(OP_SET_PROPERTY, name);
     }
     else if (match(TOKEN_LEFT_PAREN))
     {
-        uint8_t argCount = expressionList(TOKEN_RIGHT_PAREN);
-        emitBytes(OP_INVOKE, name);
-        emitByte(argCount);
+        uint8_t arg_count = expression_list(TOKEN_RIGHT_PAREN);
+        emit_bytes(OP_INVOKE, name);
+        emit_byte(arg_count);
     }
     else
     {
-        emitBytes(OP_GET_PROPERTY, name);
+        emit_bytes(OP_GET_PROPERTY, name);
     }
 }
 
-static void literal(bool canAssign)
+static void literal(bool can_assign)
 {
     switch (parser.previous.type)
     {
     case TOKEN_FALSE:
-        emitByte(OP_FALSE);
+        emit_byte(OP_FALSE);
         break;
     case TOKEN_NIL:
-        emitByte(OP_NIL);
+        emit_byte(OP_NIL);
         break;
     case TOKEN_TRUE:
-        emitByte(OP_TRUE);
+        emit_byte(OP_TRUE);
         break;
     default:
         return;
     }
 }
 
-static void grouping(bool canAssign)
+static void grouping(bool can_assign)
 {
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
-static void list(bool canAssign)
+static void list(bool can_assign)
 {
-    uint8_t elemCount = expressionList(TOKEN_RIGHT_SQUARE);
-    emitBytes(OP_LIST, elemCount);
+    uint8_t elem_count = expression_list(TOKEN_RIGHT_SQUARE);
+    emit_bytes(OP_LIST, elem_count);
 }
 
-static void map(bool canAssign)
+static void map(bool can_assign)
 {
     consume(TOKEN_LEFT_BRACE, "Expected '{' after map keyword.");
-    uint8_t pairCount = mapPairList();
-    emitBytes(OP_MAP, pairCount);
+    uint8_t pair_count = map_pairList();
+    emit_bytes(OP_MAP, pair_count);
 }
 
-static void index_(bool canAssign)
+static void index_(bool can_assign)
 {
     expression();
     consume(TOKEN_RIGHT_SQUARE, "Expect ']' after index");
 
-    if (canAssign && match(TOKEN_EQUAL))
+    if (can_assign && match(TOKEN_EQUAL))
     {
         expression();
-        emitByte(OP_SET_INDEX);
+        emit_byte(OP_SET_INDEX);
     }
     else
-        emitByte(OP_GET_INDEX);
+        emit_byte(OP_GET_INDEX);
 }
 
-static void number(bool canAssign)
+static void number(bool can_assign)
 {
     double value = strtod(parser.previous.start, NULL);
-    emitConstant(OBJ_VAL(newInt(value)));
+    emit_constant(OBJ_VAL(new_int(value)));
 }
 
-static void or (bool canAssign)
+static void or (bool can_assign)
 {
-    int elseJump = emitJump(OP_JUMP_IF_FALSE);
-    int endJump = emitJump(OP_JUMP);
+    int else_jump = emit_jump(OP_JUMP_IF_FALSE);
+    int end_jump = emit_jump(OP_JUMP);
 
-    patchJump(elseJump);
-    emitByte(OP_POP);
+    patch_jump(else_jump);
+    emit_byte(OP_POP);
 
-    parsePrecedence(PREC_OR);
-    patchJump(endJump);
+    parse_precedence(PREC_OR);
+    patch_jump(end_jump);
 }
 
-static void and (bool canAssign)
+static void and (bool can_assign)
 {
-    int endJump = emitJump(OP_JUMP_IF_FALSE);
+    int end_jump = emit_jump(OP_JUMP_IF_FALSE);
 
-    emitByte(OP_POP);
-    parsePrecedence(PREC_AND);
+    emit_byte(OP_POP);
+    parse_precedence(PREC_AND);
 
-    patchJump(endJump);
+    patch_jump(end_jump);
 }
 
-static void string(bool canAssign)
+static void string(bool can_assign)
 {
-    emitConstant(OBJ_VAL(newString(parser.previous.start + 1, parser.previous.length - 2)));
+    emit_constant(OBJ_VAL(new_string(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
-static void unary(bool canAssign)
+static void unary(bool can_assign)
 {
-    TokenType operatorType = parser.previous.type;
+    TokenType operator_type = parser.previous.type;
 
-    parsePrecedence(PREC_UNARY);
+    parse_precedence(PREC_UNARY);
 
-    switch (operatorType)
+    switch (operator_type)
     {
     case TOKEN_BANG:
-        emitByte(OP_NOT);
+        emit_byte(OP_NOT);
         break;
     case TOKEN_MINUS:
-        emitByte(OP_NEGATE);
+        emit_byte(OP_NEGATE);
         break;
     default:
         return;
     }
 }
 
-static void namedVariable(Token name, bool canAssign)
+static void named_variable(Token name, bool can_assign)
 {
-    uint8_t getOp, setOp;
-    int arg = resolveLocal(current, &name);
+    uint8_t get_op, set_op;
+    int arg = resolve_local(current, &name);
     if (arg != -1)
     {
-        getOp = OP_GET_LOCAL;
-        setOp = OP_SET_LOCAL;
+        get_op = OP_GET_LOCAL;
+        set_op = OP_SET_LOCAL;
     }
-    else if ((arg = resolveUpvalue(current, &name)) != -1)
+    else if ((arg = resolve_upvalue(current, &name)) != -1)
     {
-        getOp = OP_GET_UPVALUE;
-        setOp = OP_SET_UPVALUE;
+        get_op = OP_GET_UPVALUE;
+        set_op = OP_SET_UPVALUE;
     }
     else
     {
-        arg = identifierConstant(&name);
-        getOp = OP_GET_GLOBAL;
-        setOp = OP_SET_GLOBAL;
+        arg = identifier_constant(&name);
+        get_op = OP_GET_GLOBAL;
+        set_op = OP_SET_GLOBAL;
     }
 
-    if (canAssign && match(TOKEN_EQUAL))
+    if (can_assign && match(TOKEN_EQUAL))
     {
         expression();
-        emitBytes(setOp, (uint8_t)arg);
+        emit_bytes(set_op, (uint8_t)arg);
     }
     else
     {
-        emitBytes(getOp, (uint8_t)arg);
+        emit_bytes(get_op, (uint8_t)arg);
     }
 }
 
-static void variable(bool canAssign)
+static void variable(bool can_assign)
 {
-    namedVariable(parser.previous, canAssign);
+    named_variable(parser.previous, can_assign);
 }
 
-static Token syntheticToken(const char *text)
+static Token synthetic_token(const char *text)
 {
     Token token;
     token.start = text;
@@ -613,40 +613,40 @@ static Token syntheticToken(const char *text)
     return token;
 }
 
-static void super(bool canAssign)
+static void super(bool can_assign)
 {
-    if (currentClass == NULL)
+    if (current_class == NULL)
     {
         error("Can't use 'super' outside of a class.");
     }
-    else if (!currentClass->hasSuperclass)
+    else if (!current_class->has_super_class)
     {
         error("Can't use 'super' in a class with no superclass.");
     }
 
     consume(TOKEN_DOT, "Expect '.' after 'super'.");
     consume(TOKEN_IDENTIFIER, "Expect superclass method name.");
-    uint8_t name = identifierConstant(&parser.previous);
+    uint8_t name = identifier_constant(&parser.previous);
 
-    namedVariable(syntheticToken("this"), false);
+    named_variable(synthetic_token("this"), false);
 
     if (match(TOKEN_LEFT_PAREN))
     {
-        uint8_t argCount = expressionList(TOKEN_RIGHT_PAREN);
-        namedVariable(syntheticToken("super"), false);
-        emitBytes(OP_SUPER_INVOKE, name);
-        emitByte(argCount);
+        uint8_t arg_count = expression_list(TOKEN_RIGHT_PAREN);
+        named_variable(synthetic_token("super"), false);
+        emit_bytes(OP_SUPER_INVOKE, name);
+        emit_byte(arg_count);
     }
     else
     {
-        namedVariable(syntheticToken("super"), false);
-        emitBytes(OP_GET_SUPER, name);
+        named_variable(synthetic_token("super"), false);
+        emit_bytes(OP_GET_SUPER, name);
     }
 }
 
-static void this(bool canAssign)
+static void this(bool can_assign)
 {
-    if (currentClass == NULL)
+    if (current_class == NULL)
     {
         error("Can't use 'this' outside of a class.");
         return;
@@ -700,71 +700,71 @@ ParseRule rules[] = {
     [TOKEN_EOF] = {NULL, NULL, PREC_NONE},
 };
 
-static void parsePrecedence(Precedence precedence)
+static void parse_precedence(Precedence precedence)
 {
     advance();
-    ParseFn prefixRule = getRule(parser.previous.type)->prefix;
-    if (prefixRule == NULL)
+    ParseFn prefix_rule = get_rule(parser.previous.type)->prefix;
+    if (prefix_rule == NULL)
     {
         error("Expect expression.");
         return;
     }
 
-    bool canAssign = precedence <= PREC_ASSIGNMENT;
-    prefixRule(canAssign);
+    bool can_assign = precedence <= PREC_ASSIGNMENT;
+    prefix_rule(can_assign);
 
-    while (precedence <= getRule(parser.current.type)->precedence)
+    while (precedence <= get_rule(parser.current.type)->precedence)
     {
         advance();
-        ParseFn infixRule = getRule(parser.previous.type)->infix;
-        infixRule(canAssign);
+        ParseFn infix_rule = get_rule(parser.previous.type)->infix;
+        infix_rule(can_assign);
     }
 
-    if (canAssign && match(TOKEN_EQUAL))
+    if (can_assign && match(TOKEN_EQUAL))
     {
         error("Invalid assignment target.");
     }
 }
 
-static uint8_t parseVariable(const char *errorMessage)
+static uint8_t parse_variable(const char *error_message)
 {
-    consume(TOKEN_IDENTIFIER, errorMessage);
+    consume(TOKEN_IDENTIFIER, error_message);
 
-    declareVariable();
-    if (current->scopeDepth > 0)
+    declare_variable();
+    if (current->scope_depth > 0)
         return 0;
 
-    return identifierConstant(&parser.previous);
+    return identifier_constant(&parser.previous);
 }
 
-static void markInitialized()
+static void mark_initialized()
 {
-    if (current->scopeDepth == 0)
+    if (current->scope_depth == 0)
         return;
 
-    current->locals[current->localCount - 1].depth =
-        current->scopeDepth;
+    current->locals[current->local_count - 1].depth =
+        current->scope_depth;
 }
 
-static void defineVariable(uint8_t global)
+static void define_variable(uint8_t global)
 {
-    if (current->scopeDepth > 0)
+    if (current->scope_depth > 0)
     {
-        markInitialized();
+        mark_initialized();
         return;
     }
 
-    emitBytes(OP_DEFINE_GLOBAL, global);
+    emit_bytes(OP_DEFINE_GLOBAL, global);
 }
 
-static ParseRule *getRule(TokenType type)
+static ParseRule *get_rule(TokenType type)
 {
     return &rules[type];
 }
 
 static void expression()
 {
-    parsePrecedence(PREC_ASSIGNMENT);
+    parse_precedence(PREC_ASSIGNMENT);
 }
 
 static void block()
@@ -780,8 +780,8 @@ static void block()
 static void function(FunctionType type)
 {
     Compiler compiler;
-    initCompiler(&compiler, type);
-    beginScope();
+    init_compiler(&compiler, type);
+    begin_scope();
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after function name.");
     if (!check(TOKEN_RIGHT_PAREN))
@@ -791,32 +791,32 @@ static void function(FunctionType type)
             current->function->arity++;
             if (current->function->arity > 255)
             {
-                errorAtCurrent("Can't have more than 255 parameters.");
+                error_atCurrent("Can't have more than 255 parameters.");
             }
-            uint8_t constant = parseVariable("Expect parameter name.");
-            defineVariable(constant);
+            uint8_t constant = parse_variable("Expect parameter name.");
+            define_variable(constant);
         } while (match(TOKEN_COMMA));
     }
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after parameters.");
     consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
     block();
 
-    ObjFunction *function = endCompiler();
+    ObjFunction *function = end_compiler();
 
     if (type == TYPE_STATIC_METHOD)
     {
-        function->isStatic = true;
+        function->is_static = true;
     }
     else
     {
-        function->isStatic = false;
+        function->is_static = false;
     }
 
-    emitBytes(OP_CLOSURE, makeConstant(OBJ_VAL(function)));
+    emit_bytes(OP_CLOSURE, make_constant(OBJ_VAL(function)));
 
-    for (int i = 0; i < function->upvalueCount; i++)
+    for (int i = 0; i < function->upvalue_count; i++)
     {
-        emitBytes(compiler.upvalues[i].isLocal ? 1 : 0, compiler.upvalues[i].index);
+        emit_bytes(compiler.upvalues[i].is_local ? 1 : 0, compiler.upvalues[i].index);
     }
 }
 
@@ -830,7 +830,7 @@ static void method()
         type = TYPE_METHOD;
 
     consume(TOKEN_IDENTIFIER, "Expect method name.");
-    uint8_t constant = identifierConstant(&parser.previous);
+    uint8_t constant = identifier_constant(&parser.previous);
 
     if (parser.previous.length == 4 && memcmp(parser.previous.start, "init", 4) == 0 && type != TYPE_STATIC_METHOD)
     {
@@ -838,45 +838,45 @@ static void method()
     }
 
     function(type);
-    emitBytes(OP_METHOD, constant);
+    emit_bytes(OP_METHOD, constant);
 }
 
-static void classDeclaration()
+static void class_declaration()
 {
     consume(TOKEN_IDENTIFIER, "Expect class name.");
-    Token className = parser.previous;
-    uint8_t nameConstant = identifierConstant(&parser.previous);
-    declareVariable();
+    Token class_name = parser.previous;
+    uint8_t name_constant = identifier_constant(&parser.previous);
+    declare_variable();
 
-    emitBytes(OP_CLASS, nameConstant);
-    defineVariable(nameConstant);
+    emit_bytes(OP_CLASS, name_constant);
+    define_variable(name_constant);
 
-    ClassCompiler classCompiler;
-    classCompiler.hasSuperclass = false;
+    ClassCompiler class_compiler;
+    class_compiler.has_super_class = false;
 
-    classCompiler.enclosing = currentClass;
-    currentClass = &classCompiler;
+    class_compiler.enclosing = current_class;
+    current_class = &class_compiler;
 
     if (match(TOKEN_LESS))
     {
         consume(TOKEN_IDENTIFIER, "Expect superclass name.");
         variable(false);
 
-        if (identifiersEqual(&className, &parser.previous))
+        if (identifiers_equal(&class_name, &parser.previous))
         {
             error("A class can't inherit from itself.");
         }
 
-        beginScope();
-        addLocal(syntheticToken("super"));
-        defineVariable(0);
+        begin_scope();
+        add_local(synthetic_token("super"));
+        define_variable(0);
 
-        namedVariable(className, false);
-        emitByte(OP_INHERIT);
-        classCompiler.hasSuperclass = true;
+        named_variable(class_name, false);
+        emit_byte(OP_INHERIT);
+        class_compiler.has_super_class = true;
     }
 
-    namedVariable(className, false);
+    named_variable(class_name, false);
     consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
 
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF))
@@ -885,27 +885,27 @@ static void classDeclaration()
     }
 
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
-    emitByte(OP_POP);
+    emit_byte(OP_POP);
 
-    if (classCompiler.hasSuperclass)
+    if (class_compiler.has_super_class)
     {
-        endScope();
+        end_scope();
     }
 
-    currentClass = currentClass->enclosing;
+    current_class = current_class->enclosing;
 }
 
-static void funDeclaration()
+static void fun_declaration()
 {
-    uint8_t global = parseVariable("Expect function name.");
-    markInitialized();
+    uint8_t global = parse_variable("Expect function name.");
+    mark_initialized();
     function(TYPE_FUNCTION);
-    defineVariable(global);
+    define_variable(global);
 }
 
-static void varDeclaration()
+static void var_declaration()
 {
-    uint8_t global = parseVariable("Expect variable name.");
+    uint8_t global = parse_variable("Expect variable name.");
 
     if (match(TOKEN_EQUAL))
     {
@@ -913,23 +913,23 @@ static void varDeclaration()
     }
     else
     {
-        emitByte(OP_NIL);
+        emit_byte(OP_NIL);
     }
 
     consume(TOKEN_SEMICOLON, "Expect ';' after variable declaration.");
-    defineVariable(global);
+    define_variable(global);
 }
 
-static void expressionStatement()
+static void expression_statement()
 {
     expression();
     consume(TOKEN_SEMICOLON, "Expect ';' after expression.");
-    emitByte(OP_POP);
+    emit_byte(OP_POP);
 }
 
-static void forStatement()
+static void for_statement()
 {
-    beginScope();
+    begin_scope();
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'for'.");
 
     if (match(TOKEN_SEMICOLON))
@@ -937,72 +937,72 @@ static void forStatement()
     }
     else if (match(TOKEN_VAR))
     {
-        varDeclaration();
+        var_declaration();
     }
     else
     {
-        expressionStatement();
+        expression_statement();
     }
 
-    int loopStart = currentChunk()->count;
+    int loop_start = current_chunk()->count;
 
-    int exitJump = -1;
+    int exit_jump = -1;
     if (!match(TOKEN_SEMICOLON))
     {
         expression();
         consume(TOKEN_SEMICOLON, "Expect ';' after loop condition.");
 
-        exitJump = emitJump(OP_JUMP_IF_FALSE);
-        emitByte(OP_POP);
+        exit_jump = emit_jump(OP_JUMP_IF_FALSE);
+        emit_byte(OP_POP);
     }
 
     if (!match(TOKEN_RIGHT_PAREN))
     {
-        int bodyJump = emitJump(OP_JUMP);
-        int incrementStart = currentChunk()->count;
+        int body_jump = emit_jump(OP_JUMP);
+        int increment_start = current_chunk()->count;
         expression();
-        emitByte(OP_POP);
+        emit_byte(OP_POP);
         consume(TOKEN_RIGHT_PAREN, "Expect ')' after for clauses.");
 
-        emitLoop(loopStart);
-        loopStart = incrementStart;
-        patchJump(bodyJump);
+        emit_loop(loop_start);
+        loop_start = increment_start;
+        patch_jump(body_jump);
     }
 
     statement();
-    emitLoop(loopStart);
+    emit_loop(loop_start);
 
-    if (exitJump != -1)
+    if (exit_jump != -1)
     {
-        patchJump(exitJump);
-        emitByte(OP_POP);
+        patch_jump(exit_jump);
+        emit_byte(OP_POP);
     }
 
-    endScope();
+    end_scope();
 }
 
-static void ifStatement()
+static void if_statement()
 {
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'if'.");
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
-    int thenJump = emitJump(OP_JUMP_IF_FALSE);
-    emitByte(OP_POP);
+    int then_jump = emit_jump(OP_JUMP_IF_FALSE);
+    emit_byte(OP_POP);
     statement();
 
-    int elseJump = emitJump(OP_JUMP);
+    int else_jump = emit_jump(OP_JUMP);
 
-    patchJump(thenJump);
-    emitByte(OP_POP);
+    patch_jump(then_jump);
+    emit_byte(OP_POP);
 
     if (match(TOKEN_ELSE))
         statement();
 
-    patchJump(elseJump);
+    patch_jump(else_jump);
 }
 
-static void returnStatement()
+static void return_statement()
 {
     if (current->type == TYPE_SCRIPT)
     {
@@ -1011,7 +1011,7 @@ static void returnStatement()
 
     if (match(TOKEN_SEMICOLON))
     {
-        emitReturn();
+        emit_return();
     }
     else
     {
@@ -1022,31 +1022,31 @@ static void returnStatement()
 
         expression();
         consume(TOKEN_SEMICOLON, "Expect ';' after return value.");
-        emitByte(OP_RETURN);
+        emit_byte(OP_RETURN);
     }
 }
 
-static void whileStatement()
+static void while_statement()
 {
-    int loopStart = currentChunk()->count;
+    int loop_start = current_chunk()->count;
 
     consume(TOKEN_LEFT_PAREN, "Expect '(' after 'while'.");
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
-    int exitJump = emitJump(OP_JUMP_IF_FALSE);
-    emitByte(OP_POP);
+    int exit_jump = emit_jump(OP_JUMP_IF_FALSE);
+    emit_byte(OP_POP);
     statement();
 
-    emitLoop(loopStart);
+    emit_loop(loop_start);
 
-    patchJump(exitJump);
-    emitByte(OP_POP);
+    patch_jump(exit_jump);
+    emit_byte(OP_POP);
 }
 
 static void synchronize()
 {
-    parser.panicMode = false;
+    parser.panic_mode = false;
     while (parser.current.type != TOKEN_EOF)
     {
         if (parser.previous.type == TOKEN_SEMICOLON)
@@ -1072,22 +1072,22 @@ static void declaration()
 {
     if (match(TOKEN_FUN))
     {
-        funDeclaration();
+        fun_declaration();
     }
     else if (match(TOKEN_CLASS))
     {
-        classDeclaration();
+        class_declaration();
     }
     else if (match(TOKEN_VAR))
     {
-        varDeclaration();
+        var_declaration();
     }
     else
     {
         statement();
     }
 
-    if (parser.panicMode)
+    if (parser.panic_mode)
         synchronize();
 }
 
@@ -1095,40 +1095,40 @@ static void statement()
 {
     if (match(TOKEN_IF))
     {
-        ifStatement();
+        if_statement();
     }
     else if (match(TOKEN_RETURN))
     {
-        returnStatement();
+        return_statement();
     }
     else if (match(TOKEN_WHILE))
     {
-        whileStatement();
+        while_statement();
     }
     else if (match(TOKEN_FOR))
     {
-        forStatement();
+        for_statement();
     }
     else if (match(TOKEN_LEFT_BRACE))
     {
-        beginScope();
+        begin_scope();
         block();
-        endScope();
+        end_scope();
     }
     else
     {
-        expressionStatement();
+        expression_statement();
     }
 }
 
 ObjFunction *compile(const char *source)
 {
-    initScanner(source);
+    init_scanner(source);
     Compiler compiler;
-    initCompiler(&compiler, TYPE_SCRIPT);
+    init_compiler(&compiler, TYPE_SCRIPT);
 
-    parser.hadError = false;
-    parser.panicMode = false;
+    parser.had_error = false;
+    parser.panic_mode = false;
 
     advance();
 
@@ -1137,16 +1137,16 @@ ObjFunction *compile(const char *source)
         declaration();
     }
 
-    ObjFunction *function = endCompiler();
-    return parser.hadError ? NULL : function;
+    ObjFunction *function = end_compiler();
+    return parser.had_error ? NULL : function;
 }
 
-void markCompilerRoots()
+void mark_compiler_roots()
 {
     Compiler *compiler = current;
     while (compiler != NULL)
     {
-        markObject((Obj *)compiler->function);
+        mark_object((Obj *)compiler->function);
         compiler = compiler->enclosing;
     }
 }

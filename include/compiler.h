@@ -9,21 +9,21 @@ typedef struct
 {
     Token current;
     Token previous;
-    bool hadError;
-    bool panicMode;
+    bool had_error;
+    bool panic_mode;
 } Parser;
 
 typedef struct
 {
     Token name;
     int depth;
-    bool isCaptured;
+    bool is_captured;
 } Local;
 
 typedef struct
 {
     uint8_t index;
-    bool isLocal;
+    bool is_local;
     struct ObjUpvalue *next;
 } Upvalue;
 
@@ -42,15 +42,15 @@ typedef struct Compiler
     ObjFunction *function;
     FunctionType type;
     Local locals[UINT8_COUNT];
-    int localCount;
+    int local_count;
     Upvalue upvalues[UINT8_COUNT];
-    int scopeDepth;
+    int scope_depth;
 } Compiler;
 
 typedef struct ClassCompiler
 {
     struct ClassCompiler *enclosing;
-    bool hasSuperclass;
+    bool has_super_class;
 } ClassCompiler;
 
 typedef enum
@@ -68,7 +68,7 @@ typedef enum
     PREC_PRIMARY
 } Precedence;
 
-typedef void (*ParseFn)(bool canAssign);
+typedef void (*ParseFn)(bool);
 
 typedef struct
 {
@@ -78,6 +78,6 @@ typedef struct
 } ParseRule;
 
 ObjFunction *compile(const char *);
-void markCompilerRoots();
+void mark_compiler_roots();
 
 #endif // clox_compiler_h

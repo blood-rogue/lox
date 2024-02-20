@@ -16,17 +16,17 @@ typedef struct
     Entry *entries;
 } Table;
 
-void initTable(Table *);
-void freeTable(Table *);
+void init_table(Table *);
+void free_table(Table *);
 
-bool tableGet(Table *, Obj *, Obj **);
-bool tableSet(Table *, Obj *, Obj *);
-bool tableDelete(Table *, Obj *);
+bool table_get(Table *, Obj *, Obj **);
+bool table_set(Table *, Obj *, Obj *);
+bool table_delete(Table *, Obj *);
 
-void tableAddAll(Table *, Table *);
-Obj *tableFindString(Table *, const char *, int, uint32_t);
-void tableRemoveWhite(Table *);
+void table_addAll(Table *, Table *);
+Obj *table_findString(Table *, const char *, int, uint32_t);
+void table_removeWhite(Table *);
 
-void markTable(Table *);
+void mark_table(Table *);
 
 #endif // clox_table_h

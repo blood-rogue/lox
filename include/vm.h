@@ -17,25 +17,25 @@ typedef struct
 typedef struct
 {
     CallFrame frames[FRAMES_MAX];
-    int frameCount;
+    int frame_count;
 
     Obj *stack[STACK_MAX];
-    Obj **stackTop;
+    Obj **stack_top;
 
     Table globals;
     Table strings;
-    ObjString *initString;
+    ObjString *init_string;
 
-    ObjUpvalue *openUpvalues;
+    ObjUpvalue *open_upvalues;
 
-    size_t bytesAllocated;
-    size_t nextGC;
+    size_t bytes_allocated;
+    size_t next_gc;
 
     Obj *objects;
 
-    int grayCount;
-    int grayCapacity;
-    Obj **grayStack;
+    int gray_count;
+    int gray_capacity;
+    Obj **gray_stack;
 } VM;
 
 typedef enum
@@ -47,8 +47,8 @@ typedef enum
 
 extern VM vm;
 
-void initVM();
-void freeVM();
+void init_vm();
+void free_vm();
 InterpretResult interpret(const char *);
 void push(Obj *);
 Obj *pop();

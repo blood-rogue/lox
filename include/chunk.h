@@ -2,7 +2,7 @@
 #define clox_chunk_h
 
 #include "common.h"
-#include "value.h"
+#include "array.h"
 
 typedef enum
 {
@@ -54,13 +54,13 @@ typedef struct
     int capacity;
     uint8_t *code;
     int *lines;
-    ValueArray constants;
+    Array constants;
 } Chunk;
 
-void initChunk(Chunk *);
-void freeChunk(Chunk *);
-void writeChunk(Chunk *, uint8_t, int);
+void init_chunk(Chunk *);
+void free_chunk(Chunk *);
+void write_chunk(Chunk *, uint8_t, int);
 
-int addConstant(Chunk *, Obj *);
+int add_constant(Chunk *, Obj *);
 
 #endif // clox_chunk_h

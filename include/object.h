@@ -4,7 +4,7 @@
 #include "common.h"
 #include "chunk.h"
 #include "table.h"
-#include "value.h"
+#include "array.h"
 
 #define OBJ_VAL(value) ((Obj *)(value))
 
@@ -54,7 +54,7 @@ typedef enum
 struct Obj
 {
     ObjType type;
-    bool isMarked;
+    bool is_marked;
     struct Obj *next;
 };
 
@@ -78,10 +78,10 @@ typedef struct
 {
     Obj obj;
     int arity;
-    int upvalueCount;
+    int upvalue_count;
     Chunk chunk;
     ObjString *name;
-    bool isStatic;
+    bool is_static;
 } ObjFunction;
 
 typedef struct
@@ -90,7 +90,7 @@ typedef struct
     char *error;
 } NativeResult;
 
-typedef NativeResult (*NativeFn)(int argCount, Obj **args);
+typedef NativeResult (*NativeFn)(int, Obj **);
 
 typedef struct
 {
@@ -103,7 +103,7 @@ typedef struct
     Obj obj;
     ObjFunction *function;
     ObjUpvalue **upvalues;
-    int upvalueCount;
+    int upvalue_count;
 } ObjClosure;
 
 typedef struct
@@ -130,7 +130,7 @@ typedef struct
 typedef struct
 {
     Obj obj;
-    ValueArray elems;
+    Array elems;
 } ObjList;
 
 typedef struct
@@ -156,25 +156,26 @@ typedef struct
     Obj obj;
 } ObjNil;
 
-ObjNil *newNil();
-ObjInt *newInt(int64_t);
-ObjBool *newBool(bool);
-ObjMap *newMap(Obj **, int);
-ObjList *newList(Obj **, int);
-ObjBoundMethod *newBoundMethod(Obj *, ObjClosure *);
-ObjClass *newClass(ObjString *);
-ObjInstance *newInstance(ObjClass *);
-ObjClosure *newClosure(ObjFunction *);
-ObjFunction *newFunction();
-ObjNative *newNative(NativeFn);
-ObjString *newString(const char *, int);
-ObjUpvalue *newUpvalue(Obj **);
-ObjString *takeString(char *, int);
+ObjNil *new_nil();
+ObjInt *new_int(int64_t);
+ObjBool *new_bool(bool);
+ObjMap *new_map(Obj **, int);
+ObjList *new_list(Obj **, int);
+ObjBoundMethod *new_bound_method(Obj *, ObjClosure *);
+ObjClass *new_class(ObjString *);
+ObjInstance *new_instance(ObjClass *);
+ObjClosure *new_closure(ObjFunction *);
+ObjFunction *new_function();
+ObjNative *new_native(NativeFn);
+ObjString *new_string(const char *, int);
+ObjUpvalue *new_upvalue(Obj **);
 
-void printObject(Obj *);
-void reprObject(Obj *);
-uint32_t getHash(Obj *);
+ObjString *take_string(char *, int);
 
-bool objEqual(Obj *, Obj *);
+void print_object(Obj *);
+void repr_object(Obj *);
+uint32_t get_hash(Obj *);
+
+bool obj_equal(Obj *, Obj *);
 
 #endif // clox_object_h

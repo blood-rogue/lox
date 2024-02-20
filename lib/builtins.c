@@ -6,58 +6,58 @@
 #include "builtins.h"
 
 #define ERR(err) \
-    (NativeResult) { .error = err, .value = OBJ_VAL(newNil()) }
+    (NativeResult) { .error = err, .value = OBJ_VAL(new_nil()) }
 #define OK(ok) \
     (NativeResult) { .value = ok, .error = NULL }
 
-#define CHECK_ARG_COUNT(expected)                                             \
-    if (argCount != expected)                                                 \
-    {                                                                         \
-        char buf[50];                                                         \
-        sprintf(buf, "Expected %d arguments but got %d", expected, argCount); \
-        return ERR(buf);                                                      \
+#define CHECK_ARG_COUNT(expected)                                              \
+    if (arg_count != expected)                                                 \
+    {                                                                          \
+        char buf[50];                                                          \
+        sprintf(buf, "Expected %d arguments but got %d", expected, arg_count); \
+        return ERR(buf);                                                       \
     }
 
-NativeResult clockNative(int argCount, Obj **args)
+NativeResult clock_native(int arg_count, Obj **args)
 {
     CHECK_ARG_COUNT(0)
-    return OK(OBJ_VAL(newInt(clock() / CLOCKS_PER_SEC)));
+    return OK(OBJ_VAL(new_int(clock() / CLOCKS_PER_SEC)));
 }
 
-NativeResult exitNative(int argCount, Obj **args)
+NativeResult exit_native(int arg_count, Obj **args)
 {
 
     CHECK_ARG_COUNT(1)
 
     if (IS_INT(args[0]))
     {
-        int exitCode = AS_INT(args[0])->value;
-        exit(exitCode);
+        int exit_code = AS_INT(args[0])->value;
+        exit(exit_code);
     }
     else
     {
         return ERR("Cannot exit with non integer exit code");
     }
 
-    return OK(OBJ_VAL(newNil()));
+    return OK(OBJ_VAL(new_nil()));
 }
 
-NativeResult printNative(int argCount, Obj **args)
+NativeResult print_native(int arg_count, Obj **args)
 {
-    for (int i = 0; i < argCount; i++)
+    for (int i = 0; i < arg_count; i++)
     {
-        printObject(args[i]);
+        print_object(args[i]);
         printf(" ");
     }
 
     printf("\n");
-    return OK(OBJ_VAL(newNil()));
+    return OK(OBJ_VAL(new_nil()));
 }
 
-NativeResult inputNative(int argCount, Obj **args)
+NativeResult input_native(int arg_count, Obj **args)
 {
-    if (argCount > 0)
-        printObject(args[0]);
+    if (arg_count > 0)
+        print_object(args[0]);
 
     int capacity = 8;
     char *s = (char *)malloc(capacity);
@@ -78,10 +78,10 @@ NativeResult inputNative(int argCount, Obj **args)
     }
 
     s[len - 1] = '\0';
-    return OK(OBJ_VAL(takeString(s, len)));
+    return OK(OBJ_VAL(take_string(s, len)));
 }
 
-NativeResult lenNative(int argCount, Obj **args)
+NativeResult len_native(int arg_count, Obj **args)
 {
     CHECK_ARG_COUNT(1)
 
@@ -91,17 +91,17 @@ NativeResult lenNative(int argCount, Obj **args)
     case OBJ_LIST:
     {
         ObjList *list = (ObjList *)(obj);
-        return OK(OBJ_VAL(newInt(list->elems.count)));
+        return OK(OBJ_VAL(new_int(list->elems.count)));
     }
     case OBJ_MAP:
     {
         ObjMap *map = (ObjMap *)(obj);
-        return OK(OBJ_VAL(newInt(map->table.count)));
+        return OK(OBJ_VAL(new_int(map->table.count)));
     }
     case OBJ_STRING:
     {
         ObjString *string = (ObjString *)(obj);
-        return OK(OBJ_VAL(newInt(string->length)));
+        return OK(OBJ_VAL(new_int(string->length)));
     }
     default:
         return ERR("len() is not defined for the type");
