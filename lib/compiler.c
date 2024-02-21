@@ -39,7 +39,7 @@ static void error_at(Token *token, const char *message)
     parser.had_error = true;
 }
 
-static void error_atCurrent(const char *message)
+static void error_at_current(const char *message)
 {
     error_at(&parser.current, message);
 }
@@ -59,7 +59,7 @@ static void advance()
         if (parser.current.type != TOKEN_ERROR)
             break;
 
-        error_atCurrent(parser.current.start);
+        error_at_current(parser.current.start);
     }
 }
 
@@ -71,7 +71,7 @@ static void consume(TokenType type, const char *message)
         return;
     }
 
-    error_atCurrent(message);
+    error_at_current(message);
 }
 
 static bool check(TokenType type)
@@ -413,7 +413,7 @@ static uint8_t expression_list(TokenType terminator)
     return expression_count;
 }
 
-static uint8_t map_pairList()
+static uint8_t map_pair_list()
 {
     uint8_t expression_count = 0;
     if (!check(TOKEN_RIGHT_BRACE))
@@ -498,7 +498,7 @@ static void list(bool can_assign)
 static void map(bool can_assign)
 {
     consume(TOKEN_LEFT_BRACE, "Expected '{' after map keyword.");
-    uint8_t pair_count = map_pairList();
+    uint8_t pair_count = map_pair_list();
     emit_bytes(OP_MAP, pair_count);
 }
 
@@ -524,7 +524,7 @@ static void float_(bool can_assign)
 
 static void int_(bool can_assign)
 {
-    int64_t value = strtol(parser.previous.start, NULL, 10);
+    int64_t value = (int64_t)strtol(parser.previous.start, NULL, 10);
     emit_constant(OBJ_VAL(new_int(value)));
 }
 
@@ -803,7 +803,7 @@ static void function(FunctionType type)
             current->function->arity++;
             if (current->function->arity > 255)
             {
-                error_atCurrent("Can't have more than 255 parameters.");
+                error_at_current("Can't have more than 255 parameters.");
             }
             uint8_t constant = parse_variable("Expect parameter name.");
             define_variable(constant);

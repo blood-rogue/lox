@@ -99,14 +99,14 @@ bool table_set(Table *table, Obj *key, Obj *value)
     }
 
     Entry *entry = find_entry(table->entries, table->capacity, key);
-    bool is_newKey = entry->key == NULL;
+    bool is_new_key = entry->key == NULL;
 
-    if (is_newKey && IS_NIL(entry->value))
+    if (is_new_key && IS_NIL(entry->value))
         table->count++;
 
     entry->key = key;
     entry->value = value;
-    return is_newKey;
+    return is_new_key;
 }
 
 bool table_delete(Table *table, Obj *key)
@@ -123,7 +123,7 @@ bool table_delete(Table *table, Obj *key)
     return true;
 }
 
-void table_addAll(Table *from, Table *to)
+void table_add_all(Table *from, Table *to)
 {
     for (int i = 0; i < from->capacity; i++)
     {
@@ -135,7 +135,7 @@ void table_addAll(Table *from, Table *to)
     }
 }
 
-Obj *table_findString(Table *table, const char *chars, int length, uint32_t hash)
+Obj *table_find_string(Table *table, const char *chars, int length, uint32_t hash)
 {
     if (table->count == 0)
         return NULL;
@@ -158,7 +158,7 @@ Obj *table_findString(Table *table, const char *chars, int length, uint32_t hash
     }
 }
 
-void table_removeWhite(Table *table)
+void table_remove_white(Table *table)
 {
     for (int i = 0; i < table->capacity; i++)
     {

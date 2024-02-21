@@ -109,9 +109,16 @@ static void free_object(Obj *object)
         FREE(ObjInstance, object);
         break;
     }
-    case OBJ_NATIVE:
+    case OBJ_BUILTIN_CLASS:
     {
-        FREE(ObjBuiltin, object);
+        ObjBuiltinClass *klass = AS_BUILTIN_CLASS(object);
+        free_builtin_table(&klass->statics);
+        FREE(ObjBuiltinClass, object);
+        return;
+    }
+    case OBJ_BUILTIN_FUNCTION:
+    {
+        FREE(ObjBuiltinFunction, object);
         break;
     }
     case OBJ_UPVALUE:
@@ -223,7 +230,8 @@ static void blacken_object(Obj *object)
     case OBJ_UPVALUE:
         mark_object(AS_UPVALUE(object)->closed);
         break;
-    case OBJ_NATIVE:
+    case OBJ_BUILTIN_CLASS:
+    case OBJ_BUILTIN_FUNCTION:
     case OBJ_STRING:
     case OBJ_BOOL:
     case OBJ_INT:
@@ -264,7 +272,7 @@ static void trace_references()
     }
 }
 
-static void sweep()
+void sweep()
 {
     Obj *previous = NULL;
     Obj *object = vm.objects;
@@ -298,7 +306,7 @@ void collect_garbage()
 {
     mark_roots();
     trace_references();
-    table_removeWhite(&vm.strings);
+    table_remove_white(&vm.strings);
     sweep();
 
     vm.next_gc = vm.bytes_allocated * GC_HEAP_GROW_FACTOR;

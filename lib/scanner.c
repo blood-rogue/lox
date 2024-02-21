@@ -107,16 +107,9 @@ static void skip_whitespace()
             scanner.line++;
             advance();
             break;
-        case '/':
-            if (peek_next() == '/')
-            {
-                while (peek() != '\n' && !is_eof())
-                    advance();
-            }
-            else
-            {
-                return;
-            }
+        case '#':
+            while (peek() != '\n' && !is_eof())
+                advance();
             break;
         default:
             return;

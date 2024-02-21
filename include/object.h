@@ -5,6 +5,7 @@
 #include "chunk.h"
 #include "table.h"
 #include "array.h"
+#include "builtin_table.h"
 
 #define OBJ_VAL(value) ((Obj *)(value))
 
@@ -17,7 +18,8 @@
 #define IS_CLOSURE(value) (value->type == OBJ_CLOSURE)
 #define IS_INSTANCE(value) (value->type == OBJ_INSTANCE)
 #define IS_FUNCTION(value) (value->type == OBJ_FUNCTION)
-#define IS_NATIVE(value) (value->type == OBJ_NATIVE)
+#define IS_BUILTIN_CLASS(value) (value->type == OBJ_BUILTIN_CLASS)
+#define IS_BUILTIN_FUNCTION(value) (value->type == OBJ_BUILTIN_FUNCTION)
 #define IS_STRING(value) (value->type == OBJ_STRING)
 #define IS_LIST(value) (value->type == OBJ_LIST)
 #define IS_MAP(value) (value->type == OBJ_MAP)
@@ -31,19 +33,12 @@
 #define AS_INSTANCE(value) ((ObjInstance *)(value))
 #define AS_CLOSURE(value) ((ObjClosure *)(value))
 #define AS_FUNCTION(value) ((ObjFunction *)(value))
-#define AS_NATIVE(value) (((ObjBuiltin *)(value)))
+#define AS_BUILTIN_CLASS(value) (((ObjBuiltinClass *)(value)))
+#define AS_BUILTIN_FUNCTION(value) (((ObjBuiltinFunction *)(value)))
 #define AS_STRING(value) ((ObjString *)(value))
 #define AS_LIST(value) ((ObjList *)(value))
 #define AS_MAP(value) ((ObjMap *)(value))
 #define AS_UPVALUE(value) ((ObjUpvalue *)(value))
-
-typedef struct
-{
-    Obj *value;
-    char *error;
-} BuiltinResult;
-
-typedef BuiltinResult (*BuiltinFn)(int, Obj **);
 
 typedef enum
 {
@@ -56,7 +51,8 @@ typedef enum
     OBJ_CLOSURE,
     OBJ_FUNCTION,
     OBJ_INSTANCE,
-    OBJ_NATIVE,
+    OBJ_BUILTIN_CLASS,
+    OBJ_BUILTIN_FUNCTION,
     OBJ_STRING,
     OBJ_UPVALUE,
     OBJ_LIST,
@@ -98,8 +94,15 @@ typedef struct
 typedef struct
 {
     Obj obj;
+    BuiltinTable statics;
+    BuiltinTable methods;
+} ObjBuiltinClass;
+
+typedef struct
+{
+    Obj obj;
     BuiltinFn function;
-} ObjBuiltin;
+} ObjBuiltinFunction;
 
 typedef struct
 {
@@ -177,7 +180,8 @@ ObjClass *new_class(ObjString *);
 ObjInstance *new_instance(ObjClass *);
 ObjClosure *new_closure(ObjFunction *);
 ObjFunction *new_function();
-ObjBuiltin *new_builtin(BuiltinFn);
+ObjBuiltinClass *new_builtin_class();
+ObjBuiltinFunction *new_builtin_function(BuiltinFn);
 ObjString *new_string(const char *, int);
 ObjUpvalue *new_upvalue(Obj **);
 
@@ -186,6 +190,8 @@ ObjString *take_string(char *, int);
 
 void print_object(Obj *);
 void repr_object(Obj *);
+
+uint32_t hash_string(const char *, int);
 uint32_t get_hash(Obj *);
 
 bool obj_equal(Obj *, Obj *);

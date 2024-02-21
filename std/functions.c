@@ -1,30 +1,12 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <time.h>
-#include <string.h>
-
 #include "builtins.h"
 
-#define ERR(err) \
-    (BuiltinResult) { .error = err, .value = OBJ_VAL(new_nil()) }
-#define OK(ok) \
-    (BuiltinResult) { .value = ok, .error = NULL }
-
-#define CHECK_ARG_COUNT(expected)                                              \
-    if (arg_count != expected)                                                 \
-    {                                                                          \
-        char buf[50];                                                          \
-        sprintf(buf, "Expected %d arguments but got %d", expected, arg_count); \
-        return ERR(buf);                                                       \
-    }
-
-BuiltinResult clock_builtin(int arg_count, Obj **args)
+BuiltinResult clock_builtin_function(int arg_count, Obj **args)
 {
     CHECK_ARG_COUNT(0)
     return OK(OBJ_VAL(new_int(clock() / CLOCKS_PER_SEC)));
 }
 
-BuiltinResult exit_builtin(int arg_count, Obj **args)
+BuiltinResult exit_builtin_function(int arg_count, Obj **args)
 {
 
     CHECK_ARG_COUNT(1)
@@ -32,6 +14,7 @@ BuiltinResult exit_builtin(int arg_count, Obj **args)
     if (IS_INT(args[0]))
     {
         int exit_code = AS_INT(args[0])->value;
+        sweep();
         exit(exit_code);
     }
     else
@@ -42,7 +25,7 @@ BuiltinResult exit_builtin(int arg_count, Obj **args)
     return OK(OBJ_VAL(new_nil()));
 }
 
-BuiltinResult print_builtin(int arg_count, Obj **args)
+BuiltinResult print_builtin_function(int arg_count, Obj **args)
 {
     for (int i = 0; i < arg_count; i++)
     {
@@ -54,7 +37,7 @@ BuiltinResult print_builtin(int arg_count, Obj **args)
     return OK(OBJ_VAL(new_nil()));
 }
 
-BuiltinResult input_builtin(int arg_count, Obj **args)
+BuiltinResult input_builtin_function(int arg_count, Obj **args)
 {
     if (arg_count > 0)
         print_object(args[0]);
@@ -81,7 +64,7 @@ BuiltinResult input_builtin(int arg_count, Obj **args)
     return OK(OBJ_VAL(take_string(s, len)));
 }
 
-BuiltinResult len_builtin(int arg_count, Obj **args)
+BuiltinResult len_builtin_function(int arg_count, Obj **args)
 {
     CHECK_ARG_COUNT(1)
 
@@ -108,7 +91,7 @@ BuiltinResult len_builtin(int arg_count, Obj **args)
     }
 }
 
-BuiltinResult argv_builtin(int arg_count, Obj **args)
+BuiltinResult argv_builtin_function(int arg_count, Obj **args)
 {
     CHECK_ARG_COUNT(0)
 

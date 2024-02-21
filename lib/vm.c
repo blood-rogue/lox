@@ -36,10 +36,19 @@ static Obj *peek(int distance)
     return vm.stack_top[-1 - distance];
 }
 
-static void define_builtin(const char *name, BuiltinFn function)
+static void define_builtin_function(const char *name, BuiltinFn function)
 {
     push(OBJ_VAL(new_string(name, (int)strlen(name))));
-    push(OBJ_VAL(new_builtin(function)));
+    push(OBJ_VAL(new_builtin_function(function)));
+    table_set(&vm.globals, vm.stack[0], vm.stack[1]);
+    pop();
+    pop();
+}
+
+static void define_builtin_class(const char *name, ObjBuiltinClass *klass)
+{
+    push(OBJ_VAL(new_string(name, (int)strlen(name))));
+    push(OBJ_VAL(klass));
     table_set(&vm.globals, vm.stack[0], vm.stack[1]);
     pop();
     pop();
@@ -89,12 +98,14 @@ void init_vm()
     vm.init_string = NULL;
     vm.init_string = new_string("init", 4);
 
-    define_builtin("clock", clock_builtin);
-    define_builtin("exit", exit_builtin);
-    define_builtin("print", print_builtin);
-    define_builtin("input", input_builtin);
-    define_builtin("len", len_builtin);
-    define_builtin("argv", argv_builtin);
+    define_builtin_function("clock", clock_builtin_function);
+    define_builtin_function("exit", exit_builtin_function);
+    define_builtin_function("print", print_builtin_function);
+    define_builtin_function("input", input_builtin_function);
+    define_builtin_function("len", len_builtin_function);
+    define_builtin_function("argv", argv_builtin_function);
+
+    define_builtin_class("int", int_builtin_class());
 }
 
 void free_vm()
@@ -158,9 +169,9 @@ static bool call_value(Obj *callee, int arg_count)
     }
     case OBJ_CLOSURE:
         return call(AS_CLOSURE(callee), arg_count);
-    case OBJ_NATIVE:
+    case OBJ_BUILTIN_FUNCTION:
     {
-        BuiltinFn builtin = AS_NATIVE(callee)->function;
+        BuiltinFn builtin = AS_BUILTIN_FUNCTION(callee)->function;
         BuiltinResult result = builtin(arg_count, vm.stack_top - arg_count);
 
         if (result.error != NULL)
@@ -172,6 +183,11 @@ static bool call_value(Obj *callee, int arg_count)
         vm.stack_top -= arg_count + 1;
         push(result.value);
         return true;
+    }
+    case OBJ_BUILTIN_CLASS:
+    {
+        runtime_error("Cannot create builtin classes");
+        return false;
     }
     default:
         runtime_error("Can only call functions and classes.");
@@ -221,8 +237,31 @@ static bool invoke(ObjString *name, int arg_count)
 
         return call(AS_CLOSURE(method), arg_count);
     }
+    else if (IS_BUILTIN_CLASS(receiver))
+    {
+        ObjBuiltinClass *klass = AS_BUILTIN_CLASS(receiver);
 
-    runtime_error("Only instances have methods.");
+        BuiltinFn method;
+        if (!builtin_table_get(&klass->statics, name->hash, &method))
+        {
+            runtime_error("Undefined method '%s'.", name->chars);
+            return false;
+        }
+
+        BuiltinResult result = method(arg_count, vm.stack_top - arg_count);
+
+        if (result.error != NULL)
+        {
+            runtime_error(result.error);
+            return false;
+        }
+
+        vm.stack_top -= arg_count + 1;
+        push(result.value);
+        return true;
+    }
+
+    runtime_error("Could not invode method.");
     return false;
 }
 
@@ -424,7 +463,7 @@ static InterpretResult run()
         }
         case OP_SET_INDEX:
         {
-            Obj *to_beAssigned = peek(0);
+            Obj *to_be_assigned = peek(0);
             Obj *index_value = peek(1);
             Obj *value = peek(2);
 
@@ -445,7 +484,7 @@ static InterpretResult run()
                     return INTERPRET_RUNTIME_ERROR;
                 }
 
-                list->elems.values[index] = to_beAssigned;
+                list->elems.values[index] = to_be_assigned;
             }
             else if (IS_MAP(value))
             {
@@ -458,7 +497,7 @@ static InterpretResult run()
                 ObjString *index = AS_STRING(index_value);
                 ObjMap *map = AS_MAP(value);
 
-                table_set(&map->table, (Obj *)index, to_beAssigned);
+                table_set(&map->table, (Obj *)index, to_be_assigned);
             }
             else
             {
@@ -772,7 +811,7 @@ static InterpretResult run()
             }
 
             ObjClass *subclass = AS_CLASS(peek(0));
-            table_addAll(&AS_CLASS(superclass)->methods, &subclass->methods);
+            table_add_all(&AS_CLASS(superclass)->methods, &subclass->methods);
             pop();
             break;
         }

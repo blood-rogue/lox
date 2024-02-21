@@ -23,9 +23,9 @@ bool table_get(Table *, Obj *, Obj **);
 bool table_set(Table *, Obj *, Obj *);
 bool table_delete(Table *, Obj *);
 
-void table_addAll(Table *, Table *);
-Obj *table_findString(Table *, const char *, int, uint32_t);
-void table_removeWhite(Table *);
+void table_add_all(Table *, Table *);
+Obj *table_find_string(Table *, const char *, int, uint32_t);
+void table_remove_white(Table *);
 
 void mark_table(Table *);
 

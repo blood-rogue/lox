@@ -135,9 +135,17 @@ ObjFunction *new_function()
     return function;
 }
 
-ObjBuiltin *new_builtin(BuiltinFn function)
+ObjBuiltinClass *new_builtin_class()
 {
-    ObjBuiltin *builtin = ALLOCATE_OBJ(ObjBuiltin, OBJ_NATIVE);
+    ObjBuiltinClass *builtin = ALLOCATE_OBJ(ObjBuiltinClass, OBJ_BUILTIN_CLASS);
+    init_builtin_table(&builtin->statics);
+
+    return builtin;
+}
+
+ObjBuiltinFunction *new_builtin_function(BuiltinFn function)
+{
+    ObjBuiltinFunction *builtin = ALLOCATE_OBJ(ObjBuiltinFunction, OBJ_BUILTIN_FUNCTION);
     builtin->function = function;
     return builtin;
 }
@@ -157,7 +165,7 @@ static ObjString *allocate_string(char *chars, int length, uint32_t hash)
     return string;
 }
 
-static uint32_t hash_string(const char *key, int length)
+uint32_t hash_string(const char *key, int length)
 {
     uint32_t hash = 2166136261u;
     for (int i = 0; i < length; i++)
@@ -171,7 +179,7 @@ static uint32_t hash_string(const char *key, int length)
 ObjString *take_string(char *chars, int length)
 {
     uint32_t hash = hash_string(chars, length);
-    Obj *interned = table_findString(&vm.strings, chars, length, hash);
+    Obj *interned = table_find_string(&vm.strings, chars, length, hash);
     if (interned != NULL && interned->type == OBJ_STRING)
     {
         FREE_ARRAY(char, chars, length + 1);
@@ -185,7 +193,7 @@ ObjString *new_string(const char *chars, int length)
 {
     uint32_t hash = hash_string(chars, length);
 
-    Obj *interned = table_findString(&vm.strings, chars, length, hash);
+    Obj *interned = table_find_string(&vm.strings, chars, length, hash);
 
     if (interned != NULL && interned->type == OBJ_STRING)
         return AS_STRING(interned);
@@ -258,48 +266,51 @@ static void print_map(ObjMap *map)
     printf("}");
 }
 
-void print_object(Obj *value)
+void print_object(Obj *obj)
 {
-    switch (value->type)
+    switch (obj->type)
     {
     case OBJ_NIL:
         printf("(nil)");
         break;
     case OBJ_FLOAT:
-        printf("%g", AS_FLOAT(value)->value);
+        printf("%g", AS_FLOAT(obj)->value);
         break;
     case OBJ_INT:
-        printf("%ld", AS_INT(value)->value);
+        printf("%ld", AS_INT(obj)->value);
         break;
     case OBJ_BOOL:
-        printf(AS_BOOL(value)->value ? "true" : "false");
+        printf(AS_BOOL(obj)->value ? "true" : "false");
         break;
     case OBJ_MAP:
-        print_map(AS_MAP(value));
+        print_map(AS_MAP(obj));
         break;
     case OBJ_LIST:
-        print_list(&AS_LIST(value)->elems);
+        print_list(&AS_LIST(obj)->elems);
         break;
     case OBJ_BOUND_METHOD:
-        print_function(AS_BOUND_METHOD(value)->method->function);
+        print_function(AS_BOUND_METHOD(obj)->method->function);
         break;
     case OBJ_CLASS:
-        printf("<class '%s'>", AS_CLASS(value)->name->chars);
+        printf("<class '%s'>", AS_CLASS(obj)->name->chars);
         break;
     case OBJ_CLOSURE:
-        print_function(AS_CLOSURE(value)->function);
+        print_function(AS_CLOSURE(obj)->function);
         break;
     case OBJ_STRING:
-        printf("%s", AS_STRING(value)->chars);
+        printf("%s", AS_STRING(obj)->chars);
         break;
     case OBJ_INSTANCE:
-        printf("<'%s' instance>", AS_INSTANCE(value)->klass->name->chars);
+        printf("<'%s' instance>", AS_INSTANCE(obj)->klass->name->chars);
         break;
-    case OBJ_NATIVE:
+    case OBJ_BUILTIN_CLASS:
+        printf("<builtin class>");
+        break;
+    case OBJ_BUILTIN_FUNCTION:
         printf("<builtin fn>");
         break;
     case OBJ_FUNCTION:
-        print_function(AS_FUNCTION(value));
+        print_function(AS_FUNCTION(obj));
         break;
     case OBJ_UPVALUE:
         printf("upvalue");
@@ -307,15 +318,15 @@ void print_object(Obj *value)
     }
 }
 
-void repr_object(Obj *value)
+void repr_object(Obj *obj)
 {
-    switch (value->type)
+    switch (obj->type)
     {
     case OBJ_STRING:
-        printf("\"%s\"", AS_STRING(value)->chars);
+        printf("\"%s\"", AS_STRING(obj)->chars);
         break;
     default:
-        print_object(value);
+        print_object(obj);
         break;
     }
 }
