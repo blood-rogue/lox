@@ -3,8 +3,7 @@
 
 #include "common.h"
 
-typedef struct
-{
+typedef struct {
     int capacity;
     int count;
     Obj **values;

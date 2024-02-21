@@ -1,11 +1,11 @@
 #ifndef clox_object_h
 #define clox_object_h
 
-#include "common.h"
-#include "chunk.h"
-#include "table.h"
 #include "array.h"
 #include "builtin_table.h"
+#include "chunk.h"
+#include "common.h"
+#include "table.h"
 
 #define OBJ_VAL(value) ((Obj *)(value))
 
@@ -40,8 +40,7 @@
 #define AS_MAP(value) ((ObjMap *)(value))
 #define AS_UPVALUE(value) ((ObjUpvalue *)(value))
 
-typedef enum
-{
+typedef enum {
     OBJ_NIL,
     OBJ_FLOAT,
     OBJ_INT,
@@ -59,31 +58,27 @@ typedef enum
     OBJ_MAP,
 } ObjType;
 
-struct Obj
-{
+struct Obj {
     ObjType type;
     bool is_marked;
     struct Obj *next;
 };
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     int length;
     char *chars;
     uint32_t hash;
 } ObjString;
 
-typedef struct ObjUpvalue
-{
+typedef struct ObjUpvalue {
     Obj obj;
     Obj **location;
     Obj *closed;
     struct ObjUpvalue *next;
 } ObjUpvalue;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     int arity;
     int upvalue_count;
@@ -91,81 +86,69 @@ typedef struct
     ObjString *name;
 } ObjFunction;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     BuiltinTable statics;
     BuiltinTable methods;
 } ObjBuiltinClass;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     BuiltinFn function;
 } ObjBuiltinFunction;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     ObjFunction *function;
     ObjUpvalue **upvalues;
     int upvalue_count;
 } ObjClosure;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     ObjString *name;
     Table methods;
     Table statics;
 } ObjClass;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     ObjClass *klass;
     Table fields;
 } ObjInstance;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     Obj *receiver;
     ObjClosure *method;
 } ObjBoundMethod;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     Array elems;
 } ObjList;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     Table table;
 } ObjMap;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     bool value;
 } ObjBool;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     int64_t value;
 } ObjInt;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
     double value;
 } ObjFloat;
 
-typedef struct
-{
+typedef struct {
     Obj obj;
 } ObjNil;
 

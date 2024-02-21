@@ -3,23 +3,20 @@
 
 #include "common.h"
 
-typedef struct
-{
+typedef struct {
     Obj *value;
     char *error;
 } BuiltinResult;
 
 typedef BuiltinResult (*BuiltinFn)(int, Obj **);
 
-typedef struct
-{
+typedef struct {
     uint32_t hash;
     char *key;
     BuiltinFn value;
 } BuiltinEntry;
 
-typedef struct
-{
+typedef struct {
     int count;
     int capacity;
     BuiltinEntry *entries;

@@ -5,10 +5,10 @@
 #include "object.h"
 #include "vm.h"
 
-#define ALLOCATE_OBJ(type, object_type) (type *)allocate_object(sizeof(type), object_type)
+#define ALLOCATE_OBJ(type, object_type)                                        \
+    (type *)allocate_object(sizeof(type), object_type)
 
-static Obj *allocate_object(size_t size, ObjType type)
-{
+static Obj *allocate_object(size_t size, ObjType type) {
     Obj *object = (Obj *)reallocate(NULL, 0, size);
     object->type = type;
     object->is_marked = false;
@@ -19,58 +19,48 @@ static Obj *allocate_object(size_t size, ObjType type)
     return object;
 }
 
-ObjNil *new_nil()
-{
-    return ALLOCATE_OBJ(ObjNil, OBJ_NIL);
-}
+ObjNil *new_nil() { return ALLOCATE_OBJ(ObjNil, OBJ_NIL); }
 
-ObjFloat *new_float(double value)
-{
+ObjFloat *new_float(double value) {
     ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
     float_->value = value;
 
     return float_;
 }
 
-ObjInt *new_int(int64_t value)
-{
+ObjInt *new_int(int64_t value) {
     ObjInt *integer = ALLOCATE_OBJ(ObjInt, OBJ_INT);
     integer->value = value;
 
     return integer;
 }
 
-ObjBool *new_bool(bool value)
-{
+ObjBool *new_bool(bool value) {
     ObjBool *boolean = ALLOCATE_OBJ(ObjBool, OBJ_BOOL);
     boolean->value = value;
 
     return boolean;
 }
 
-ObjMap *new_map(Obj **elems, int pair_count)
-{
+ObjMap *new_map(Obj **elems, int pair_count) {
     ObjMap *map = ALLOCATE_OBJ(ObjMap, OBJ_MAP);
     init_table(&map->table);
     map->table.count = pair_count;
 
-    for (int i = 0; i < pair_count; i++)
-    {
+    for (int i = 0; i < pair_count; i++) {
         table_set(&map->table, elems[i * 2], elems[i * 2 + 1]);
     }
 
     return map;
 }
 
-ObjList *new_list(Obj **elems, int elem_count)
-{
+ObjList *new_list(Obj **elems, int elem_count) {
     ObjList *list = ALLOCATE_OBJ(ObjList, OBJ_LIST);
 
     Array arr;
     init_array(&arr);
 
-    for (int i = 0; i < elem_count; i++)
-    {
+    for (int i = 0; i < elem_count; i++) {
         write_array(&arr, elems[i]);
     }
 
@@ -79,8 +69,7 @@ ObjList *new_list(Obj **elems, int elem_count)
     return list;
 }
 
-ObjBoundMethod *new_bound_method(Obj *receiver, ObjClosure *method)
-{
+ObjBoundMethod *new_bound_method(Obj *receiver, ObjClosure *method) {
     ObjBoundMethod *bound = ALLOCATE_OBJ(ObjBoundMethod, OBJ_BOUND_METHOD);
     bound->receiver = receiver;
     bound->method = method;
@@ -88,8 +77,7 @@ ObjBoundMethod *new_bound_method(Obj *receiver, ObjClosure *method)
     return bound;
 }
 
-ObjClass *new_class(ObjString *name)
-{
+ObjClass *new_class(ObjString *name) {
     ObjClass *klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
     klass->name = name;
     init_table(&klass->methods);
@@ -98,8 +86,7 @@ ObjClass *new_class(ObjString *name)
     return klass;
 }
 
-ObjInstance *new_instance(ObjClass *klass)
-{
+ObjInstance *new_instance(ObjClass *klass) {
     ObjInstance *instance = ALLOCATE_OBJ(ObjInstance, OBJ_INSTANCE);
     instance->klass = klass;
     init_table(&instance->fields);
@@ -107,11 +94,9 @@ ObjInstance *new_instance(ObjClass *klass)
     return instance;
 }
 
-ObjClosure *new_closure(ObjFunction *function)
-{
+ObjClosure *new_closure(ObjFunction *function) {
     ObjUpvalue **upvalues = ALLOCATE(ObjUpvalue *, function->upvalue_count);
-    for (int i = 0; i < function->upvalue_count; i++)
-    {
+    for (int i = 0; i < function->upvalue_count; i++) {
         upvalues[i] = NULL;
     }
 
@@ -124,8 +109,7 @@ ObjClosure *new_closure(ObjFunction *function)
     return closure;
 }
 
-ObjFunction *new_function()
-{
+ObjFunction *new_function() {
     ObjFunction *function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
     function->arity = 0;
     function->name = NULL;
@@ -135,8 +119,7 @@ ObjFunction *new_function()
     return function;
 }
 
-ObjBuiltinClass *new_builtin_class()
-{
+ObjBuiltinClass *new_builtin_class() {
     ObjBuiltinClass *builtin = ALLOCATE_OBJ(ObjBuiltinClass, OBJ_BUILTIN_CLASS);
     init_builtin_table(&builtin->statics);
     init_builtin_table(&builtin->methods);
@@ -144,15 +127,14 @@ ObjBuiltinClass *new_builtin_class()
     return builtin;
 }
 
-ObjBuiltinFunction *new_builtin_function(BuiltinFn function)
-{
-    ObjBuiltinFunction *builtin = ALLOCATE_OBJ(ObjBuiltinFunction, OBJ_BUILTIN_FUNCTION);
+ObjBuiltinFunction *new_builtin_function(BuiltinFn function) {
+    ObjBuiltinFunction *builtin =
+        ALLOCATE_OBJ(ObjBuiltinFunction, OBJ_BUILTIN_FUNCTION);
     builtin->function = function;
     return builtin;
 }
 
-static ObjString *allocate_string(char *chars, int length, uint32_t hash)
-{
+static ObjString *allocate_string(char *chars, int length, uint32_t hash) {
     ObjString *string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
 
     string->length = length;
@@ -166,23 +148,19 @@ static ObjString *allocate_string(char *chars, int length, uint32_t hash)
     return string;
 }
 
-uint32_t hash_string(const char *key, int length)
-{
+uint32_t hash_string(const char *key, int length) {
     uint32_t hash = 2166136261u;
-    for (int i = 0; i < length; i++)
-    {
+    for (int i = 0; i < length; i++) {
         hash ^= (uint8_t)key[i];
         hash *= 16777619;
     }
     return hash;
 }
 
-ObjString *take_string(char *chars, int length)
-{
+ObjString *take_string(char *chars, int length) {
     uint32_t hash = hash_string(chars, length);
     Obj *interned = table_find_string(&vm.strings, chars, length, hash);
-    if (interned != NULL && interned->type == OBJ_STRING)
-    {
+    if (interned != NULL && interned->type == OBJ_STRING) {
         FREE_ARRAY(char, chars, length + 1);
         return AS_STRING(interned);
     }
@@ -190,8 +168,7 @@ ObjString *take_string(char *chars, int length)
     return allocate_string(chars, length, hash);
 }
 
-ObjString *new_string(const char *chars, int length)
-{
+ObjString *new_string(const char *chars, int length) {
     uint32_t hash = hash_string(chars, length);
 
     Obj *interned = table_find_string(&vm.strings, chars, length, hash);
@@ -205,8 +182,7 @@ ObjString *new_string(const char *chars, int length)
     return allocate_string(heap_chars, length, hash);
 }
 
-ObjUpvalue *new_upvalue(Obj **slot)
-{
+ObjUpvalue *new_upvalue(Obj **slot) {
     ObjUpvalue *upvalue = ALLOCATE_OBJ(ObjUpvalue, OBJ_UPVALUE);
     upvalue->closed = OBJ_VAL(new_nil());
     upvalue->location = slot;
@@ -215,26 +191,21 @@ ObjUpvalue *new_upvalue(Obj **slot)
     return upvalue;
 }
 
-static void print_function(ObjFunction *function)
-{
-    if (function->name == NULL)
-    {
+static void print_function(ObjFunction *function) {
+    if (function->name == NULL) {
         printf("<script>");
         return;
     }
     printf("<fn %s>", function->name->chars);
 }
 
-static void print_list(Array *elems)
-{
+static void print_list(Array *elems) {
     Obj **values = elems->values;
 
     printf("[");
-    if (elems->count > 0)
-    {
+    if (elems->count > 0) {
         repr_object(values[0]);
-        for (int i = 1; i < elems->count; i++)
-        {
+        for (int i = 1; i < elems->count; i++) {
             printf(", ");
             repr_object(values[i]);
         }
@@ -242,14 +213,12 @@ static void print_list(Array *elems)
     printf("]");
 }
 
-static void print_map(ObjMap *map)
-{
+static void print_map(ObjMap *map) {
     int count = map->table.count;
     Obj *value;
 
     printf("{");
-    for (int i = 0; i < map->table.capacity && count > 0; i++)
-    {
+    for (int i = 0; i < map->table.capacity && count > 0; i++) {
         Entry *entry = &map->table.entries[i];
 
         if (entry->key == NULL)
@@ -267,10 +236,8 @@ static void print_map(ObjMap *map)
     printf("}");
 }
 
-void print_object(Obj *obj)
-{
-    switch (obj->type)
-    {
+void print_object(Obj *obj) {
+    switch (obj->type) {
     case OBJ_NIL:
         printf("(nil)");
         break;
@@ -319,10 +286,8 @@ void print_object(Obj *obj)
     }
 }
 
-void repr_object(Obj *obj)
-{
-    switch (obj->type)
-    {
+void repr_object(Obj *obj) {
+    switch (obj->type) {
     case OBJ_STRING:
         printf("\"%s\"", AS_STRING(obj)->chars);
         break;
@@ -332,10 +297,8 @@ void repr_object(Obj *obj)
     }
 }
 
-uint32_t get_hash(Obj *obj)
-{
-    switch (obj->type)
-    {
+uint32_t get_hash(Obj *obj) {
+    switch (obj->type) {
     case OBJ_STRING:
         return AS_STRING(obj)->hash;
     default:
@@ -343,23 +306,19 @@ uint32_t get_hash(Obj *obj)
     }
 }
 
-bool obj_equal(Obj *a, Obj *b)
-{
+bool obj_equal(Obj *a, Obj *b) {
     if (a->type != b->type)
         return false;
 
-    switch (a->type)
-    {
-    case OBJ_BOOL:
-    {
+    switch (a->type) {
+    case OBJ_BOOL: {
         ObjBool *a = AS_BOOL(a);
         ObjBool *b = AS_BOOL(b);
         return a->value == b->value;
     }
     case OBJ_NIL:
         return true;
-    case OBJ_INT:
-    {
+    case OBJ_INT: {
         ObjInt *a = AS_INT(a);
         ObjInt *b = AS_INT(b);
         return a->value == b->value;
@@ -369,15 +328,13 @@ bool obj_equal(Obj *a, Obj *b)
     }
 }
 
-ObjList *argv_list(int argc, const char **argv)
-{
+ObjList *argv_list(int argc, const char **argv) {
     ObjList *list = ALLOCATE_OBJ(ObjList, OBJ_LIST);
 
     Array arr;
     init_array(&arr);
 
-    for (int i = 0; i < argc; i++)
-    {
+    for (int i = 0; i < argc; i++) {
         write_array(&arr, (Obj *)new_string(argv[i], strlen(argv[i])));
     }
 

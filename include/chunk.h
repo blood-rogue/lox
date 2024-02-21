@@ -1,11 +1,10 @@
 #ifndef clox_chunk_h
 #define clox_chunk_h
 
-#include "common.h"
 #include "array.h"
+#include "common.h"
 
-typedef enum
-{
+typedef enum {
     OP_CONSTANT,
     OP_GET_INDEX,
     OP_SET_INDEX,
@@ -49,8 +48,7 @@ typedef enum
     OP_STATIC_METHOD,
 } OpCode;
 
-typedef struct
-{
+typedef struct {
     int count;
     int capacity;
     uint8_t *code;

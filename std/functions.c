@@ -1,34 +1,27 @@
 #include "builtins.h"
 
-BuiltinResult clock_builtin_function(int arg_count, Obj **args)
-{
+BuiltinResult clock_builtin_function(int arg_count, Obj **args) {
     CHECK_ARG_COUNT(0)
     return OK(OBJ_VAL(new_int(clock() / CLOCKS_PER_SEC)));
 }
 
-BuiltinResult exit_builtin_function(int arg_count, Obj **args)
-{
+BuiltinResult exit_builtin_function(int arg_count, Obj **args) {
 
     CHECK_ARG_COUNT(1)
 
-    if (IS_INT(args[0]))
-    {
+    if (IS_INT(args[0])) {
         int exit_code = AS_INT(args[0])->value;
         sweep();
         exit(exit_code);
-    }
-    else
-    {
+    } else {
         return ERR("Cannot exit with non integer exit code");
     }
 
     return OK(OBJ_VAL(new_nil()));
 }
 
-BuiltinResult print_builtin_function(int arg_count, Obj **args)
-{
-    for (int i = 0; i < arg_count; i++)
-    {
+BuiltinResult print_builtin_function(int arg_count, Obj **args) {
+    for (int i = 0; i < arg_count; i++) {
         print_object(args[i]);
         printf(" ");
     }
@@ -37,8 +30,7 @@ BuiltinResult print_builtin_function(int arg_count, Obj **args)
     return OK(OBJ_VAL(new_nil()));
 }
 
-BuiltinResult input_builtin_function(int arg_count, Obj **args)
-{
+BuiltinResult input_builtin_function(int arg_count, Obj **args) {
     if (arg_count > 0)
         print_object(args[0]);
 
@@ -48,8 +40,7 @@ BuiltinResult input_builtin_function(int arg_count, Obj **args)
 
     char c;
 
-    for (;;)
-    {
+    for (;;) {
         if (++len == capacity)
             s = (char *)realloc(s, (capacity *= 2));
 
@@ -64,25 +55,20 @@ BuiltinResult input_builtin_function(int arg_count, Obj **args)
     return OK(OBJ_VAL(take_string(s, len)));
 }
 
-BuiltinResult len_builtin_function(int arg_count, Obj **args)
-{
+BuiltinResult len_builtin_function(int arg_count, Obj **args) {
     CHECK_ARG_COUNT(1)
 
     Obj *obj = args[0];
-    switch (obj->type)
-    {
-    case OBJ_LIST:
-    {
+    switch (obj->type) {
+    case OBJ_LIST: {
         ObjList *list = AS_LIST(obj);
         return OK(OBJ_VAL(new_int(list->elems.count)));
     }
-    case OBJ_MAP:
-    {
+    case OBJ_MAP: {
         ObjMap *map = AS_MAP(obj);
         return OK(OBJ_VAL(new_int(map->table.count)));
     }
-    case OBJ_STRING:
-    {
+    case OBJ_STRING: {
         ObjString *string = AS_STRING(obj);
         return OK(OBJ_VAL(new_int(string->length)));
     }
@@ -91,8 +77,7 @@ BuiltinResult len_builtin_function(int arg_count, Obj **args)
     }
 }
 
-BuiltinResult argv_builtin_function(int arg_count, Obj **args)
-{
+BuiltinResult argv_builtin_function(int arg_count, Obj **args) {
     CHECK_ARG_COUNT(0)
 
     ObjList *argv = argv_list(_argc, _argv);

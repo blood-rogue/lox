@@ -3,14 +3,12 @@
 
 #include "common.h"
 
-typedef struct
-{
+typedef struct {
     Obj *key;
     Obj *value;
 } Entry;
 
-typedef struct
-{
+typedef struct {
     int count;
     int capacity;
     Entry *entries;
