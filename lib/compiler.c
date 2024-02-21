@@ -288,38 +288,38 @@ static void binary(bool can_assign) {
     parse_precedence((Precedence)(rule->precedence + 1));
 
     switch (operator_type) {
-    case TOKEN_BANG_EQUAL:
-        emit_bytes(OP_EQUAL, OP_NOT);
-        break;
-    case TOKEN_EQUAL_EQUAL:
-        emit_byte(OP_EQUAL);
-        break;
-    case TOKEN_GREATER:
-        emit_byte(OP_GREATER);
-        break;
-    case TOKEN_GREATER_EQUAL:
-        emit_bytes(OP_LESS, OP_NOT);
-        break;
-    case TOKEN_LESS:
-        emit_byte(OP_LESS);
-        break;
-    case TOKEN_LESS_EQUAL:
-        emit_bytes(OP_GREATER, OP_NOT);
-        break;
-    case TOKEN_PLUS:
-        emit_byte(OP_ADD);
-        break;
-    case TOKEN_MINUS:
-        emit_byte(OP_SUBTRACT);
-        break;
-    case TOKEN_STAR:
-        emit_byte(OP_MULTIPLY);
-        break;
-    case TOKEN_SLASH:
-        emit_byte(OP_DIVIDE);
-        break;
-    default:
-        return;
+        case TOKEN_BANG_EQUAL:
+            emit_bytes(OP_EQUAL, OP_NOT);
+            break;
+        case TOKEN_EQUAL_EQUAL:
+            emit_byte(OP_EQUAL);
+            break;
+        case TOKEN_GREATER:
+            emit_byte(OP_GREATER);
+            break;
+        case TOKEN_GREATER_EQUAL:
+            emit_bytes(OP_LESS, OP_NOT);
+            break;
+        case TOKEN_LESS:
+            emit_byte(OP_LESS);
+            break;
+        case TOKEN_LESS_EQUAL:
+            emit_bytes(OP_GREATER, OP_NOT);
+            break;
+        case TOKEN_PLUS:
+            emit_byte(OP_ADD);
+            break;
+        case TOKEN_MINUS:
+            emit_byte(OP_SUBTRACT);
+            break;
+        case TOKEN_STAR:
+            emit_byte(OP_MULTIPLY);
+            break;
+        case TOKEN_SLASH:
+            emit_byte(OP_DIVIDE);
+            break;
+        default:
+            return;
     }
 }
 
@@ -384,17 +384,17 @@ static void dot(bool can_assign) {
 
 static void literal(bool can_assign) {
     switch (parser.previous.type) {
-    case TOKEN_FALSE:
-        emit_byte(OP_FALSE);
-        break;
-    case TOKEN_NIL:
-        emit_byte(OP_NIL);
-        break;
-    case TOKEN_TRUE:
-        emit_byte(OP_TRUE);
-        break;
-    default:
-        return;
+        case TOKEN_FALSE:
+            emit_byte(OP_FALSE);
+            break;
+        case TOKEN_NIL:
+            emit_byte(OP_NIL);
+            break;
+        case TOKEN_TRUE:
+            emit_byte(OP_TRUE);
+            break;
+        default:
+            return;
     }
 }
 
@@ -466,14 +466,14 @@ static void unary(bool can_assign) {
     parse_precedence(PREC_UNARY);
 
     switch (operator_type) {
-    case TOKEN_BANG:
-        emit_byte(OP_NOT);
-        break;
-    case TOKEN_MINUS:
-        emit_byte(OP_NEGATE);
-        break;
-    default:
-        return;
+        case TOKEN_BANG:
+            emit_byte(OP_NOT);
+            break;
+        case TOKEN_MINUS:
+            emit_byte(OP_NEGATE);
+            break;
+        default:
+            return;
     }
 }
 
@@ -887,15 +887,15 @@ static void synchronize() {
         if (parser.previous.type == TOKEN_SEMICOLON)
             return;
         switch (parser.current.type) {
-        case TOKEN_CLASS:
-        case TOKEN_FUN:
-        case TOKEN_VAR:
-        case TOKEN_FOR:
-        case TOKEN_IF:
-        case TOKEN_WHILE:
-        case TOKEN_RETURN:
-            return;
-        default:;
+            case TOKEN_CLASS:
+            case TOKEN_FUN:
+            case TOKEN_VAR:
+            case TOKEN_FOR:
+            case TOKEN_IF:
+            case TOKEN_WHILE:
+            case TOKEN_RETURN:
+                return;
+            default:;
         }
 
         advance();

@@ -238,71 +238,71 @@ static void print_map(ObjMap *map) {
 
 void print_object(Obj *obj) {
     switch (obj->type) {
-    case OBJ_NIL:
-        printf("(nil)");
-        break;
-    case OBJ_FLOAT:
-        printf("%g", AS_FLOAT(obj)->value);
-        break;
-    case OBJ_INT:
-        printf("%ld", AS_INT(obj)->value);
-        break;
-    case OBJ_BOOL:
-        printf(AS_BOOL(obj)->value ? "true" : "false");
-        break;
-    case OBJ_MAP:
-        print_map(AS_MAP(obj));
-        break;
-    case OBJ_LIST:
-        print_list(&AS_LIST(obj)->elems);
-        break;
-    case OBJ_BOUND_METHOD:
-        print_function(AS_BOUND_METHOD(obj)->method->function);
-        break;
-    case OBJ_CLASS:
-        printf("<class '%s'>", AS_CLASS(obj)->name->chars);
-        break;
-    case OBJ_CLOSURE:
-        print_function(AS_CLOSURE(obj)->function);
-        break;
-    case OBJ_STRING:
-        printf("%s", AS_STRING(obj)->chars);
-        break;
-    case OBJ_INSTANCE:
-        printf("<'%s' instance>", AS_INSTANCE(obj)->klass->name->chars);
-        break;
-    case OBJ_BUILTIN_CLASS:
-        printf("<builtin class>");
-        break;
-    case OBJ_BUILTIN_FUNCTION:
-        printf("<builtin fn>");
-        break;
-    case OBJ_FUNCTION:
-        print_function(AS_FUNCTION(obj));
-        break;
-    case OBJ_UPVALUE:
-        printf("upvalue");
-        break;
+        case OBJ_NIL:
+            printf("(nil)");
+            break;
+        case OBJ_FLOAT:
+            printf("%g", AS_FLOAT(obj)->value);
+            break;
+        case OBJ_INT:
+            printf("%ld", AS_INT(obj)->value);
+            break;
+        case OBJ_BOOL:
+            printf(AS_BOOL(obj)->value ? "true" : "false");
+            break;
+        case OBJ_MAP:
+            print_map(AS_MAP(obj));
+            break;
+        case OBJ_LIST:
+            print_list(&AS_LIST(obj)->elems);
+            break;
+        case OBJ_BOUND_METHOD:
+            print_function(AS_BOUND_METHOD(obj)->method->function);
+            break;
+        case OBJ_CLASS:
+            printf("<class '%s'>", AS_CLASS(obj)->name->chars);
+            break;
+        case OBJ_CLOSURE:
+            print_function(AS_CLOSURE(obj)->function);
+            break;
+        case OBJ_STRING:
+            printf("%s", AS_STRING(obj)->chars);
+            break;
+        case OBJ_INSTANCE:
+            printf("<'%s' instance>", AS_INSTANCE(obj)->klass->name->chars);
+            break;
+        case OBJ_BUILTIN_CLASS:
+            printf("<builtin class>");
+            break;
+        case OBJ_BUILTIN_FUNCTION:
+            printf("<builtin fn>");
+            break;
+        case OBJ_FUNCTION:
+            print_function(AS_FUNCTION(obj));
+            break;
+        case OBJ_UPVALUE:
+            printf("upvalue");
+            break;
     }
 }
 
 void repr_object(Obj *obj) {
     switch (obj->type) {
-    case OBJ_STRING:
-        printf("\"%s\"", AS_STRING(obj)->chars);
-        break;
-    default:
-        print_object(obj);
-        break;
+        case OBJ_STRING:
+            printf("\"%s\"", AS_STRING(obj)->chars);
+            break;
+        default:
+            print_object(obj);
+            break;
     }
 }
 
 uint32_t get_hash(Obj *obj) {
     switch (obj->type) {
-    case OBJ_STRING:
-        return AS_STRING(obj)->hash;
-    default:
-        return 0;
+        case OBJ_STRING:
+            return AS_STRING(obj)->hash;
+        default:
+            return 0;
     }
 }
 
@@ -311,20 +311,22 @@ bool obj_equal(Obj *a, Obj *b) {
         return false;
 
     switch (a->type) {
-    case OBJ_BOOL: {
-        ObjBool *a = AS_BOOL(a);
-        ObjBool *b = AS_BOOL(b);
-        return a->value == b->value;
-    }
-    case OBJ_NIL:
-        return true;
-    case OBJ_INT: {
-        ObjInt *a = AS_INT(a);
-        ObjInt *b = AS_INT(b);
-        return a->value == b->value;
-    }
-    default:
-        return a == b;
+        case OBJ_BOOL:
+            {
+                ObjBool *a = AS_BOOL(a);
+                ObjBool *b = AS_BOOL(b);
+                return a->value == b->value;
+            }
+        case OBJ_NIL:
+            return true;
+        case OBJ_INT:
+            {
+                ObjInt *a = AS_INT(a);
+                ObjInt *b = AS_INT(b);
+                return a->value == b->value;
+            }
+        default:
+            return a == b;
     }
 }
 

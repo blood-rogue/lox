@@ -60,20 +60,23 @@ BuiltinResult len_builtin_function(int arg_count, Obj **args) {
 
     Obj *obj = args[0];
     switch (obj->type) {
-    case OBJ_LIST: {
-        ObjList *list = AS_LIST(obj);
-        return OK(OBJ_VAL(new_int(list->elems.count)));
-    }
-    case OBJ_MAP: {
-        ObjMap *map = AS_MAP(obj);
-        return OK(OBJ_VAL(new_int(map->table.count)));
-    }
-    case OBJ_STRING: {
-        ObjString *string = AS_STRING(obj);
-        return OK(OBJ_VAL(new_int(string->length)));
-    }
-    default:
-        return ERR("len() is not defined for the type");
+        case OBJ_LIST:
+            {
+                ObjList *list = AS_LIST(obj);
+                return OK(OBJ_VAL(new_int(list->elems.count)));
+            }
+        case OBJ_MAP:
+            {
+                ObjMap *map = AS_MAP(obj);
+                return OK(OBJ_VAL(new_int(map->table.count)));
+            }
+        case OBJ_STRING:
+            {
+                ObjString *string = AS_STRING(obj);
+                return OK(OBJ_VAL(new_int(string->length)));
+            }
+        default:
+            return ERR("len() is not defined for the type");
     }
 }
 

@@ -36,4 +36,7 @@ $(BUILD_DIR)/%.o: $(STD_DIR)/%.c
 clean:
 	rm -rf $(BUILD_DIR) $(TARGET)
 
+fmt:
+	clang-format -i main.c lib/*.c std/*.c include/*.h
+
 .PHONY: all clean

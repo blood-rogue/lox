@@ -124,47 +124,54 @@ static bool call(ObjClosure *closure, int arg_count) {
 
 static bool call_value(Obj *callee, int arg_count) {
     switch (callee->type) {
-    case OBJ_BOUND_METHOD: {
-        ObjBoundMethod *bound = AS_BOUND_METHOD(callee);
-        vm.stack_top[-arg_count - 1] = bound->receiver;
-        return call(bound->method, arg_count);
-    }
-    case OBJ_CLASS: {
-        ObjClass *klass = AS_CLASS(callee);
-        vm.stack_top[-arg_count - 1] = OBJ_VAL(new_instance(klass));
+        case OBJ_BOUND_METHOD:
+            {
+                ObjBoundMethod *bound = AS_BOUND_METHOD(callee);
+                vm.stack_top[-arg_count - 1] = bound->receiver;
+                return call(bound->method, arg_count);
+            }
+        case OBJ_CLASS:
+            {
+                ObjClass *klass = AS_CLASS(callee);
+                vm.stack_top[-arg_count - 1] = OBJ_VAL(new_instance(klass));
 
-        Obj *initializer;
-        if (table_get(&klass->methods, (Obj *)vm.init_string, &initializer)) {
-            return call(AS_CLOSURE(initializer), arg_count);
-        } else if (arg_count != 0) {
-            runtime_error("Expected 0 arguments but got %d.", arg_count);
+                Obj *initializer;
+                if (table_get(&klass->methods, (Obj *)vm.init_string,
+                              &initializer)) {
+                    return call(AS_CLOSURE(initializer), arg_count);
+                } else if (arg_count != 0) {
+                    runtime_error("Expected 0 arguments but got %d.",
+                                  arg_count);
+                    return false;
+                }
+
+                return true;
+            }
+        case OBJ_CLOSURE:
+            return call(AS_CLOSURE(callee), arg_count);
+        case OBJ_BUILTIN_FUNCTION:
+            {
+                BuiltinFn builtin = AS_BUILTIN_FUNCTION(callee)->function;
+                BuiltinResult result =
+                    builtin(arg_count, vm.stack_top - arg_count);
+
+                if (result.error != NULL) {
+                    runtime_error(result.error);
+                    return false;
+                }
+
+                vm.stack_top -= arg_count + 1;
+                push(result.value);
+                return true;
+            }
+        case OBJ_BUILTIN_CLASS:
+            {
+                runtime_error("Cannot create builtin classes");
+                return false;
+            }
+        default:
+            runtime_error("Can only call functions and classes.");
             return false;
-        }
-
-        return true;
-    }
-    case OBJ_CLOSURE:
-        return call(AS_CLOSURE(callee), arg_count);
-    case OBJ_BUILTIN_FUNCTION: {
-        BuiltinFn builtin = AS_BUILTIN_FUNCTION(callee)->function;
-        BuiltinResult result = builtin(arg_count, vm.stack_top - arg_count);
-
-        if (result.error != NULL) {
-            runtime_error(result.error);
-            return false;
-        }
-
-        vm.stack_top -= arg_count + 1;
-        push(result.value);
-        return true;
-    }
-    case OBJ_BUILTIN_CLASS: {
-        runtime_error("Cannot create builtin classes");
-        return false;
-    }
-    default:
-        runtime_error("Can only call functions and classes.");
-        return false;
     }
 }
 
@@ -330,368 +337,413 @@ static InterpretResult run() {
 
     for (;;) {
         switch (READ_BYTE()) {
-        case OP_CONSTANT: {
-            Obj *constant = READ_CONSTANT();
-            push(constant);
-            break;
-        }
-        case OP_LIST: {
-            int elem_count = READ_BYTE();
-            ObjList *list = new_list(vm.stack_top - elem_count, elem_count);
-            vm.stack_top -= elem_count;
-            push(OBJ_VAL(list));
-
-            break;
-        }
-        case OP_MAP: {
-            int pair_count = READ_BYTE();
-            ObjMap *map = new_map(vm.stack_top - pair_count * 2, pair_count);
-            vm.stack_top -= pair_count * 2;
-            push(OBJ_VAL(map));
-
-            break;
-        }
-        case OP_GET_INDEX: {
-            Obj *index_value = pop();
-            Obj *value = pop();
-
-            Obj *indexed;
-            if (IS_LIST(value)) {
-                if (!IS_INT(index_value)) {
-                    runtime_error("Lists can only be indexed using numbers.");
-                    return INTERPRET_RUNTIME_ERROR;
+            case OP_CONSTANT:
+                {
+                    Obj *constant = READ_CONSTANT();
+                    push(constant);
+                    break;
                 }
+            case OP_LIST:
+                {
+                    int elem_count = READ_BYTE();
+                    ObjList *list =
+                        new_list(vm.stack_top - elem_count, elem_count);
+                    vm.stack_top -= elem_count;
+                    push(OBJ_VAL(list));
 
-                int64_t index = AS_INT(index_value)->value;
-                ObjList *list = AS_LIST(value);
-
-                if (index >= list->elems.count) {
-                    runtime_error("Index out of bounds.");
-                    return INTERPRET_RUNTIME_ERROR;
+                    break;
                 }
+            case OP_MAP:
+                {
+                    int pair_count = READ_BYTE();
+                    ObjMap *map =
+                        new_map(vm.stack_top - pair_count * 2, pair_count);
+                    vm.stack_top -= pair_count * 2;
+                    push(OBJ_VAL(map));
 
-                indexed = list->elems.values[index];
-            } else if (IS_MAP(value)) {
-                if (!IS_STRING(index_value)) {
-                    runtime_error("Maps can only be indexed using strings.");
-                    return INTERPRET_RUNTIME_ERROR;
+                    break;
                 }
+            case OP_GET_INDEX:
+                {
+                    Obj *index_value = pop();
+                    Obj *value = pop();
 
-                ObjString *index = AS_STRING(index_value);
-                ObjMap *map = AS_MAP(value);
+                    Obj *indexed;
+                    if (IS_LIST(value)) {
+                        if (!IS_INT(index_value)) {
+                            runtime_error(
+                                "Lists can only be indexed using numbers.");
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
 
-                if (!table_get(&map->table, (Obj *)index, &indexed)) {
-                    runtime_error("Key not found.");
-                    return INTERPRET_RUNTIME_ERROR;
+                        int64_t index = AS_INT(index_value)->value;
+                        ObjList *list = AS_LIST(value);
+
+                        if (index >= list->elems.count) {
+                            runtime_error("Index out of bounds.");
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
+
+                        indexed = list->elems.values[index];
+                    } else if (IS_MAP(value)) {
+                        if (!IS_STRING(index_value)) {
+                            runtime_error(
+                                "Maps can only be indexed using strings.");
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
+
+                        ObjString *index = AS_STRING(index_value);
+                        ObjMap *map = AS_MAP(value);
+
+                        if (!table_get(&map->table, (Obj *)index, &indexed)) {
+                            runtime_error("Key not found.");
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
+                    } else {
+                        runtime_error("Only lists and maps can be indexed.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+
+                    push(indexed);
+                    break;
                 }
-            } else {
-                runtime_error("Only lists and maps can be indexed.");
-                return INTERPRET_RUNTIME_ERROR;
-            }
+            case OP_SET_INDEX:
+                {
+                    Obj *to_be_assigned = peek(0);
+                    Obj *index_value = peek(1);
+                    Obj *value = peek(2);
 
-            push(indexed);
-            break;
-        }
-        case OP_SET_INDEX: {
-            Obj *to_be_assigned = peek(0);
-            Obj *index_value = peek(1);
-            Obj *value = peek(2);
+                    if (IS_LIST(value)) {
+                        if (!IS_INT(index_value)) {
+                            runtime_error(
+                                "Lists can only be indexed using numbers.");
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
 
-            if (IS_LIST(value)) {
-                if (!IS_INT(index_value)) {
-                    runtime_error("Lists can only be indexed using numbers.");
-                    return INTERPRET_RUNTIME_ERROR;
-                }
+                        int64_t index = AS_INT(index_value)->value;
+                        ObjList *list = AS_LIST(value);
 
-                int64_t index = AS_INT(index_value)->value;
-                ObjList *list = AS_LIST(value);
+                        if (index >= list->elems.count) {
+                            runtime_error("Index out of bounds.");
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
 
-                if (index >= list->elems.count) {
-                    runtime_error("Index out of bounds.");
-                    return INTERPRET_RUNTIME_ERROR;
-                }
+                        list->elems.values[index] = to_be_assigned;
+                    } else if (IS_MAP(value)) {
+                        if (!IS_STRING(index_value)) {
+                            runtime_error(
+                                "Maps can only be indexed using strings.");
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
 
-                list->elems.values[index] = to_be_assigned;
-            } else if (IS_MAP(value)) {
-                if (!IS_STRING(index_value)) {
-                    runtime_error("Maps can only be indexed using strings.");
-                    return INTERPRET_RUNTIME_ERROR;
-                }
+                        ObjString *index = AS_STRING(index_value);
+                        ObjMap *map = AS_MAP(value);
 
-                ObjString *index = AS_STRING(index_value);
-                ObjMap *map = AS_MAP(value);
+                        table_set(&map->table, (Obj *)index, to_be_assigned);
+                    } else {
+                        runtime_error("Only lists and maps can be indexed.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
 
-                table_set(&map->table, (Obj *)index, to_be_assigned);
-            } else {
-                runtime_error("Only lists and maps can be indexed.");
-                return INTERPRET_RUNTIME_ERROR;
-            }
-
-            pop();
-            pop();
-            pop();
-
-            push(value);
-
-            break;
-        }
-        case OP_NIL: {
-            push(OBJ_VAL(new_nil()));
-            break;
-        }
-        case OP_TRUE: {
-            push(OBJ_VAL(new_bool(true)));
-            break;
-        }
-        case OP_FALSE: {
-            push(OBJ_VAL(new_bool(false)));
-            break;
-        }
-        case OP_POP: {
-            pop();
-            break;
-        }
-        case OP_GET_LOCAL: {
-            uint8_t slot = READ_BYTE();
-            push(frame->slots[slot]);
-            break;
-        }
-        case OP_SET_LOCAL: {
-            uint8_t slot = READ_BYTE();
-            frame->slots[slot] = peek(0);
-            break;
-        }
-        case OP_GET_GLOBAL: {
-            ObjString *name = READ_STRING();
-            Obj *value;
-            if (!table_get(&vm.globals, (Obj *)name, &value)) {
-                runtime_error("Undefined variable '%s'.", name->chars);
-                return INTERPRET_RUNTIME_ERROR;
-            }
-            push(value);
-            break;
-        }
-        case OP_DEFINE_GLOBAL: {
-            ObjString *name = READ_STRING();
-            table_set(&vm.globals, (Obj *)name, peek(0));
-            pop();
-            break;
-        }
-        case OP_SET_GLOBAL: {
-            ObjString *name = READ_STRING();
-            if (table_set(&vm.globals, (Obj *)name, peek(0))) {
-                table_delete(&vm.globals, (Obj *)name);
-                runtime_error("Undefined variable '%s'.", name->chars);
-                return INTERPRET_RUNTIME_ERROR;
-            }
-            break;
-        }
-        case OP_GET_UPVALUE: {
-            uint8_t slot = READ_BYTE();
-            push(*frame->closure->upvalues[slot]->location);
-            break;
-        }
-        case OP_SET_UPVALUE: {
-            uint8_t slot = READ_BYTE();
-            *frame->closure->upvalues[slot]->location = peek(0);
-            break;
-        }
-        case OP_GET_PROPERTY: {
-            if (IS_INSTANCE(peek(0))) {
-                ObjInstance *instance = AS_INSTANCE(peek(0));
-                ObjString *name = READ_STRING();
-
-                Obj *value;
-                if (table_get(&instance->fields, (Obj *)name, &value)) {
                     pop();
+                    pop();
+                    pop();
+
+                    push(value);
+
+                    break;
+                }
+            case OP_NIL:
+                {
+                    push(OBJ_VAL(new_nil()));
+                    break;
+                }
+            case OP_TRUE:
+                {
+                    push(OBJ_VAL(new_bool(true)));
+                    break;
+                }
+            case OP_FALSE:
+                {
+                    push(OBJ_VAL(new_bool(false)));
+                    break;
+                }
+            case OP_POP:
+                {
+                    pop();
+                    break;
+                }
+            case OP_GET_LOCAL:
+                {
+                    uint8_t slot = READ_BYTE();
+                    push(frame->slots[slot]);
+                    break;
+                }
+            case OP_SET_LOCAL:
+                {
+                    uint8_t slot = READ_BYTE();
+                    frame->slots[slot] = peek(0);
+                    break;
+                }
+            case OP_GET_GLOBAL:
+                {
+                    ObjString *name = READ_STRING();
+                    Obj *value;
+                    if (!table_get(&vm.globals, (Obj *)name, &value)) {
+                        runtime_error("Undefined variable '%s'.", name->chars);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
                     push(value);
                     break;
                 }
+            case OP_DEFINE_GLOBAL:
+                {
+                    ObjString *name = READ_STRING();
+                    table_set(&vm.globals, (Obj *)name, peek(0));
+                    pop();
+                    break;
+                }
+            case OP_SET_GLOBAL:
+                {
+                    ObjString *name = READ_STRING();
+                    if (table_set(&vm.globals, (Obj *)name, peek(0))) {
+                        table_delete(&vm.globals, (Obj *)name);
+                        runtime_error("Undefined variable '%s'.", name->chars);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    break;
+                }
+            case OP_GET_UPVALUE:
+                {
+                    uint8_t slot = READ_BYTE();
+                    push(*frame->closure->upvalues[slot]->location);
+                    break;
+                }
+            case OP_SET_UPVALUE:
+                {
+                    uint8_t slot = READ_BYTE();
+                    *frame->closure->upvalues[slot]->location = peek(0);
+                    break;
+                }
+            case OP_GET_PROPERTY:
+                {
+                    if (IS_INSTANCE(peek(0))) {
+                        ObjInstance *instance = AS_INSTANCE(peek(0));
+                        ObjString *name = READ_STRING();
 
-                if (!bind_method(instance->klass, name)) {
+                        Obj *value;
+                        if (table_get(&instance->fields, (Obj *)name, &value)) {
+                            pop();
+                            push(value);
+                            break;
+                        }
+
+                        if (!bind_method(instance->klass, name)) {
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
+                        break;
+                    }
+
+                    runtime_error("Only instances have properties.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
-                break;
-            }
+            case OP_SET_PROPERTY:
+                {
+                    if (IS_INSTANCE(peek(1))) {
 
-            runtime_error("Only instances have properties.");
-            return INTERPRET_RUNTIME_ERROR;
-        }
-        case OP_SET_PROPERTY: {
-            if (IS_INSTANCE(peek(1))) {
+                        ObjInstance *instance = AS_INSTANCE(peek(1));
+                        table_set(&instance->fields, (Obj *)READ_STRING(),
+                                  peek(0));
+                        Obj *value = pop();
+                        pop();
+                        push(value);
+                        break;
+                    }
 
-                ObjInstance *instance = AS_INSTANCE(peek(1));
-                table_set(&instance->fields, (Obj *)READ_STRING(), peek(0));
-                Obj *value = pop();
-                pop();
-                push(value);
-                break;
-            }
-
-            runtime_error("Only instances have properties.");
-            return INTERPRET_RUNTIME_ERROR;
-        }
-        case OP_GET_SUPER: {
-            ObjString *name = READ_STRING();
-            ObjClass *superclass = AS_CLASS(pop());
-
-            if (!bind_method(superclass, name)) {
-                return INTERPRET_RUNTIME_ERROR;
-            }
-            break;
-        }
-        case OP_EQUAL: {
-            Obj *b = pop();
-            Obj *a = pop();
-            push(OBJ_VAL(new_bool(obj_equal(a, b))));
-            break;
-        }
-        case OP_GREATER:
-            BINARY_OP(new_bool, new_bool, >);
-            break;
-        case OP_LESS:
-            BINARY_OP(new_bool, new_bool, <);
-            break;
-        case OP_ADD: {
-            if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
-                concatenate();
-            } else if (IS_INT(peek(0)) && IS_INT(peek(1))) {
-                push(OBJ_VAL(
-                    new_int(AS_INT(pop())->value + AS_INT(pop())->value)));
-            } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {
-                push(OBJ_VAL(new_float(AS_FLOAT(pop())->value +
-                                       AS_FLOAT(pop())->value)));
-            } else {
-                runtime_error("Operands must be two numbers or two strings.");
-                return INTERPRET_RUNTIME_ERROR;
-            }
-            break;
-        }
-        case OP_SUBTRACT: {
-            BINARY_OP(new_int, new_float, -);
-            break;
-        }
-        case OP_MULTIPLY: {
-            BINARY_OP(new_int, new_float, *);
-            break;
-        }
-        case OP_DIVIDE: {
-            BINARY_OP(new_int, new_float, /);
-            break;
-        }
-        case OP_NOT: {
-            push(OBJ_VAL(new_bool(is_falsey(pop()))));
-            break;
-        }
-        case OP_NEGATE: {
-            if (!IS_INT(peek(0))) {
-                runtime_error("Operand must be a number.");
-                return INTERPRET_RUNTIME_ERROR;
-            }
-            push(OBJ_VAL(new_int(-(AS_INT(pop())->value))));
-            break;
-        }
-        case OP_JUMP: {
-            uint16_t offset = READ_SHORT();
-            frame->ip += offset;
-            break;
-        }
-        case OP_JUMP_IF_FALSE: {
-            uint16_t offset = READ_SHORT();
-            if (is_falsey(peek(0)))
-                frame->ip += offset;
-            break;
-        }
-        case OP_LOOP: {
-            uint16_t offset = READ_SHORT();
-            frame->ip -= offset;
-            break;
-        }
-        case OP_CALL: {
-            int arg_count = READ_BYTE();
-            if (!call_value(peek(arg_count), arg_count)) {
-                return INTERPRET_RUNTIME_ERROR;
-            }
-            frame = &vm.frames[vm.frame_count - 1];
-            break;
-        }
-        case OP_INVOKE: {
-            ObjString *method = READ_STRING();
-            int arg_count = READ_BYTE();
-            if (!invoke(method, arg_count)) {
-                return INTERPRET_RUNTIME_ERROR;
-            }
-            frame = &vm.frames[vm.frame_count - 1];
-            break;
-        }
-        case OP_SUPER_INVOKE: {
-            ObjString *method = READ_STRING();
-            int arg_count = READ_BYTE();
-            ObjClass *superclass = AS_CLASS(pop());
-            if (!invoke_from_class(superclass, method, arg_count)) {
-                return INTERPRET_RUNTIME_ERROR;
-            }
-            frame = &vm.frames[vm.frame_count - 1];
-            break;
-        }
-        case OP_CLOSURE: {
-            ObjFunction *function = AS_FUNCTION(READ_CONSTANT());
-            ObjClosure *closure = new_closure(function);
-            push(OBJ_VAL(closure));
-
-            for (int i = 0; i < closure->upvalue_count; i++) {
-                uint8_t is_local = READ_BYTE();
-                uint8_t index = READ_BYTE();
-                if (is_local) {
-                    closure->upvalues[i] =
-                        capture_upvalue(frame->slots + index);
-                } else {
-                    closure->upvalues[i] = frame->closure->upvalues[index];
+                    runtime_error("Only instances have properties.");
+                    return INTERPRET_RUNTIME_ERROR;
                 }
-            }
+            case OP_GET_SUPER:
+                {
+                    ObjString *name = READ_STRING();
+                    ObjClass *superclass = AS_CLASS(pop());
 
-            break;
-        }
-        case OP_CLOSE_UPVALUE:
-            close_upvalues(vm.stack_top - 1);
-            pop();
-            break;
-        case OP_RETURN: {
-            Obj *result = pop();
-            close_upvalues(frame->slots);
-            vm.frame_count--;
-            if (vm.frame_count == 0) {
+                    if (!bind_method(superclass, name)) {
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    break;
+                }
+            case OP_EQUAL:
+                {
+                    Obj *b = pop();
+                    Obj *a = pop();
+                    push(OBJ_VAL(new_bool(obj_equal(a, b))));
+                    break;
+                }
+            case OP_GREATER:
+                BINARY_OP(new_bool, new_bool, >);
+                break;
+            case OP_LESS:
+                BINARY_OP(new_bool, new_bool, <);
+                break;
+            case OP_ADD:
+                {
+                    if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+                        concatenate();
+                    } else if (IS_INT(peek(0)) && IS_INT(peek(1))) {
+                        push(OBJ_VAL(new_int(AS_INT(pop())->value +
+                                             AS_INT(pop())->value)));
+                    } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {
+                        push(OBJ_VAL(new_float(AS_FLOAT(pop())->value +
+                                               AS_FLOAT(pop())->value)));
+                    } else {
+                        runtime_error(
+                            "Operands must be two numbers or two strings.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    break;
+                }
+            case OP_SUBTRACT:
+                {
+                    BINARY_OP(new_int, new_float, -);
+                    break;
+                }
+            case OP_MULTIPLY:
+                {
+                    BINARY_OP(new_int, new_float, *);
+                    break;
+                }
+            case OP_DIVIDE:
+                {
+                    BINARY_OP(new_int, new_float, /);
+                    break;
+                }
+            case OP_NOT:
+                {
+                    push(OBJ_VAL(new_bool(is_falsey(pop()))));
+                    break;
+                }
+            case OP_NEGATE:
+                {
+                    if (!IS_INT(peek(0))) {
+                        runtime_error("Operand must be a number.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    push(OBJ_VAL(new_int(-(AS_INT(pop())->value))));
+                    break;
+                }
+            case OP_JUMP:
+                {
+                    uint16_t offset = READ_SHORT();
+                    frame->ip += offset;
+                    break;
+                }
+            case OP_JUMP_IF_FALSE:
+                {
+                    uint16_t offset = READ_SHORT();
+                    if (is_falsey(peek(0)))
+                        frame->ip += offset;
+                    break;
+                }
+            case OP_LOOP:
+                {
+                    uint16_t offset = READ_SHORT();
+                    frame->ip -= offset;
+                    break;
+                }
+            case OP_CALL:
+                {
+                    int arg_count = READ_BYTE();
+                    if (!call_value(peek(arg_count), arg_count)) {
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    frame = &vm.frames[vm.frame_count - 1];
+                    break;
+                }
+            case OP_INVOKE:
+                {
+                    ObjString *method = READ_STRING();
+                    int arg_count = READ_BYTE();
+                    if (!invoke(method, arg_count)) {
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    frame = &vm.frames[vm.frame_count - 1];
+                    break;
+                }
+            case OP_SUPER_INVOKE:
+                {
+                    ObjString *method = READ_STRING();
+                    int arg_count = READ_BYTE();
+                    ObjClass *superclass = AS_CLASS(pop());
+                    if (!invoke_from_class(superclass, method, arg_count)) {
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+                    frame = &vm.frames[vm.frame_count - 1];
+                    break;
+                }
+            case OP_CLOSURE:
+                {
+                    ObjFunction *function = AS_FUNCTION(READ_CONSTANT());
+                    ObjClosure *closure = new_closure(function);
+                    push(OBJ_VAL(closure));
+
+                    for (int i = 0; i < closure->upvalue_count; i++) {
+                        uint8_t is_local = READ_BYTE();
+                        uint8_t index = READ_BYTE();
+                        if (is_local) {
+                            closure->upvalues[i] =
+                                capture_upvalue(frame->slots + index);
+                        } else {
+                            closure->upvalues[i] =
+                                frame->closure->upvalues[index];
+                        }
+                    }
+
+                    break;
+                }
+            case OP_CLOSE_UPVALUE:
+                close_upvalues(vm.stack_top - 1);
                 pop();
-                return INTERPRET_OK;
-            }
+                break;
+            case OP_RETURN:
+                {
+                    Obj *result = pop();
+                    close_upvalues(frame->slots);
+                    vm.frame_count--;
+                    if (vm.frame_count == 0) {
+                        pop();
+                        return INTERPRET_OK;
+                    }
 
-            vm.stack_top = frame->slots;
-            push(result);
-            frame = &vm.frames[vm.frame_count - 1];
-            break;
-        }
-        case OP_CLASS:
-            push(OBJ_VAL(new_class(READ_STRING())));
-            break;
-        case OP_INHERIT: {
-            Obj *superclass = peek(1);
+                    vm.stack_top = frame->slots;
+                    push(result);
+                    frame = &vm.frames[vm.frame_count - 1];
+                    break;
+                }
+            case OP_CLASS:
+                push(OBJ_VAL(new_class(READ_STRING())));
+                break;
+            case OP_INHERIT:
+                {
+                    Obj *superclass = peek(1);
 
-            if (!IS_CLASS(superclass)) {
-                runtime_error("Superclass must be a class.");
-                return INTERPRET_RUNTIME_ERROR;
-            }
+                    if (!IS_CLASS(superclass)) {
+                        runtime_error("Superclass must be a class.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
 
-            ObjClass *subclass = AS_CLASS(peek(0));
-            table_add_all(&AS_CLASS(superclass)->methods, &subclass->methods);
-            pop();
-            break;
-        }
-        case OP_METHOD:
-            define_method(READ_STRING(), false);
-            break;
-        case OP_STATIC_METHOD:
-            define_method(READ_STRING(), true);
-            break;
+                    ObjClass *subclass = AS_CLASS(peek(0));
+                    table_add_all(&AS_CLASS(superclass)->methods,
+                                  &subclass->methods);
+                    pop();
+                    break;
+                }
+            case OP_METHOD:
+                define_method(READ_STRING(), false);
+                break;
+            case OP_STATIC_METHOD:
+                define_method(READ_STRING(), true);
+                break;
         }
     }
 
