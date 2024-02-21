@@ -139,6 +139,7 @@ ObjBuiltinClass *new_builtin_class()
 {
     ObjBuiltinClass *builtin = ALLOCATE_OBJ(ObjBuiltinClass, OBJ_BUILTIN_CLASS);
     init_builtin_table(&builtin->statics);
+    init_builtin_table(&builtin->methods);
 
     return builtin;
 }

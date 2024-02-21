@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <math.h>
 
 #include "common.h"
 #include "compiler.h"
@@ -106,6 +105,7 @@ void init_vm()
     define_builtin_function("argv", argv_builtin_function);
 
     define_builtin_class("int", int_builtin_class());
+    define_builtin_class("float", float_builtin_class());
 }
 
 void free_vm()
@@ -589,43 +589,45 @@ static InterpretResult run()
         }
         case OP_GET_PROPERTY:
         {
-            if (!IS_INSTANCE(peek(0)))
+            if (IS_INSTANCE(peek(0)))
             {
-                runtime_error("Only instances have properties.");
-                return INTERPRET_RUNTIME_ERROR;
+
+                ObjInstance *instance = AS_INSTANCE(peek(0));
+                ObjString *name = READ_STRING();
+
+                Obj *value;
+                if (table_get(&instance->fields, (Obj *)name, &value))
+                {
+                    pop();
+                    push(value);
+                    break;
+                }
+
+                if (!bind_method(instance->klass, name))
+                {
+                    return INTERPRET_RUNTIME_ERROR;
+                }
+                break;
             }
 
-            ObjInstance *instance = AS_INSTANCE(peek(0));
-            ObjString *name = READ_STRING();
-
-            Obj *value;
-            if (table_get(&instance->fields, (Obj *)name, &value))
+            runtime_error("Only instances have properties.");
+            return INTERPRET_RUNTIME_ERROR;
+        }
+        case OP_SET_PROPERTY:
+        {
+            if (IS_INSTANCE(peek(1)))
             {
+
+                ObjInstance *instance = AS_INSTANCE(peek(1));
+                table_set(&instance->fields, (Obj *)READ_STRING(), peek(0));
+                Obj *value = pop();
                 pop();
                 push(value);
                 break;
             }
 
-            if (!bind_method(instance->klass, name))
-            {
-                return INTERPRET_RUNTIME_ERROR;
-            }
-            break;
-        }
-        case OP_SET_PROPERTY:
-        {
-            if (!IS_INSTANCE(peek(1)))
-            {
-                runtime_error("Only instances have properties.");
-                return INTERPRET_RUNTIME_ERROR;
-            }
-
-            ObjInstance *instance = AS_INSTANCE(peek(1));
-            table_set(&instance->fields, (Obj *)READ_STRING(), peek(0));
-            Obj *value = pop();
-            pop();
-            push(value);
-            break;
+            runtime_error("Only instances have properties.");
+            return INTERPRET_RUNTIME_ERROR;
         }
         case OP_GET_SUPER:
         {

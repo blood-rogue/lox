@@ -1,17 +1,17 @@
 #include "builtins.h"
 
-STATIC(int, parse);
+STATIC(float, parse);
 
-ObjBuiltinClass *int_builtin_class()
+ObjBuiltinClass *float_builtin_class()
 {
     ObjBuiltinClass *klass = new_builtin_class();
 
-    SET_STATIC(int, parse, 5);
+    SET_STATIC(float, parse, 5);
 
     return klass;
 }
 
-STATIC(int, parse)
+STATIC(float, parse)
 {
     CHECK_ARG_COUNT(1)
     Obj *arg = args[0];
@@ -19,11 +19,9 @@ STATIC(int, parse)
     switch (arg->type)
     {
     case OBJ_INT:
-        return OK(arg);
+        return OK(OBJ_VAL(new_float(AS_INT(arg)->value * 1.0)));
     case OBJ_STRING:
-        return OK(OBJ_VAL(new_int((int64_t)strtol(AS_STRING(arg)->chars, NULL, 10))));
-    case OBJ_FLOAT:
-        return OK(OBJ_VAL(new_int((int64_t)floor(AS_FLOAT(arg)->value))));
+        return OK(OBJ_VAL(new_float(strtod(AS_STRING(arg)->chars, NULL))));
     default:
         return ERR("Cannot parse to int");
     }
