@@ -2,7 +2,7 @@
 
 BuiltinResult clock_builtin_function(int arg_count, Obj **args) {
     CHECK_ARG_COUNT(0)
-    return OK(OBJ_VAL(new_int(clock() / CLOCKS_PER_SEC)));
+    return OK(AS_OBJ(new_int(clock() / CLOCKS_PER_SEC)));
 }
 
 BuiltinResult exit_builtin_function(int arg_count, Obj **args) {
@@ -17,7 +17,7 @@ BuiltinResult exit_builtin_function(int arg_count, Obj **args) {
         return ERR("Cannot exit with non integer exit code");
     }
 
-    return OK(OBJ_VAL(new_nil()));
+    return OK(AS_OBJ(new_nil()));
 }
 
 BuiltinResult print_builtin_function(int arg_count, Obj **args) {
@@ -27,7 +27,7 @@ BuiltinResult print_builtin_function(int arg_count, Obj **args) {
     }
 
     printf("\n");
-    return OK(OBJ_VAL(new_nil()));
+    return OK(AS_OBJ(new_nil()));
 }
 
 BuiltinResult input_builtin_function(int arg_count, Obj **args) {
@@ -52,7 +52,7 @@ BuiltinResult input_builtin_function(int arg_count, Obj **args) {
     }
 
     s[len - 1] = '\0';
-    return OK(OBJ_VAL(take_string(s, len)));
+    return OK(AS_OBJ(take_string(s, len)));
 }
 
 BuiltinResult len_builtin_function(int arg_count, Obj **args) {
@@ -63,17 +63,17 @@ BuiltinResult len_builtin_function(int arg_count, Obj **args) {
         case OBJ_LIST:
             {
                 ObjList *list = AS_LIST(obj);
-                return OK(OBJ_VAL(new_int(list->elems.count)));
+                return OK(AS_OBJ(new_int(list->elems.count)));
             }
         case OBJ_MAP:
             {
                 ObjMap *map = AS_MAP(obj);
-                return OK(OBJ_VAL(new_int(map->table.count)));
+                return OK(AS_OBJ(new_int(map->table.count)));
             }
         case OBJ_STRING:
             {
                 ObjString *string = AS_STRING(obj);
-                return OK(OBJ_VAL(new_int(string->length)));
+                return OK(AS_OBJ(new_int(string->length)));
             }
         default:
             return ERR("len() is not defined for the type");
@@ -84,5 +84,13 @@ BuiltinResult argv_builtin_function(int arg_count, Obj **args) {
     CHECK_ARG_COUNT(0)
 
     ObjList *argv = argv_list(_argc, _argv);
-    return OK(OBJ_VAL(argv));
+    return OK(AS_OBJ(argv));
+}
+
+BuiltinResult run_gc_builtin_function(int arg_count, Obj **args) {
+    CHECK_ARG_COUNT(0)
+
+    collect_garbage();
+
+    return OK(AS_OBJ(new_nil()));
 }

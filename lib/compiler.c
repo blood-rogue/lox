@@ -114,7 +114,7 @@ static uint8_t make_constant(Obj *value) {
 }
 
 static uint8_t identifier_constant(Token *name) {
-    return make_constant(OBJ_VAL(new_string(name->start, name->length)));
+    return make_constant(AS_OBJ(new_string(name->start, name->length)));
 }
 
 static bool identifiers_equal(Token *a, Token *b) {
@@ -427,12 +427,12 @@ static void index_(bool can_assign) {
 
 static void float_(bool can_assign) {
     double value = strtod(parser.previous.start, NULL);
-    emit_constant(OBJ_VAL(new_float(value)));
+    emit_constant(AS_OBJ(new_float(value)));
 }
 
 static void int_(bool can_assign) {
     int64_t value = (int64_t)strtol(parser.previous.start, NULL, 10);
-    emit_constant(OBJ_VAL(new_int(value)));
+    emit_constant(AS_OBJ(new_int(value)));
 }
 
 static void or (bool can_assign) {
@@ -456,7 +456,7 @@ static void and (bool can_assign) {
 }
 
 static void string(bool can_assign) {
-    emit_constant(OBJ_VAL(
+    emit_constant(AS_OBJ(
         new_string(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
@@ -674,7 +674,7 @@ static void function(FunctionType type) {
     block();
 
     ObjFunction *function = end_compiler();
-    emit_bytes(OP_CLOSURE, make_constant(OBJ_VAL(function)));
+    emit_bytes(OP_CLOSURE, make_constant(AS_OBJ(function)));
 
     for (int i = 0; i < function->upvalue_count; i++) {
         emit_bytes(compiler.upvalues[i].is_local ? 1 : 0,

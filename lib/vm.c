@@ -30,16 +30,16 @@ Obj *pop() {
 static Obj *peek(int distance) { return vm.stack_top[-1 - distance]; }
 
 static void define_builtin_function(const char *name, BuiltinFn function) {
-    push(OBJ_VAL(new_string(name, (int)strlen(name))));
-    push(OBJ_VAL(new_builtin_function(function)));
+    push(AS_OBJ(new_string(name, (int)strlen(name))));
+    push(AS_OBJ(new_builtin_function(function)));
     table_set(&vm.globals, vm.stack[0], vm.stack[1]);
     pop();
     pop();
 }
 
 static void define_builtin_class(const char *name, ObjBuiltinClass *klass) {
-    push(OBJ_VAL(new_string(name, (int)strlen(name))));
-    push(OBJ_VAL(klass));
+    push(AS_OBJ(new_string(name, (int)strlen(name))));
+    push(AS_OBJ(klass));
     table_set(&vm.globals, vm.stack[0], vm.stack[1]);
     pop();
     pop();
@@ -89,6 +89,7 @@ void init_vm() {
     define_builtin_function("input", input_builtin_function);
     define_builtin_function("len", len_builtin_function);
     define_builtin_function("argv", argv_builtin_function);
+    define_builtin_function("run_gc", run_gc_builtin_function);
 
     define_builtin_class("int", int_builtin_class());
     define_builtin_class("float", float_builtin_class());
@@ -133,7 +134,7 @@ static bool call_value(Obj *callee, int arg_count) {
         case OBJ_CLASS:
             {
                 ObjClass *klass = AS_CLASS(callee);
-                vm.stack_top[-arg_count - 1] = OBJ_VAL(new_instance(klass));
+                vm.stack_top[-arg_count - 1] = AS_OBJ(new_instance(klass));
 
                 Obj *initializer;
                 if (table_get(&klass->methods, (Obj *)vm.init_string,
@@ -243,7 +244,7 @@ static bool bind_method(ObjClass *klass, ObjString *name) {
 
     ObjBoundMethod *bound = new_bound_method(peek(0), AS_CLOSURE(method));
     pop();
-    push(OBJ_VAL(bound));
+    push(AS_OBJ(bound));
     return true;
 }
 
@@ -309,7 +310,7 @@ static void concatenate() {
     ObjString *result = take_string(chars, length);
     pop();
     pop();
-    push(OBJ_VAL(result));
+    push(AS_OBJ(result));
 }
 
 static InterpretResult run() {
@@ -324,10 +325,10 @@ static InterpretResult run() {
 #define BINARY_OP(new_func_int, new_func_float, op)                            \
     {                                                                          \
         if (IS_INT(peek(0)) && IS_INT(peek(1))) {                              \
-            push(OBJ_VAL(                                                      \
+            push(AS_OBJ(                                                       \
                 new_func_int(AS_INT(pop())->value op AS_INT(pop())->value)));  \
         } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {                   \
-            push(OBJ_VAL(new_func_float(                                       \
+            push(AS_OBJ(new_func_float(                                        \
                 AS_FLOAT(pop())->value op AS_FLOAT(pop())->value)));           \
         } else {                                                               \
             runtime_error("Operands must be numbers.");                        \
@@ -349,7 +350,7 @@ static InterpretResult run() {
                     ObjList *list =
                         new_list(vm.stack_top - elem_count, elem_count);
                     vm.stack_top -= elem_count;
-                    push(OBJ_VAL(list));
+                    push(AS_OBJ(list));
 
                     break;
                 }
@@ -359,7 +360,7 @@ static InterpretResult run() {
                     ObjMap *map =
                         new_map(vm.stack_top - pair_count * 2, pair_count);
                     vm.stack_top -= pair_count * 2;
-                    push(OBJ_VAL(map));
+                    push(AS_OBJ(map));
 
                     break;
                 }
@@ -455,17 +456,17 @@ static InterpretResult run() {
                 }
             case OP_NIL:
                 {
-                    push(OBJ_VAL(new_nil()));
+                    push(AS_OBJ(new_nil()));
                     break;
                 }
             case OP_TRUE:
                 {
-                    push(OBJ_VAL(new_bool(true)));
+                    push(AS_OBJ(new_bool(true)));
                     break;
                 }
             case OP_FALSE:
                 {
-                    push(OBJ_VAL(new_bool(false)));
+                    push(AS_OBJ(new_bool(false)));
                     break;
                 }
             case OP_POP:
@@ -577,7 +578,7 @@ static InterpretResult run() {
                 {
                     Obj *b = pop();
                     Obj *a = pop();
-                    push(OBJ_VAL(new_bool(obj_equal(a, b))));
+                    push(AS_OBJ(new_bool(obj_equal(a, b))));
                     break;
                 }
             case OP_GREATER:
@@ -591,11 +592,11 @@ static InterpretResult run() {
                     if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
                         concatenate();
                     } else if (IS_INT(peek(0)) && IS_INT(peek(1))) {
-                        push(OBJ_VAL(new_int(AS_INT(pop())->value +
-                                             AS_INT(pop())->value)));
+                        push(AS_OBJ(new_int(AS_INT(pop())->value +
+                                            AS_INT(pop())->value)));
                     } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {
-                        push(OBJ_VAL(new_float(AS_FLOAT(pop())->value +
-                                               AS_FLOAT(pop())->value)));
+                        push(AS_OBJ(new_float(AS_FLOAT(pop())->value +
+                                              AS_FLOAT(pop())->value)));
                     } else {
                         runtime_error(
                             "Operands must be two numbers or two strings.");
@@ -620,7 +621,7 @@ static InterpretResult run() {
                 }
             case OP_NOT:
                 {
-                    push(OBJ_VAL(new_bool(is_falsey(pop()))));
+                    push(AS_OBJ(new_bool(is_falsey(pop()))));
                     break;
                 }
             case OP_NEGATE:
@@ -629,7 +630,7 @@ static InterpretResult run() {
                         runtime_error("Operand must be a number.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
-                    push(OBJ_VAL(new_int(-(AS_INT(pop())->value))));
+                    push(AS_OBJ(new_int(-(AS_INT(pop())->value))));
                     break;
                 }
             case OP_JUMP:
@@ -685,7 +686,7 @@ static InterpretResult run() {
                 {
                     ObjFunction *function = AS_FUNCTION(READ_CONSTANT());
                     ObjClosure *closure = new_closure(function);
-                    push(OBJ_VAL(closure));
+                    push(AS_OBJ(closure));
 
                     for (int i = 0; i < closure->upvalue_count; i++) {
                         uint8_t is_local = READ_BYTE();
@@ -721,7 +722,7 @@ static InterpretResult run() {
                     break;
                 }
             case OP_CLASS:
-                push(OBJ_VAL(new_class(READ_STRING())));
+                push(AS_OBJ(new_class(READ_STRING())));
                 break;
             case OP_INHERIT:
                 {
@@ -759,11 +760,11 @@ InterpretResult interpret(const char *source) {
     if (function == NULL)
         return INTERPRET_COMPILE_ERROR;
 
-    push(OBJ_VAL(function));
+    push(AS_OBJ(function));
 
     ObjClosure *closure = new_closure(function);
     pop();
-    push(OBJ_VAL(closure));
+    push(AS_OBJ(closure));
     call(closure, 0);
 
     return run();

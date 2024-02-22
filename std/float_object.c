@@ -16,11 +16,11 @@ STATIC(float, parse) {
 
     switch (arg->type) {
         case OBJ_INT:
-            return OK(OBJ_VAL(new_float(AS_INT(arg)->value * 1.0)));
+            return OK(AS_OBJ(new_float(AS_INT(arg)->value * 1.0)));
         case OBJ_STRING:
-            return OK(OBJ_VAL(new_float(strtod(AS_STRING(arg)->chars, NULL))));
+            return OK(AS_OBJ(new_float(strtod(AS_STRING(arg)->chars, NULL))));
         default:
             return ERR("Cannot parse to int");
     }
-    return OK(OBJ_VAL(AS_INT(arg)));
+    return OK(AS_OBJ(AS_INT(arg)));
 }

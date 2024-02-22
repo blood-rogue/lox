@@ -7,7 +7,7 @@
 #include "common.h"
 #include "table.h"
 
-#define OBJ_VAL(obj)             ((Obj *)(obj))
+#define AS_OBJ(obj)              ((Obj *)(obj))
 
 #define IS_FLOAT(obj)            (obj->type == OBJ_FLOAT)
 #define IS_NIL(obj)              (obj->type == OBJ_NIL)
@@ -89,7 +89,6 @@ typedef struct {
 typedef struct {
     Obj obj;
     BuiltinTable statics;
-    BuiltinTable methods;
 } ObjBuiltinClass;
 
 typedef struct {

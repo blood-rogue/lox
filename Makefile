@@ -1,7 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Ofast -Iinclude -flto=auto -ffunction-sections -fdata-sections
 LDFLAGS = -flto=auto -Wl,--gc-sections -s
-STRIP_FLAGS = -s -R .comment -R .gnu.version --strip-unneeded
 
 LIB_DIR = ./lib
 STD_DIR = ./std

@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "memory.h"
@@ -122,7 +123,6 @@ ObjFunction *new_function() {
 ObjBuiltinClass *new_builtin_class() {
     ObjBuiltinClass *builtin = ALLOCATE_OBJ(ObjBuiltinClass, OBJ_BUILTIN_CLASS);
     init_builtin_table(&builtin->statics);
-    init_builtin_table(&builtin->methods);
 
     return builtin;
 }
@@ -141,8 +141,8 @@ static ObjString *allocate_string(char *chars, int length, uint32_t hash) {
     string->chars = chars;
     string->hash = hash;
 
-    push(OBJ_VAL(string));
-    table_set(&vm.strings, (Obj *)string, OBJ_VAL(new_nil()));
+    push(AS_OBJ(string));
+    table_set(&vm.strings, (Obj *)string, AS_OBJ(new_nil()));
     pop();
 
     return string;
@@ -159,9 +159,10 @@ uint32_t hash_string(const char *key, int length) {
 
 ObjString *take_string(char *chars, int length) {
     uint32_t hash = hash_string(chars, length);
+
     Obj *interned = table_find_string(&vm.strings, chars, length, hash);
     if (interned != NULL && interned->type == OBJ_STRING) {
-        FREE_ARRAY(char, chars, length + 1);
+        free(chars);
         return AS_STRING(interned);
     }
 
@@ -172,19 +173,19 @@ ObjString *new_string(const char *chars, int length) {
     uint32_t hash = hash_string(chars, length);
 
     Obj *interned = table_find_string(&vm.strings, chars, length, hash);
-
     if (interned != NULL && interned->type == OBJ_STRING)
         return AS_STRING(interned);
 
     char *heap_chars = ALLOCATE(char, length + 1);
     memcpy(heap_chars, chars, length);
     heap_chars[length] = '\0';
+
     return allocate_string(heap_chars, length, hash);
 }
 
 ObjUpvalue *new_upvalue(Obj **slot) {
     ObjUpvalue *upvalue = ALLOCATE_OBJ(ObjUpvalue, OBJ_UPVALUE);
-    upvalue->closed = OBJ_VAL(new_nil());
+    upvalue->closed = AS_OBJ(new_nil());
     upvalue->location = slot;
 
     upvalue->next = NULL;
@@ -224,7 +225,7 @@ static void print_map(ObjMap *map) {
         if (entry->key == NULL)
             continue;
 
-        repr_object(OBJ_VAL(entry->key));
+        repr_object(AS_OBJ(entry->key));
         printf(": ");
         table_get(&map->table, (Obj *)entry->key, &value);
         repr_object(value);

@@ -12,7 +12,7 @@
 #include "object.h"
 
 #define ERR(err)                                                               \
-    (BuiltinResult) { .error = err, .value = OBJ_VAL(new_nil()) }
+    (BuiltinResult) { .error = err, .value = AS_OBJ(new_nil()) }
 #define OK(ok)                                                                 \
     (BuiltinResult) { .value = ok, .error = NULL }
 
@@ -39,6 +39,7 @@ BUILTIN_FUNCTION(print);
 BUILTIN_FUNCTION(input);
 BUILTIN_FUNCTION(len);
 BUILTIN_FUNCTION(argv);
+BUILTIN_FUNCTION(run_gc);
 
 BUILTIN_CLASS(int);
 BUILTIN_CLASS(float);

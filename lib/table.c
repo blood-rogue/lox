@@ -44,7 +44,7 @@ static void adjust_capacity(Table *table, int capacity) {
     Entry *entries = ALLOCATE(Entry, capacity);
     for (int i = 0; i < capacity; i++) {
         entries[i].key = NULL;
-        entries[i].value = OBJ_VAL(new_nil());
+        entries[i].value = AS_OBJ(new_nil());
     }
 
     table->count = 0;
@@ -102,7 +102,7 @@ bool table_delete(Table *table, Obj *key) {
         return false;
 
     entry->key = NULL;
-    entry->value = OBJ_VAL(new_bool(true));
+    entry->value = NULL;
     return true;
 }
 
@@ -146,7 +146,7 @@ void table_remove_white(Table *table) {
 void mark_table(Table *table) {
     for (int i = 0; i < table->capacity; i++) {
         Entry *entry = &table->entries[i];
-        mark_object((Obj *)entry->key);
+        mark_object(entry->key);
         mark_object(entry->value);
     }
 }
