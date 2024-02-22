@@ -26,7 +26,7 @@
 #define STATIC(klass, name)                                                    \
     BuiltinResult __##klass##_##name##_builtin_static(int arg_count, Obj **args)
 #define SET_STATIC(_klass, name, len)                                          \
-    builtin_table_set(&klass->statics, #name, hash_string(#name, len),         \
+    builtin_table_set(&klass->methods, #name, hash_string(#name, len),         \
                       __##_klass##_##name##_builtin_static)
 
 #define BUILTIN_FUNCTION(name)                                                 \
@@ -43,5 +43,15 @@ BUILTIN_FUNCTION(run_gc);
 
 BUILTIN_CLASS(int);
 BUILTIN_CLASS(float);
+
+BuiltinTable **get_builtin_methods();
+
+BuiltinTable *nil_methods();
+BuiltinTable *float_methods();
+BuiltinTable *int_methods();
+BuiltinTable *bool_methods();
+BuiltinTable *string_methods();
+BuiltinTable *list_methods();
+BuiltinTable *map_methods();
 
 #endif // clox_builtin_h

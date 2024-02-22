@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Ofast -Iinclude -flto=auto -ffunction-sections -fdata-sections
-LDFLAGS = -flto=auto -Wl,--gc-sections -s
+CFLAGS = -Wall -Werror -Ofast -Iinclude -flto=auto -ffunction-sections -fdata-sections -g
+LDFLAGS = -flto=auto -Wl,--gc-sections
 
 LIB_DIR = ./lib
 STD_DIR = ./std
@@ -38,4 +38,7 @@ clean:
 fmt:
 	clang-format -i main.c lib/*.c std/*.c include/*.h
 
-.PHONY: all clean
+lint:
+	clang-tidy std/*.c lib/*.c include/*.h -- -Iinclude
+
+.PHONY: all clean fmt lint

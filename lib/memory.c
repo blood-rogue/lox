@@ -107,7 +107,7 @@ static void free_object(Obj *object) {
         case OBJ_BUILTIN_CLASS:
             {
                 ObjBuiltinClass *klass = AS_BUILTIN_CLASS(object);
-                free_builtin_table(&klass->statics);
+                free_builtin_table(&klass->methods);
                 FREE(ObjBuiltinClass, object);
                 return;
             }

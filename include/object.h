@@ -62,6 +62,7 @@ struct Obj {
     ObjType type;
     bool is_marked;
     struct Obj *next;
+    BuiltinTable *statics;
 };
 
 typedef struct {
@@ -88,7 +89,7 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    BuiltinTable statics;
+    BuiltinTable methods;
 } ObjBuiltinClass;
 
 typedef struct {

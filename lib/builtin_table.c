@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "builtins.h"
+#include "builtin_table.h"
 #include "memory.h"
 #include "object.h"
 

@@ -80,6 +80,8 @@ void init_vm() {
     init_table(&vm.globals);
     init_table(&vm.strings);
 
+    vm.builtin_methods = get_builtin_methods();
+
     vm.init_string = NULL;
     vm.init_string = new_string("init", 4);
 
@@ -102,6 +104,11 @@ void free_vm() {
     vm.init_string = NULL;
 
     free_objects();
+
+    for (int i = 0; i < 15; i++)
+        free(vm.builtin_methods[i]);
+
+    free(vm.builtin_methods);
 }
 
 static bool call(ObjClosure *closure, int arg_count) {
@@ -214,7 +221,7 @@ static bool invoke(ObjString *name, int arg_count) {
         ObjBuiltinClass *klass = AS_BUILTIN_CLASS(receiver);
 
         BuiltinFn method;
-        if (!builtin_table_get(&klass->statics, name->hash, &method)) {
+        if (!builtin_table_get(&klass->methods, name->hash, &method)) {
             runtime_error("Undefined method '%s'.", name->chars);
             return false;
         }
