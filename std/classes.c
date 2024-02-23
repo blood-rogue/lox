@@ -2,7 +2,7 @@
 
 STATIC(int, parse) {
     CHECK_ARG_COUNT(1)
-    Obj *arg = args[0];
+    Obj *arg = argv[0];
 
     switch (arg->type) {
         case OBJ_INT:
@@ -20,7 +20,7 @@ STATIC(int, parse) {
 
 STATIC(float, parse) {
     CHECK_ARG_COUNT(1)
-    Obj *arg = args[0];
+    Obj *arg = argv[0];
 
     switch (arg->type) {
         case OBJ_INT:
@@ -34,7 +34,7 @@ STATIC(float, parse) {
 }
 
 ObjBuiltinClass *int_builtin_class() {
-    ObjBuiltinClass *klass = new_builtin_class();
+    ObjBuiltinClass *klass = new_builtin_class(8);
 
     SET_STATIC(int, parse, 5);
 
@@ -42,7 +42,7 @@ ObjBuiltinClass *int_builtin_class() {
 }
 
 ObjBuiltinClass *float_builtin_class() {
-    ObjBuiltinClass *klass = new_builtin_class();
+    ObjBuiltinClass *klass = new_builtin_class(8);
 
     SET_STATIC(float, parse, 5);
 

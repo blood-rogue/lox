@@ -115,8 +115,7 @@ void table_add_all(Table *from, Table *to) {
     }
 }
 
-Obj *table_find_string(Table *table, const char *chars, int length,
-                       uint32_t hash) {
+Obj *table_find_string(Table *table, uint32_t hash) {
     if (table->count == 0)
         return NULL;
 

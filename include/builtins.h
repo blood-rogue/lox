@@ -17,41 +17,43 @@
     (BuiltinResult) { .value = ok, .error = NULL }
 
 #define CHECK_ARG_COUNT(expected)                                              \
-    if (arg_count != expected) {                                               \
+    if (argc != expected) {                                                    \
         char buf[100];                                                         \
-        sprintf(buf, "Expected %d arguments but got %d", expected, arg_count); \
+        sprintf(buf, "Expected %d arguments but got %d", expected, argc);      \
         return ERR(buf);                                                       \
     }
 
-#define STATIC(klass, name)                                                    \
-    BuiltinResult __##klass##_##name##_builtin_static(int arg_count, Obj **args)
-#define SET_STATIC(_klass, name, len)                                          \
-    builtin_table_set(&klass->methods, #name, hash_string(#name, len),         \
-                      __##_klass##_##name##_builtin_static)
+#define UNUSED(type, name) type name##_UNUSED __attribute__((unused))
 
-#define BUILTIN_FUNCTION(name)                                                 \
-    BuiltinResult name##_builtin_function(int, Obj **)
+#define STATIC(klass, name)                                                    \
+    BuiltinResult __##klass##_##name##_builtin_static(int argc, Obj **argv,    \
+                                                      UNUSED(Obj *, callee))
+#define SET_STATIC(_klass, name, len)                                          \
+    method_table_set(&klass->methods, #name, hash_string(#name, len),          \
+                     __##_klass##_##name##_builtin_static)
+
+#define BLTIN_FN(name)      BuiltinResult name##_builtin_function(int, Obj **, Obj *)
 #define BUILTIN_CLASS(name) ObjBuiltinClass *name##_builtin_class()
 
-BUILTIN_FUNCTION(clock);
-BUILTIN_FUNCTION(exit);
-BUILTIN_FUNCTION(print);
-BUILTIN_FUNCTION(input);
-BUILTIN_FUNCTION(len);
-BUILTIN_FUNCTION(argv);
-BUILTIN_FUNCTION(run_gc);
+BLTIN_FN(clock);
+BLTIN_FN(exit);
+BLTIN_FN(print);
+BLTIN_FN(input);
+BLTIN_FN(len);
+BLTIN_FN(argv);
+BLTIN_FN(run_gc);
 
 BUILTIN_CLASS(int);
 BUILTIN_CLASS(float);
 
-BuiltinTable **get_builtin_methods();
+BuiltinMethodTable **get_builtin_methods();
 
-BuiltinTable *nil_methods();
-BuiltinTable *float_methods();
-BuiltinTable *int_methods();
-BuiltinTable *bool_methods();
-BuiltinTable *string_methods();
-BuiltinTable *list_methods();
-BuiltinTable *map_methods();
+BuiltinMethodTable *nil_methods();
+BuiltinMethodTable *float_methods();
+BuiltinMethodTable *int_methods();
+BuiltinMethodTable *bool_methods();
+BuiltinMethodTable *string_methods();
+BuiltinMethodTable *list_methods();
+BuiltinMethodTable *map_methods();
 
 #endif // clox_builtin_h

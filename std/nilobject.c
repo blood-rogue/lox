@@ -1,8 +1,8 @@
 #include "builtins.h"
 
-BuiltinTable *nil_methods() {
-    BuiltinTable *table = malloc(sizeof(BuiltinTable));
-    init_builtin_table(table);
+BuiltinMethodTable *nil_methods() {
+    BuiltinMethodTable *table = malloc(sizeof(BuiltinMethodTable));
+    init_method_table(table, 8);
 
     return table;
 }

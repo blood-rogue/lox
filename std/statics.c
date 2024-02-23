@@ -1,8 +1,8 @@
 #include "builtins.h"
 
-BuiltinTable **get_builtin_methods() {
-    BuiltinTable **statics =
-        (BuiltinTable **)malloc(sizeof(BuiltinTable *) * 15);
+BuiltinMethodTable **get_builtin_methods() {
+    BuiltinMethodTable **statics =
+        (BuiltinMethodTable **)malloc(sizeof(BuiltinMethodTable *) * 15);
 
     statics[OBJ_NIL] = nil_methods();
     statics[OBJ_FLOAT] = float_methods();

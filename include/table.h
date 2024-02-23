@@ -22,7 +22,7 @@ bool table_set(Table *, Obj *, Obj *);
 bool table_delete(Table *, Obj *);
 
 void table_add_all(Table *, Table *);
-Obj *table_find_string(Table *, const char *, int, uint32_t);
+Obj *table_find_string(Table *, uint32_t);
 void table_remove_white(Table *);
 
 void mark_table(Table *);

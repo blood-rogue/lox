@@ -29,9 +29,10 @@ Obj *pop() {
 
 static Obj *peek(int distance) { return vm.stack_top[-1 - distance]; }
 
-static void define_builtin_function(const char *name, BuiltinFn function) {
+static void define_builtin_function(const char *name,
+                                    BuiltinMethodFn function) {
     push(AS_OBJ(new_string(name, (int)strlen(name))));
-    push(AS_OBJ(new_builtin_function(function)));
+    push(AS_OBJ(new_builtin_method(function)));
     table_set(&vm.globals, vm.stack[0], vm.stack[1]);
     pop();
     pop();
@@ -111,10 +112,10 @@ void free_vm() {
     free(vm.builtin_methods);
 }
 
-static bool call(ObjClosure *closure, int arg_count) {
-    if (arg_count != closure->function->arity) {
+static bool call(ObjClosure *closure, int argc) {
+    if (argc != closure->function->arity) {
         runtime_error("Expected %d arguments but got %d.",
-                      closure->function->arity, arg_count);
+                      closure->function->arity, argc);
         return false;
     }
 
@@ -126,49 +127,48 @@ static bool call(ObjClosure *closure, int arg_count) {
     CallFrame *frame = &vm.frames[vm.frame_count++];
     frame->closure = closure;
     frame->ip = closure->function->chunk.code;
-    frame->slots = vm.stack_top - arg_count - 1;
+    frame->slots = vm.stack_top - argc - 1;
     return true;
 }
 
-static bool call_value(Obj *callee, int arg_count) {
+static bool call_value(Obj *callee, int argc) {
     switch (callee->type) {
         case OBJ_BOUND_METHOD:
             {
                 ObjBoundMethod *bound = AS_BOUND_METHOD(callee);
-                vm.stack_top[-arg_count - 1] = bound->receiver;
-                return call(bound->method, arg_count);
+                vm.stack_top[-argc - 1] = bound->receiver;
+                return call(bound->method, argc);
             }
         case OBJ_CLASS:
             {
                 ObjClass *klass = AS_CLASS(callee);
-                vm.stack_top[-arg_count - 1] = AS_OBJ(new_instance(klass));
+                vm.stack_top[-argc - 1] = AS_OBJ(new_instance(klass));
 
                 Obj *initializer;
                 if (table_get(&klass->methods, (Obj *)vm.init_string,
                               &initializer)) {
-                    return call(AS_CLOSURE(initializer), arg_count);
-                } else if (arg_count != 0) {
-                    runtime_error("Expected 0 arguments but got %d.",
-                                  arg_count);
+                    return call(AS_CLOSURE(initializer), argc);
+                } else if (argc != 0) {
+                    runtime_error("Expected 0 arguments but got %d.", argc);
                     return false;
                 }
 
                 return true;
             }
         case OBJ_CLOSURE:
-            return call(AS_CLOSURE(callee), arg_count);
+            return call(AS_CLOSURE(callee), argc);
         case OBJ_BUILTIN_FUNCTION:
             {
-                BuiltinFn builtin = AS_BUILTIN_FUNCTION(callee)->function;
+                BuiltinMethodFn builtin = AS_BUILTIN_FUNCTION(callee)->method;
                 BuiltinResult result =
-                    builtin(arg_count, vm.stack_top - arg_count);
+                    builtin(argc, vm.stack_top - argc, callee);
 
                 if (result.error != NULL) {
                     runtime_error(result.error);
                     return false;
                 }
 
-                vm.stack_top -= arg_count + 1;
+                vm.stack_top -= argc + 1;
                 push(result.value);
                 return true;
             }
@@ -183,7 +183,7 @@ static bool call_value(Obj *callee, int arg_count) {
     }
 }
 
-static bool invoke_from_class(ObjClass *klass, ObjString *name, int arg_count) {
+static bool invoke_from_class(ObjClass *klass, ObjString *name, int argc) {
     Obj *method;
     if (!table_get(&klass->methods, (Obj *)name, &method) &&
         !table_get(&klass->statics, (Obj *)name, &method)) {
@@ -191,55 +191,80 @@ static bool invoke_from_class(ObjClass *klass, ObjString *name, int arg_count) {
         return false;
     }
 
-    return call(AS_CLOSURE(method), arg_count);
+    return call(AS_CLOSURE(method), argc);
 }
 
-static bool invoke(ObjString *name, int arg_count) {
-    Obj *receiver = peek(arg_count);
+static bool invoke(ObjString *name, int argc) {
+    Obj *receiver = peek(argc);
 
-    if (IS_INSTANCE(receiver)) {
-        ObjInstance *instance = AS_INSTANCE(receiver);
+    switch (receiver->type) {
+        case OBJ_INSTANCE:
+            {
+                ObjInstance *instance = AS_INSTANCE(receiver);
 
-        Obj *value;
-        if (table_get(&instance->fields, (Obj *)name, &value)) {
-            vm.stack_top[-arg_count - 1] = value;
-            return call_value(value, arg_count);
-        }
+                Obj *value;
+                if (table_get(&instance->fields, (Obj *)name, &value)) {
+                    vm.stack_top[-argc - 1] = value;
+                    return call_value(value, argc);
+                }
 
-        return invoke_from_class(instance->klass, name, arg_count);
-    } else if (IS_CLASS(receiver)) {
-        ObjClass *klass = AS_CLASS(receiver);
+                return invoke_from_class(instance->klass, name, argc);
+            }
+        case OBJ_CLASS:
+            {
+                ObjClass *klass = AS_CLASS(receiver);
 
-        Obj *method;
-        if (!table_get(&klass->statics, (Obj *)name, &method)) {
-            runtime_error("Undefined method '%s'.", name->chars);
-            return false;
-        }
+                Obj *method;
+                if (!table_get(&klass->statics, (Obj *)name, &method)) {
+                    runtime_error("Undefined method '%s'.", name->chars);
+                    return false;
+                }
 
-        return call(AS_CLOSURE(method), arg_count);
-    } else if (IS_BUILTIN_CLASS(receiver)) {
-        ObjBuiltinClass *klass = AS_BUILTIN_CLASS(receiver);
+                return call(AS_CLOSURE(method), argc);
+            }
+        case OBJ_BUILTIN_CLASS:
+            {
+                ObjBuiltinClass *klass = AS_BUILTIN_CLASS(receiver);
 
-        BuiltinFn method;
-        if (!builtin_table_get(&klass->methods, name->hash, &method)) {
-            runtime_error("Undefined method '%s'.", name->chars);
-            return false;
-        }
+                BuiltinMethodFn method;
+                if (!method_table_get(&klass->methods, name->hash, &method)) {
+                    runtime_error("Undefined method '%s'.", name->chars);
+                    return false;
+                }
 
-        BuiltinResult result = method(arg_count, vm.stack_top - arg_count);
+                BuiltinResult result =
+                    method(argc, vm.stack_top - argc, receiver);
 
-        if (result.error != NULL) {
-            runtime_error(result.error);
-            return false;
-        }
+                if (result.error != NULL) {
+                    runtime_error(result.error);
+                    return false;
+                }
 
-        vm.stack_top -= arg_count + 1;
-        push(result.value);
-        return true;
+                vm.stack_top -= argc + 1;
+                push(result.value);
+                return true;
+            }
+        default:
+            {
+                BuiltinMethodFn method;
+                if (!method_table_get(receiver->statics, name->hash, &method)) {
+                    runtime_error("Could not invode method.");
+                    return false;
+                }
+
+                BuiltinResult result =
+                    method(argc, vm.stack_top - argc, receiver);
+
+                if (result.error != NULL) {
+                    runtime_error(result.error);
+                    return false;
+                }
+
+                vm.stack_top -= argc + 1;
+                push(result.value);
+                return true;
+            }
     }
-
-    runtime_error("Could not invode method.");
-    return false;
 }
 
 static bool bind_method(ObjClass *klass, ObjString *name) {
@@ -535,8 +560,9 @@ static InterpretResult run() {
                 }
             case OP_GET_PROPERTY:
                 {
-                    if (IS_INSTANCE(peek(0))) {
-                        ObjInstance *instance = AS_INSTANCE(peek(0));
+                    Obj *obj = peek(0);
+                    if (IS_INSTANCE(obj)) {
+                        ObjInstance *instance = AS_INSTANCE(obj);
                         ObjString *name = READ_STRING();
 
                         Obj *value;
@@ -550,9 +576,22 @@ static InterpretResult run() {
                             return INTERPRET_RUNTIME_ERROR;
                         }
                         break;
+                    } else if (obj->statics != NULL) {
+                        ObjString *method_name = READ_STRING();
+                        BuiltinMethodFn method;
+                        if (method_table_get(obj->statics, method_name->hash,
+                                             &method)) {
+                            pop();
+                            push(AS_OBJ(new_builtin_method(method)));
+                        } else {
+                            runtime_error("No method named '%s'",
+                                          method_name->chars);
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
                     }
 
-                    runtime_error("Only instances have properties.");
+                    runtime_error(
+                        "Properties and methods do not exist for the type.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_SET_PROPERTY:
@@ -661,8 +700,8 @@ static InterpretResult run() {
                 }
             case OP_CALL:
                 {
-                    int arg_count = READ_BYTE();
-                    if (!call_value(peek(arg_count), arg_count)) {
+                    int argc = READ_BYTE();
+                    if (!call_value(peek(argc), argc)) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     frame = &vm.frames[vm.frame_count - 1];
@@ -671,8 +710,8 @@ static InterpretResult run() {
             case OP_INVOKE:
                 {
                     ObjString *method = READ_STRING();
-                    int arg_count = READ_BYTE();
-                    if (!invoke(method, arg_count)) {
+                    int argc = READ_BYTE();
+                    if (!invoke(method, argc)) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     frame = &vm.frames[vm.frame_count - 1];
@@ -681,9 +720,9 @@ static InterpretResult run() {
             case OP_SUPER_INVOKE:
                 {
                     ObjString *method = READ_STRING();
-                    int arg_count = READ_BYTE();
+                    int argc = READ_BYTE();
                     ObjClass *superclass = AS_CLASS(pop());
-                    if (!invoke_from_class(superclass, method, arg_count)) {
+                    if (!invoke_from_class(superclass, method, argc)) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     frame = &vm.frames[vm.frame_count - 1];

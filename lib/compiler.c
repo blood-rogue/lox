@@ -82,7 +82,7 @@ static void emit_loop(int loop_start) {
     if (offset > UINT16_MAX)
         error("Loop body too large.");
 
-    emit_byte((offset >> 8) & 0xff);
+    emit_byte((uint8_t)((offset >> 8) & 0xff));
     emit_byte(offset & 0xff);
 }
 
@@ -282,7 +282,7 @@ static void declaration();
 static ParseRule *get_rule(TokenType type);
 static void parse_precedence(Precedence precedence);
 
-static void binary(bool can_assign) {
+static void binary(bool) {
     TokenType operator_type = parser.previous.type;
     ParseRule *rule = get_rule(operator_type);
     parse_precedence((Precedence)(rule->precedence + 1));
@@ -361,9 +361,9 @@ static uint8_t map_pair_list() {
     return expression_count;
 }
 
-static void call(bool can_assign) {
-    uint8_t arg_count = expression_list(TOKEN_RIGHT_PAREN);
-    emit_bytes(OP_CALL, arg_count);
+static void call(bool) {
+    uint8_t argc = expression_list(TOKEN_RIGHT_PAREN);
+    emit_bytes(OP_CALL, argc);
 }
 
 static void dot(bool can_assign) {
@@ -374,15 +374,15 @@ static void dot(bool can_assign) {
         expression();
         emit_bytes(OP_SET_PROPERTY, name);
     } else if (match(TOKEN_LEFT_PAREN)) {
-        uint8_t arg_count = expression_list(TOKEN_RIGHT_PAREN);
+        uint8_t argc = expression_list(TOKEN_RIGHT_PAREN);
         emit_bytes(OP_INVOKE, name);
-        emit_byte(arg_count);
+        emit_byte(argc);
     } else {
         emit_bytes(OP_GET_PROPERTY, name);
     }
 }
 
-static void literal(bool can_assign) {
+static void literal(bool) {
     switch (parser.previous.type) {
         case TOKEN_FALSE:
             emit_byte(OP_FALSE);
@@ -398,17 +398,17 @@ static void literal(bool can_assign) {
     }
 }
 
-static void grouping(bool can_assign) {
+static void grouping(bool) {
     expression();
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after expression.");
 }
 
-static void list(bool can_assign) {
+static void list(bool) {
     uint8_t elem_count = expression_list(TOKEN_RIGHT_SQUARE);
     emit_bytes(OP_LIST, elem_count);
 }
 
-static void map(bool can_assign) {
+static void map(bool) {
     consume(TOKEN_LEFT_BRACE, "Expected '{' after map keyword.");
     uint8_t pair_count = map_pair_list();
     emit_bytes(OP_MAP, pair_count);
@@ -425,17 +425,17 @@ static void index_(bool can_assign) {
         emit_byte(OP_GET_INDEX);
 }
 
-static void float_(bool can_assign) {
+static void float_(bool) {
     double value = strtod(parser.previous.start, NULL);
     emit_constant(AS_OBJ(new_float(value)));
 }
 
-static void int_(bool can_assign) {
+static void int_(bool) {
     int64_t value = (int64_t)strtol(parser.previous.start, NULL, 10);
     emit_constant(AS_OBJ(new_int(value)));
 }
 
-static void or (bool can_assign) {
+static void or (bool) {
     int else_jump = emit_jump(OP_JUMP_IF_FALSE);
     int end_jump = emit_jump(OP_JUMP);
 
@@ -446,7 +446,7 @@ static void or (bool can_assign) {
     patch_jump(end_jump);
 }
 
-static void and (bool can_assign) {
+static void and (bool) {
     int end_jump = emit_jump(OP_JUMP_IF_FALSE);
 
     emit_byte(OP_POP);
@@ -455,12 +455,12 @@ static void and (bool can_assign) {
     patch_jump(end_jump);
 }
 
-static void string(bool can_assign) {
+static void string(bool) {
     emit_constant(AS_OBJ(
         new_string(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
-static void unary(bool can_assign) {
+static void unary(bool) {
     TokenType operator_type = parser.previous.type;
 
     parse_precedence(PREC_UNARY);
@@ -511,7 +511,7 @@ static Token synthetic_token(const char *text) {
     return token;
 }
 
-static void super(bool can_assign) {
+static void super(bool) {
     if (current_class == NULL) {
         error("Can't use 'super' outside of a class.");
     } else if (!current_class->has_super_class) {
@@ -525,17 +525,17 @@ static void super(bool can_assign) {
     named_variable(synthetic_token("this"), false);
 
     if (match(TOKEN_LEFT_PAREN)) {
-        uint8_t arg_count = expression_list(TOKEN_RIGHT_PAREN);
+        uint8_t argc = expression_list(TOKEN_RIGHT_PAREN);
         named_variable(synthetic_token("super"), false);
         emit_bytes(OP_SUPER_INVOKE, name);
-        emit_byte(arg_count);
+        emit_byte(argc);
     } else {
         named_variable(synthetic_token("super"), false);
         emit_bytes(OP_GET_SUPER, name);
     }
 }
 
-static void this(bool can_assign) {
+static void this(bool) {
     if (current_class == NULL) {
         error("Can't use 'this' outside of a class.");
         return;

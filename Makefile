@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Werror -Ofast -Iinclude -flto=auto -ffunction-sections -fdata-sections -g
+CFLAGS = -Wall -Werror -Wextra -pedantic -O2 -Iinclude -flto=auto -ffunction-sections -fdata-sections -g
 LDFLAGS = -flto=auto -Wl,--gc-sections
 
 LIB_DIR = ./lib

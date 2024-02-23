@@ -14,6 +14,8 @@ static Obj *allocate_object(size_t size, ObjType type) {
     object->type = type;
     object->is_marked = false;
 
+    object->statics = vm.builtin_methods[type];
+
     object->next = vm.objects;
     vm.objects = object;
 
@@ -120,17 +122,17 @@ ObjFunction *new_function() {
     return function;
 }
 
-ObjBuiltinClass *new_builtin_class() {
+ObjBuiltinClass *new_builtin_class(int methods) {
     ObjBuiltinClass *builtin = ALLOCATE_OBJ(ObjBuiltinClass, OBJ_BUILTIN_CLASS);
-    init_builtin_table(&builtin->methods);
+    init_method_table(&builtin->methods, methods);
 
     return builtin;
 }
 
-ObjBuiltinFunction *new_builtin_function(BuiltinFn function) {
+ObjBuiltinFunction *new_builtin_method(BuiltinMethodFn method) {
     ObjBuiltinFunction *builtin =
         ALLOCATE_OBJ(ObjBuiltinFunction, OBJ_BUILTIN_FUNCTION);
-    builtin->function = function;
+    builtin->method = method;
     return builtin;
 }
 
@@ -160,7 +162,7 @@ uint32_t hash_string(const char *key, int length) {
 ObjString *take_string(char *chars, int length) {
     uint32_t hash = hash_string(chars, length);
 
-    Obj *interned = table_find_string(&vm.strings, chars, length, hash);
+    Obj *interned = table_find_string(&vm.strings, hash);
     if (interned != NULL && interned->type == OBJ_STRING) {
         free(chars);
         return AS_STRING(interned);
@@ -172,7 +174,7 @@ ObjString *take_string(char *chars, int length) {
 ObjString *new_string(const char *chars, int length) {
     uint32_t hash = hash_string(chars, length);
 
-    Obj *interned = table_find_string(&vm.strings, chars, length, hash);
+    Obj *interned = table_find_string(&vm.strings, hash);
     if (interned != NULL && interned->type == OBJ_STRING)
         return AS_STRING(interned);
 

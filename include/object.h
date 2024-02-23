@@ -2,9 +2,10 @@
 #define clox_object_h
 
 #include "array.h"
-#include "builtin_table.h"
+// #include "builtin_table.h"
 #include "chunk.h"
 #include "common.h"
+#include "method_table.h"
 #include "table.h"
 
 #define AS_OBJ(obj)              ((Obj *)(obj))
@@ -62,7 +63,7 @@ struct Obj {
     ObjType type;
     bool is_marked;
     struct Obj *next;
-    BuiltinTable *statics;
+    BuiltinMethodTable *statics;
 };
 
 typedef struct {
@@ -89,12 +90,12 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    BuiltinTable methods;
+    BuiltinMethodTable methods;
 } ObjBuiltinClass;
 
 typedef struct {
     Obj obj;
-    BuiltinFn function;
+    BuiltinMethodFn method;
 } ObjBuiltinFunction;
 
 typedef struct {
@@ -163,8 +164,8 @@ ObjClass *new_class(ObjString *);
 ObjInstance *new_instance(ObjClass *);
 ObjClosure *new_closure(ObjFunction *);
 ObjFunction *new_function();
-ObjBuiltinClass *new_builtin_class();
-ObjBuiltinFunction *new_builtin_function(BuiltinFn);
+ObjBuiltinClass *new_builtin_class(int);
+ObjBuiltinFunction *new_builtin_method(BuiltinMethodFn);
 ObjString *new_string(const char *, int);
 ObjUpvalue *new_upvalue(Obj **);
 

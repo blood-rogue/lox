@@ -1,16 +1,18 @@
 #include "builtins.h"
 
-BuiltinResult clock_builtin_function(int arg_count, Obj **args) {
+BuiltinResult clock_builtin_function(int argc, UNUSED(Obj **, argv),
+                                     UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(0)
     return OK(AS_OBJ(new_int(clock() / CLOCKS_PER_SEC)));
 }
 
-BuiltinResult exit_builtin_function(int arg_count, Obj **args) {
+BuiltinResult exit_builtin_function(int argc, Obj **argv,
+                                    UNUSED(Obj *, callee)) {
 
     CHECK_ARG_COUNT(1)
 
-    if (IS_INT(args[0])) {
-        int exit_code = AS_INT(args[0])->value;
+    if (IS_INT(argv[0])) {
+        int exit_code = AS_INT(argv[0])->value;
         sweep();
         exit(exit_code);
     } else {
@@ -20,9 +22,10 @@ BuiltinResult exit_builtin_function(int arg_count, Obj **args) {
     return OK(AS_OBJ(new_nil()));
 }
 
-BuiltinResult print_builtin_function(int arg_count, Obj **args) {
-    for (int i = 0; i < arg_count; i++) {
-        print_object(args[i]);
+BuiltinResult print_builtin_function(int argc, Obj **argv,
+                                     UNUSED(Obj *, callee)) {
+    for (int i = 0; i < argc; i++) {
+        print_object(argv[i]);
         printf(" ");
     }
 
@@ -30,9 +33,10 @@ BuiltinResult print_builtin_function(int arg_count, Obj **args) {
     return OK(AS_OBJ(new_nil()));
 }
 
-BuiltinResult input_builtin_function(int arg_count, Obj **args) {
-    if (arg_count > 0)
-        print_object(args[0]);
+BuiltinResult input_builtin_function(int argc, Obj **argv,
+                                     UNUSED(Obj *, callee)) {
+    if (argc > 0)
+        print_object(argv[0]);
 
     int capacity = 8;
     char *s = (char *)malloc(capacity);
@@ -55,10 +59,11 @@ BuiltinResult input_builtin_function(int arg_count, Obj **args) {
     return OK(AS_OBJ(take_string(s, len)));
 }
 
-BuiltinResult len_builtin_function(int arg_count, Obj **args) {
+BuiltinResult len_builtin_function(int argc, Obj **argv,
+                                   UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
 
-    Obj *obj = args[0];
+    Obj *obj = argv[0];
     switch (obj->type) {
         case OBJ_LIST:
             {
@@ -80,14 +85,16 @@ BuiltinResult len_builtin_function(int arg_count, Obj **args) {
     }
 }
 
-BuiltinResult argv_builtin_function(int arg_count, Obj **args) {
+BuiltinResult argv_builtin_function(int argc, UNUSED(Obj **, argv),
+                                    UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(0)
 
-    ObjList *argv = argv_list(_argc, _argv);
-    return OK(AS_OBJ(argv));
+    ObjList *args = argv_list(_argc, _argv);
+    return OK(AS_OBJ(args));
 }
 
-BuiltinResult run_gc_builtin_function(int arg_count, Obj **args) {
+BuiltinResult run_gc_builtin_function(int argc, UNUSED(Obj **, argv),
+                                      UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(0)
 
     collect_garbage();
