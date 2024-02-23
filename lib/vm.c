@@ -101,7 +101,9 @@ void free_vm() {
             free(vm.builtin_methods[i]);
         }
     }
+
     free(vm.builtin_methods);
+    free(vm.source);
 }
 
 static bool call(ObjClosure *closure, int argc) {
@@ -744,7 +746,9 @@ static InterpretResult run() {
 #undef BINARY_OP_OBJ
 }
 
-InterpretResult interpret(const char *source) {
+InterpretResult interpret(char *source) {
+    vm.source = source;
+
     ObjFunction *function = compile(source);
     if (function == NULL)
         return INTERPRET_COMPILE_ERROR;

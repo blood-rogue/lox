@@ -14,6 +14,8 @@ typedef struct {
 } CallFrame;
 
 typedef struct {
+    char *source;
+
     CallFrame frames[FRAMES_MAX];
     int frame_count;
 
@@ -46,7 +48,7 @@ extern VM vm;
 void init_vm();
 void free_vm();
 
-InterpretResult interpret(const char *);
+InterpretResult interpret(char *);
 
 void push(Obj *);
 Obj *pop();

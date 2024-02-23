@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -Wall -Werror -Wextra -pedantic -Ofast -Iinclude -flto=auto -ffunction-sections -fdata-sections -g
-LDFLAGS = -flto=auto -Wl,--gc-sections
+LDFLAGS = -flto=auto -Wl,--gc-sections -s
 
 LIB_DIR = ./lib
 STD_DIR = ./std

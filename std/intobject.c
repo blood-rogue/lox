@@ -24,7 +24,10 @@ BuiltinResult _int_to_hex(int argc, Obj **argv __attribute__((unused)), Obj *cal
 
     ObjInt *_int = AS_INT(caller);
 
-    return OK(AS_OBJ(new_int(labs(_int->value))));
+    char *buf = malloc(33);
+    snprintf(buf, 33, "0x%lx", _int->value);
+
+    return OK(AS_OBJ(take_string(buf, (int)strlen(buf))));
 }
 
 BuiltinResult _int_to_oct(int argc, Obj **argv __attribute__((unused)), Obj *caller) {
@@ -32,7 +35,10 @@ BuiltinResult _int_to_oct(int argc, Obj **argv __attribute__((unused)), Obj *cal
 
     ObjInt *_int = AS_INT(caller);
 
-    return OK(AS_OBJ(new_int(labs(_int->value))));
+    char *buf = malloc(33);
+    snprintf(buf, 33, "0o%lo", _int->value);
+
+    return OK(AS_OBJ(take_string(buf, (int)strlen(buf))));
 }
 
 BuiltinMethodTable *int_methods() {
