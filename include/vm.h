@@ -14,8 +14,6 @@ typedef struct {
 } CallFrame;
 
 typedef struct {
-    char *source;
-
     CallFrame frames[FRAMES_MAX];
     int frame_count;
 

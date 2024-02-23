@@ -199,6 +199,17 @@ static Token string() {
     return make_token(TOKEN_STRING);
 }
 
+static Token character() {
+    advance();
+
+    if (peek() != '\'' || is_eof())
+        return error_token("Invalid char literal.");
+
+    advance();
+
+    return make_token(TOKEN_CHAR);
+}
+
 Token scan_token() {
     skip_whitespace();
     scanner.start = scanner.current;
@@ -253,6 +264,8 @@ Token scan_token() {
             return make_token(match('=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER);
         case '"':
             return string();
+        case '\'':
+            return character();
     }
 
     return error_token("Unexpected character.");

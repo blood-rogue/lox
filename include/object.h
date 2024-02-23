@@ -13,6 +13,7 @@
 #define IS_NIL(obj)                  (obj->type == OBJ_NIL)
 #define IS_INT(obj)                  (obj->type == OBJ_INT)
 #define IS_MAP(obj)                  (obj->type == OBJ_MAP)
+#define IS_CHAR(obj)                 (obj->type == OBJ_CHAR)
 #define IS_LIST(obj)                 (obj->type == OBJ_LIST)
 #define IS_BOOL(obj)                 (obj->type == OBJ_BOOL)
 #define IS_FLOAT(obj)                (obj->type == OBJ_FLOAT)
@@ -29,6 +30,7 @@
 #define AS_NIL(obj)                  ((ObjNil *)(obj))
 #define AS_INT(obj)                  ((ObjInt *)(obj))
 #define AS_MAP(obj)                  ((ObjMap *)(obj))
+#define AS_CHAR(obj)                 ((ObjChar *)(obj))
 #define AS_LIST(obj)                 ((ObjList *)(obj))
 #define AS_BOOL(obj)                 ((ObjBool *)(obj))
 #define AS_FLOAT(obj)                ((ObjFloat *)(obj))
@@ -46,6 +48,7 @@ typedef enum {
     OBJ_NIL,
     OBJ_INT,
     OBJ_MAP,
+    OBJ_CHAR,
     OBJ_LIST,
     OBJ_BOOL,
     OBJ_FLOAT,
@@ -83,6 +86,11 @@ typedef struct {
     Obj obj;
     Table table;
 } ObjMap;
+
+typedef struct {
+    Obj obj;
+    uint8_t value;
+} ObjChar;
 
 typedef struct {
     Obj obj;
@@ -163,6 +171,7 @@ typedef struct {
 ObjNil *new_nil();
 ObjInt *new_int(int64_t);
 ObjMap *new_map(Obj **, int);
+ObjChar *new_char(uint8_t);
 ObjList *new_list(Obj **, int);
 ObjBool *new_bool(bool);
 ObjFloat *new_float(double);

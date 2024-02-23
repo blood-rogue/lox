@@ -56,6 +56,14 @@ ObjMap *new_map(Obj **elems, int pair_count) {
     return map;
 }
 
+ObjChar *new_char(uint8_t value) {
+    ObjChar *_char = ALLOCATE_OBJ(ObjChar, OBJ_CHAR);
+
+    _char->value = value;
+
+    return _char;
+}
+
 ObjList *new_list(Obj **elems, int elem_count) {
     ObjList *list = ALLOCATE_OBJ(ObjList, OBJ_LIST);
 
@@ -261,6 +269,9 @@ void print_object(Obj *obj) {
         case OBJ_INT:
             printf("%ld", AS_INT(obj)->value);
             break;
+        case OBJ_CHAR:
+            printf("%c", AS_CHAR(obj)->value);
+            break;
         case OBJ_BOOL:
             printf(AS_BOOL(obj)->value ? "true" : "false");
             break;
@@ -304,6 +315,9 @@ void repr_object(Obj *obj) {
     switch (obj->type) {
         case OBJ_STRING:
             printf("\"%s\"", AS_STRING(obj)->chars);
+            break;
+        case OBJ_CHAR:
+            printf("'%c'", AS_CHAR(obj)->value);
             break;
         default:
             print_object(obj);

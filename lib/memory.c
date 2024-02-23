@@ -48,6 +48,11 @@ static void free_object(Obj *object) {
                 FREE(ObjBool, object);
                 break;
             }
+        case OBJ_CHAR:
+            {
+                FREE(ObjChar, object);
+                break;
+            }
         case OBJ_MAP:
             {
                 ObjMap *map = AS_MAP(object);
@@ -216,6 +221,7 @@ static void blacken_object(Obj *object) {
         case OBJ_BOOL:
         case OBJ_INT:
         case OBJ_NIL:
+        case OBJ_CHAR:
         case OBJ_FLOAT:
             break;
     }

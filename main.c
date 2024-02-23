@@ -8,8 +8,10 @@
 
 int _argc;
 const char **_argv;
+char *_source;
 
 static void repl() {
+    _source = NULL;
     char line[1024];
     for (;;) {
         printf(">> ");
@@ -21,8 +23,6 @@ static void repl() {
 
         interpret(line);
     }
-
-    free_vm();
 }
 
 static char *read_file(const char *path) {
@@ -56,9 +56,8 @@ static char *read_file(const char *path) {
 
 static void run_file(const char *path) {
     char *source = read_file(path);
+    _source = source;
     InterpretResult result = interpret(source);
-
-    free_vm();
 
     if (result == INTERPRET_COMPILE_ERROR)
         exit(65);
@@ -76,6 +75,8 @@ int main(int argc, const char **argv) {
         repl();
     else
         run_file(argv[1]);
+
+    free_vm();
 
     return 0;
 }

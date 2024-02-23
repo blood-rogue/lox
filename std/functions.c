@@ -1,6 +1,7 @@
 #include "builtins.h"
 
 extern void free_vm();
+extern char *_source;
 
 BuiltinResult clock_builtin_function(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(0)
@@ -14,6 +15,11 @@ BuiltinResult exit_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee))
     if (IS_INT(argv[0])) {
         int exit_code = AS_INT(argv[0])->value;
         free_vm();
+
+        if (_source != NULL) {
+            free(_source);
+        }
+
         exit(exit_code);
     } else {
         return ERR("Cannot exit with non integer exit code");

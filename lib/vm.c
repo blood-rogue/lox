@@ -95,7 +95,7 @@ void free_vm() {
     free_objects();
     free_method_table(&vm.builtin_functions);
 
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < 16; i++) {
         if (vm.builtin_methods[i] != NULL) {
             free_method_table(vm.builtin_methods[i]);
             free(vm.builtin_methods[i]);
@@ -103,7 +103,6 @@ void free_vm() {
     }
 
     free(vm.builtin_methods);
-    free(vm.source);
 }
 
 static bool call(ObjClosure *closure, int argc) {
@@ -747,8 +746,6 @@ static InterpretResult run() {
 }
 
 InterpretResult interpret(char *source) {
-    vm.source = source;
-
     ObjFunction *function = compile(source);
     if (function == NULL)
         return INTERPRET_COMPILE_ERROR;

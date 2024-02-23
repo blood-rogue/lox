@@ -422,6 +422,11 @@ static void float_(bool) {
     emit_constant(AS_OBJ(new_float(value)));
 }
 
+static void char_(bool) {
+    char value = parser.previous.start[1];
+    emit_constant(AS_OBJ(new_char(value)));
+}
+
 static void int_(bool) {
     int64_t value = (int64_t)strtol(parser.previous.start, NULL, 10);
     emit_constant(AS_OBJ(new_int(value)));
@@ -562,6 +567,7 @@ ParseRule rules[] = {
     [TOKEN_STRING] = {string, NULL, PREC_NONE},
     [TOKEN_INT] = {int_, NULL, PREC_NONE},
     [TOKEN_FLOAT] = {float_, NULL, PREC_NONE},
+    [TOKEN_CHAR] = {char_, NULL, PREC_NONE},
     [TOKEN_AND] = {NULL, and, PREC_AND},
     [TOKEN_CLASS] = {NULL, NULL, PREC_NONE},
     [TOKEN_ELSE] = {NULL, NULL, PREC_NONE},

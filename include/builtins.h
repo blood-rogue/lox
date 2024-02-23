@@ -40,6 +40,7 @@ BuiltinMethodTable *nil_methods();
 BuiltinMethodTable *float_methods();
 BuiltinMethodTable *int_methods();
 BuiltinMethodTable *bool_methods();
+BuiltinMethodTable *char_methods();
 BuiltinMethodTable *string_methods();
 BuiltinMethodTable *list_methods();
 BuiltinMethodTable *map_methods();
