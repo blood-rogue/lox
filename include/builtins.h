@@ -11,29 +11,20 @@
 #include "memory.h"
 #include "object.h"
 
-#define ERR(err)                                                               \
+#define ERR(err)                                                                                   \
     (BuiltinResult) { .error = err, .value = AS_OBJ(new_nil()) }
-#define OK(ok)                                                                 \
+#define OK(ok)                                                                                     \
     (BuiltinResult) { .value = ok, .error = NULL }
 
-#define CHECK_ARG_COUNT(expected)                                              \
-    if (argc != expected) {                                                    \
-        char buf[100];                                                         \
-        sprintf(buf, "Expected %d arguments but got %d", expected, argc);      \
-        return ERR(buf);                                                       \
+#define CHECK_ARG_COUNT(expected)                                                                  \
+    if (argc != expected) {                                                                        \
+        char buf[100];                                                                             \
+        sprintf(buf, "Expected %d arguments but got %d", expected, argc);                          \
+        return ERR(buf);                                                                           \
     }
 
-#define UNUSED(type, name) type name##_UNUSED __attribute__((unused))
-
-#define STATIC(klass, name)                                                    \
-    BuiltinResult __##klass##_##name##_builtin_static(int argc, Obj **argv,    \
-                                                      UNUSED(Obj *, callee))
-#define SET_STATIC(_klass, name, len)                                          \
-    method_table_set(&klass->methods, #name, hash_string(#name, len),          \
-                     __##_klass##_##name##_builtin_static)
-
-#define BLTIN_FN(name)      BuiltinResult name##_builtin_function(int, Obj **, Obj *)
-#define BUILTIN_CLASS(name) ObjBuiltinClass *name##_builtin_class()
+#define UNUSED(typ, name) typ name##_UNUSED __attribute__((unused))
+#define BLTIN_FN(name)    BuiltinResult name##_builtin_function(int, Obj **, Obj *)
 
 BLTIN_FN(clock);
 BLTIN_FN(exit);
@@ -42,9 +33,6 @@ BLTIN_FN(input);
 BLTIN_FN(len);
 BLTIN_FN(argv);
 BLTIN_FN(run_gc);
-
-BUILTIN_CLASS(int);
-BUILTIN_CLASS(float);
 
 BuiltinMethodTable **get_builtin_methods();
 

@@ -78,8 +78,7 @@ static void free_object(Obj *object) {
         case OBJ_CLOSURE:
             {
                 ObjClosure *closure = AS_CLOSURE(object);
-                FREE_ARRAY(ObjUpvalue *, closure->upvalues,
-                           closure->upvalue_count);
+                FREE_ARRAY(ObjUpvalue *, closure->upvalues, closure->upvalue_count);
                 FREE(ObjClosure, object);
                 break;
             }
@@ -104,21 +103,16 @@ static void free_object(Obj *object) {
                 FREE(ObjInstance, object);
                 break;
             }
-        case OBJ_BUILTIN_CLASS:
+        case OBJ_BUILTIN_BOUND_METHOD:
+            break;
+        case OBJ_UPVALUE:
             {
-                ObjBuiltinClass *klass = AS_BUILTIN_CLASS(object);
-                free_method_table(&klass->methods);
-                FREE(ObjBuiltinClass, object);
-                return;
+                FREE(ObjUpvalue, object);
+                break;
             }
         case OBJ_BUILTIN_FUNCTION:
             {
                 FREE(ObjBuiltinFunction, object);
-                break;
-            }
-        case OBJ_UPVALUE:
-            {
-                FREE(ObjUpvalue, object);
                 break;
             }
     }
@@ -146,8 +140,7 @@ void mark_object(Obj *object) {
 
     if (vm.gray_capacity < vm.gray_count + 1) {
         vm.gray_capacity = GROW_CAPACITY(vm.gray_capacity);
-        vm.gray_stack =
-            (Obj **)realloc(vm.gray_stack, sizeof(Obj *) * vm.gray_capacity);
+        vm.gray_stack = (Obj **)realloc(vm.gray_stack, sizeof(Obj *) * vm.gray_capacity);
 
         if (vm.gray_stack == NULL)
             exit(1);
@@ -217,7 +210,7 @@ static void blacken_object(Obj *object) {
         case OBJ_UPVALUE:
             mark_object(AS_UPVALUE(object)->closed);
             break;
-        case OBJ_BUILTIN_CLASS:
+        case OBJ_BUILTIN_BOUND_METHOD:
         case OBJ_BUILTIN_FUNCTION:
         case OBJ_STRING:
         case OBJ_BOOL:
@@ -237,8 +230,7 @@ static void mark_roots() {
         mark_object((Obj *)vm.frames[i].closure);
     }
 
-    for (ObjUpvalue *upvalue = vm.open_upvalues; upvalue != NULL;
-         upvalue = upvalue->next) {
+    for (ObjUpvalue *upvalue = vm.open_upvalues; upvalue != NULL; upvalue = upvalue->next) {
         mark_object((Obj *)upvalue);
     }
 

@@ -22,9 +22,11 @@ typedef struct {
 
     Table globals;
     Table strings;
-    BuiltinMethodTable **builtin_methods;
-    ObjString *init_string;
 
+    BuiltinMethodTable **builtin_methods;
+    BuiltinMethodTable builtin_functions;
+
+    ObjString *init_string;
     ObjUpvalue *open_upvalues;
 
     size_t bytes_allocated;
@@ -37,17 +39,15 @@ typedef struct {
     Obj **gray_stack;
 } VM;
 
-typedef enum {
-    INTERPRET_OK,
-    INTERPRET_COMPILE_ERROR,
-    INTERPRET_RUNTIME_ERROR
-} InterpretResult;
+typedef enum { INTERPRET_OK, INTERPRET_COMPILE_ERROR, INTERPRET_RUNTIME_ERROR } InterpretResult;
 
 extern VM vm;
 
 void init_vm();
 void free_vm();
+
 InterpretResult interpret(const char *);
+
 void push(Obj *);
 Obj *pop();
 

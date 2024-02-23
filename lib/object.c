@@ -6,8 +6,7 @@
 #include "object.h"
 #include "vm.h"
 
-#define ALLOCATE_OBJ(type, object_type)                                        \
-    (type *)allocate_object(sizeof(type), object_type)
+#define ALLOCATE_OBJ(type, object_type) (type *)allocate_object(sizeof(type), object_type)
 
 static Obj *allocate_object(size_t size, ObjType type) {
     Obj *object = (Obj *)reallocate(NULL, 0, size);
@@ -22,27 +21,27 @@ static Obj *allocate_object(size_t size, ObjType type) {
     return object;
 }
 
-ObjNil *new_nil() { return ALLOCATE_OBJ(ObjNil, OBJ_NIL); }
+static ObjString *allocate_string(char *chars, int length, uint32_t hash) {
+    ObjString *string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
 
-ObjFloat *new_float(double value) {
-    ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
-    float_->value = value;
+    string->length = length;
+    string->chars = chars;
+    string->hash = hash;
 
-    return float_;
+    push(AS_OBJ(string));
+    table_set(&vm.strings, (Obj *)string, AS_OBJ(new_nil()));
+    pop();
+
+    return string;
 }
+
+ObjNil *new_nil() { return ALLOCATE_OBJ(ObjNil, OBJ_NIL); }
 
 ObjInt *new_int(int64_t value) {
     ObjInt *integer = ALLOCATE_OBJ(ObjInt, OBJ_INT);
     integer->value = value;
 
     return integer;
-}
-
-ObjBool *new_bool(bool value) {
-    ObjBool *boolean = ALLOCATE_OBJ(ObjBool, OBJ_BOOL);
-    boolean->value = value;
-
-    return boolean;
 }
 
 ObjMap *new_map(Obj **elems, int pair_count) {
@@ -72,29 +71,32 @@ ObjList *new_list(Obj **elems, int elem_count) {
     return list;
 }
 
-ObjBoundMethod *new_bound_method(Obj *receiver, ObjClosure *method) {
-    ObjBoundMethod *bound = ALLOCATE_OBJ(ObjBoundMethod, OBJ_BOUND_METHOD);
-    bound->receiver = receiver;
-    bound->method = method;
+ObjBool *new_bool(bool value) {
+    ObjBool *boolean = ALLOCATE_OBJ(ObjBool, OBJ_BOOL);
+    boolean->value = value;
 
-    return bound;
+    return boolean;
 }
 
-ObjClass *new_class(ObjString *name) {
-    ObjClass *klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
-    klass->name = name;
-    init_table(&klass->methods);
-    init_table(&klass->statics);
+ObjFloat *new_float(double value) {
+    ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
+    float_->value = value;
 
-    return klass;
+    return float_;
 }
 
-ObjInstance *new_instance(ObjClass *klass) {
-    ObjInstance *instance = ALLOCATE_OBJ(ObjInstance, OBJ_INSTANCE);
-    instance->klass = klass;
-    init_table(&instance->fields);
+ObjString *new_string(const char *chars, int length) {
+    uint32_t hash = hash_string(chars, length);
 
-    return instance;
+    Obj *interned = table_find_string(&vm.strings, hash);
+    if (interned != NULL && interned->type == OBJ_STRING)
+        return AS_STRING(interned);
+
+    char *heap_chars = ALLOCATE(char, length + 1);
+    memcpy(heap_chars, chars, length);
+    heap_chars[length] = '\0';
+
+    return allocate_string(heap_chars, length, hash);
 }
 
 ObjClosure *new_closure(ObjFunction *function) {
@@ -122,41 +124,73 @@ ObjFunction *new_function() {
     return function;
 }
 
-ObjBuiltinClass *new_builtin_class(int methods) {
-    ObjBuiltinClass *builtin = ALLOCATE_OBJ(ObjBuiltinClass, OBJ_BUILTIN_CLASS);
-    init_method_table(&builtin->methods, methods);
+ObjUpvalue *new_upvalue(Obj **slot) {
+    ObjUpvalue *upvalue = ALLOCATE_OBJ(ObjUpvalue, OBJ_UPVALUE);
+    upvalue->closed = AS_OBJ(new_nil());
+    upvalue->location = slot;
+
+    upvalue->next = NULL;
+    return upvalue;
+}
+
+ObjClass *new_class(ObjString *name) {
+    ObjClass *klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
+    klass->name = name;
+    init_table(&klass->methods);
+    init_table(&klass->statics);
+
+    return klass;
+}
+
+ObjInstance *new_instance(ObjClass *klass) {
+    ObjInstance *instance = ALLOCATE_OBJ(ObjInstance, OBJ_INSTANCE);
+    instance->klass = klass;
+    init_table(&instance->fields);
+
+    return instance;
+}
+
+ObjBoundMethod *new_bound_method(Obj *receiver, ObjClosure *method) {
+    ObjBoundMethod *bound = ALLOCATE_OBJ(ObjBoundMethod, OBJ_BOUND_METHOD);
+    bound->receiver = receiver;
+    bound->method = method;
+
+    return bound;
+}
+
+ObjBuiltinFunction *new_builtin_function(BuiltinMethodFn fn, char *name) {
+    ObjBuiltinFunction *builtin = ALLOCATE_OBJ(ObjBuiltinFunction, OBJ_BUILTIN_FUNCTION);
+
+    builtin->method = fn;
+    builtin->name = name;
 
     return builtin;
 }
 
-ObjBuiltinFunction *new_builtin_method(BuiltinMethodFn method) {
-    ObjBuiltinFunction *builtin =
-        ALLOCATE_OBJ(ObjBuiltinFunction, OBJ_BUILTIN_FUNCTION);
-    builtin->method = method;
-    return builtin;
+ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinMethodFn fn, Obj *caller, char *name) {
+    ObjBuiltinBoundMethod *bound_method =
+        ALLOCATE_OBJ(ObjBuiltinBoundMethod, OBJ_BUILTIN_BOUND_METHOD);
+
+    bound_method->caller = caller;
+    bound_method->function = fn;
+    bound_method->name = name;
+
+    return bound_method;
 }
 
-static ObjString *allocate_string(char *chars, int length, uint32_t hash) {
-    ObjString *string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
+ObjList *argv_list(int argc, const char **argv) {
+    ObjList *list = ALLOCATE_OBJ(ObjList, OBJ_LIST);
 
-    string->length = length;
-    string->chars = chars;
-    string->hash = hash;
+    Array arr;
+    init_array(&arr);
 
-    push(AS_OBJ(string));
-    table_set(&vm.strings, (Obj *)string, AS_OBJ(new_nil()));
-    pop();
-
-    return string;
-}
-
-uint32_t hash_string(const char *key, int length) {
-    uint32_t hash = 2166136261u;
-    for (int i = 0; i < length; i++) {
-        hash ^= (uint8_t)key[i];
-        hash *= 16777619;
+    for (int i = 0; i < argc; i++) {
+        write_array(&arr, (Obj *)new_string(argv[i], strlen(argv[i])));
     }
-    return hash;
+
+    list->elems = arr;
+
+    return list;
 }
 
 ObjString *take_string(char *chars, int length) {
@@ -169,29 +203,6 @@ ObjString *take_string(char *chars, int length) {
     }
 
     return allocate_string(chars, length, hash);
-}
-
-ObjString *new_string(const char *chars, int length) {
-    uint32_t hash = hash_string(chars, length);
-
-    Obj *interned = table_find_string(&vm.strings, hash);
-    if (interned != NULL && interned->type == OBJ_STRING)
-        return AS_STRING(interned);
-
-    char *heap_chars = ALLOCATE(char, length + 1);
-    memcpy(heap_chars, chars, length);
-    heap_chars[length] = '\0';
-
-    return allocate_string(heap_chars, length, hash);
-}
-
-ObjUpvalue *new_upvalue(Obj **slot) {
-    ObjUpvalue *upvalue = ALLOCATE_OBJ(ObjUpvalue, OBJ_UPVALUE);
-    upvalue->closed = AS_OBJ(new_nil());
-    upvalue->location = slot;
-
-    upvalue->next = NULL;
-    return upvalue;
 }
 
 static void print_function(ObjFunction *function) {
@@ -274,17 +285,17 @@ void print_object(Obj *obj) {
         case OBJ_INSTANCE:
             printf("<'%s' instance>", AS_INSTANCE(obj)->klass->name->chars);
             break;
-        case OBJ_BUILTIN_CLASS:
-            printf("<builtin class>");
-            break;
         case OBJ_BUILTIN_FUNCTION:
-            printf("<builtin fn>");
+            printf("<builtin fn '%s'>", AS_BUILTIN_FUNCTION(obj)->name);
             break;
         case OBJ_FUNCTION:
             print_function(AS_FUNCTION(obj));
             break;
         case OBJ_UPVALUE:
             printf("upvalue");
+            break;
+        case OBJ_BUILTIN_BOUND_METHOD:
+            printf("<bound method '%s'>", AS_BUILTIN_BOUND_METHOD(obj)->name);
             break;
     }
 }
@@ -309,6 +320,15 @@ uint32_t get_hash(Obj *obj) {
     }
 }
 
+uint32_t hash_string(const char *key, int length) {
+    uint32_t hash = 2166136261u;
+    for (int i = 0; i < length; i++) {
+        hash ^= (uint8_t)key[i];
+        hash *= 16777619;
+    }
+    return hash;
+}
+
 bool obj_equal(Obj *a, Obj *b) {
     if (a->type != b->type)
         return false;
@@ -331,19 +351,4 @@ bool obj_equal(Obj *a, Obj *b) {
         default:
             return a == b;
     }
-}
-
-ObjList *argv_list(int argc, const char **argv) {
-    ObjList *list = ALLOCATE_OBJ(ObjList, OBJ_LIST);
-
-    Array arr;
-    init_array(&arr);
-
-    for (int i = 0; i < argc; i++) {
-        write_array(&arr, (Obj *)new_string(argv[i], strlen(argv[i])));
-    }
-
-    list->elems = arr;
-
-    return list;
 }
