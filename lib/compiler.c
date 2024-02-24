@@ -1,9 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "common.h"
 #include "compiler.h"
+#include "common.h"
 #include "memory.h"
 
 Parser parser;

@@ -1,9 +1,5 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include "memory.h"
 #include "object.h"
+#include "memory.h"
 #include "vm.h"
 
 #define ALLOCATE_OBJ(type, object_type) (type *)allocate_object(sizeof(type), object_type)

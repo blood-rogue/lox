@@ -1,8 +1,5 @@
-#include <stdlib.h>
-#include <string.h>
-
-#include "memory.h"
 #include "method_table.h"
+#include "memory.h"
 #include "object.h"
 
 void init_method_table(BuiltinMethodTable *table, int methods) {

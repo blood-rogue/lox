@@ -2,9 +2,6 @@
 #define clox_builtin_h
 
 #include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <time.h>
 
 #include "common.h"

@@ -1,7 +1,5 @@
-#include <stdlib.h>
-
-#include "compiler.h"
 #include "memory.h"
+#include "compiler.h"
 #include "vm.h"
 
 #define GC_HEAP_GROW_FACTOR 2
