@@ -457,8 +457,58 @@ static void and (bool) {
 }
 
 static void string(bool) {
-    emit_constant(AS_OBJ(
-        new_string(parser.previous.start + 1, parser.previous.length - 2)));
+    char *escaped_str = calloc(parser.previous.length - 1, 1);
+    int escaped_pos = 0;
+
+    for (int i = 1; i < parser.previous.length - 1; i++) {
+        if (parser.previous.start[i] == '\\') {
+            switch (parser.previous.start[i + 1]) {
+                case '\\':
+                    escaped_str[escaped_pos] = '\\';
+                    break;
+                case '\'':
+                    escaped_str[escaped_pos] = '\'';
+                    break;
+                case '"':
+                    escaped_str[escaped_pos] = '"';
+                    break;
+                case '?':
+                    escaped_str[escaped_pos] = '\?';
+                    break;
+                case 'a':
+                    escaped_str[escaped_pos] = '\a';
+                    break;
+                case 'b':
+                    escaped_str[escaped_pos] = '\b';
+                    break;
+                case 'f':
+                    escaped_str[escaped_pos] = '\f';
+                    break;
+                case 'n':
+                    escaped_str[escaped_pos] = '\n';
+                    break;
+                case 'r':
+                    escaped_str[escaped_pos] = '\r';
+                    break;
+                case 't':
+                    escaped_str[escaped_pos] = '\t';
+                    break;
+                case 'v':
+                    escaped_str[escaped_pos] = '\v';
+                    break;
+                default:
+                    error("Invalid escape sequence in string");
+                    return;
+            }
+            i++;
+        } else {
+            escaped_str[escaped_pos] = parser.previous.start[i];
+        }
+
+        escaped_pos++;
+    }
+
+    emit_constant(AS_OBJ(take_string(escaped_str, escaped_pos)));
 }
 
 static void unary(bool) {

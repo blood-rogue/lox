@@ -2,9 +2,9 @@ CC = gcc
 CFLAGS = -Wall -Werror -Wextra -pedantic -Ofast -Iinclude -flto=auto -ffunction-sections -fdata-sections -g
 LDFLAGS = -flto=auto -Wl,--gc-sections -s
 
-LIB_DIR = ./lib
-STD_DIR = ./std
-BUILD_DIR = ./build
+LIB_DIR = lib
+STD_DIR = std
+BUILD_DIR = build
 
 LIB_SRCS = $(wildcard $(LIB_DIR)/*.c)
 STD_SRCS = $(wildcard $(STD_DIR)/*.c)
@@ -38,7 +38,6 @@ clean:
 fmt:
 	clang-format -i main.c lib/*.c std/*.c include/*.h
 
-lint:
-	clang-tidy std/*.c lib/*.c include/*.h -- -Iinclude
+rebuild: clean all
 
-.PHONY: all clean fmt lint
+.PHONY: all clean fmt rebuild
