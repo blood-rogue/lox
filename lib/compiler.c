@@ -497,6 +497,7 @@ static void string(bool) {
                     escaped_str[escaped_pos] = '\v';
                     break;
                 default:
+                    free(escaped_str);
                     error("Invalid escape sequence in string");
                     return;
             }

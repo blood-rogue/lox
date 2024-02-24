@@ -38,6 +38,9 @@ clean:
 fmt:
 	clang-format -i main.c lib/*.c std/*.c include/*.h
 
+lint:
+	clang-tidy std/*.c lib/*.c include/*.h -- -Iinclude
+
 rebuild: clean all
 
-.PHONY: all clean fmt rebuild
+.PHONY: all clean fmt rebuild lint
