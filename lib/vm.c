@@ -11,9 +11,23 @@
 
 VM vm;
 
-ObjNil *_NIL;
-ObjBool *_TRUE;
-ObjBool *_FALSE;
+const char *obj_names[] = {
+    "NIL",
+    "INT",
+    "MAP",
+    "CHAR",
+    "LIST",
+    "BOOL",
+    "FLOAT",
+    "STRING",
+    "CLOSURE",
+    "FUNCTION",
+    "UPVALUE",
+    "CLASS",
+    "INSTANCE",
+    "BOUND_METHOD",
+    "BUILTIN_METHOD",
+    "BUILTIN_BOUND_METHOD"};
 
 static void reset_stack() {
     vm.stack_top = vm.stack;
@@ -58,6 +72,25 @@ static void runtime_error(const char *format, ...) {
 void init_vm() {
     init_literals();
 
+#define SET_OBJ_NAME(obj) vm.obj_names[OBJ_##obj] = #obj;
+    SET_OBJ_NAME(NIL);
+    SET_OBJ_NAME(INT);
+    SET_OBJ_NAME(MAP);
+    SET_OBJ_NAME(CHAR);
+    SET_OBJ_NAME(LIST);
+    SET_OBJ_NAME(BOOL);
+    SET_OBJ_NAME(FLOAT);
+    SET_OBJ_NAME(STRING);
+    SET_OBJ_NAME(CLOSURE);
+    SET_OBJ_NAME(FUNCTION);
+    SET_OBJ_NAME(UPVALUE);
+    SET_OBJ_NAME(CLASS);
+    SET_OBJ_NAME(INSTANCE);
+    SET_OBJ_NAME(BOUND_METHOD);
+    SET_OBJ_NAME(BUILTIN_FUNCTION);
+    SET_OBJ_NAME(BUILTIN_BOUND_METHOD);
+#undef SET_OBJ_NAME
+
     reset_stack();
     vm.objects = NULL;
     vm.bytes_allocated = 0;
@@ -88,12 +121,12 @@ void init_vm() {
     SET_BLTIN_FN(exit);
     SET_BLTIN_FN(print);
     SET_BLTIN_FN(input);
-    SET_BLTIN_FN(len);
     SET_BLTIN_FN(argv);
     SET_BLTIN_FN(run_gc);
     SET_BLTIN_FN(parse_int);
     SET_BLTIN_FN(parse_float);
     SET_BLTIN_FN(sleep);
+    SET_BLTIN_FN(type);
 
 #undef SET_BLTIN_FN
 }
@@ -181,8 +214,25 @@ static bool call_value(Obj *callee, int argc) {
                 push(result.value);
                 return true;
             }
+        case OBJ_BUILTIN_BOUND_METHOD:
+            {
+                ObjBuiltinBoundMethod *bound_method =
+                    AS_BUILTIN_BOUND_METHOD(callee);
+
+                BuiltinResult result = bound_method->function(
+                    argc, vm.stack_top - argc, bound_method->caller);
+
+                if (result.error != NULL) {
+                    runtime_error(result.error);
+                    return false;
+                }
+
+                vm.stack_top -= argc + 1;
+                push(result.value);
+                return true;
+            }
         default:
-            runtime_error("Can only call functions and classes.");
+            runtime_error("Cannot call %s", vm.obj_names[callee->type]);
             return false;
     }
 }
@@ -191,7 +241,10 @@ static bool invoke_from_class(ObjClass *klass, ObjString *name, int argc) {
     Obj *method;
     if (!table_get(&klass->methods, (Obj *)name, &method) &&
         !table_get(&klass->statics, (Obj *)name, &method)) {
-        runtime_error("Undefined property '%s'.", name->chars);
+        runtime_error(
+            "Undefined property '%s' for class '%s'.",
+            name->chars,
+            klass->name->chars);
         return false;
     }
 
@@ -220,7 +273,10 @@ static bool invoke(ObjString *name, int argc) {
 
                 Obj *method;
                 if (!table_get(&klass->statics, (Obj *)name, &method)) {
-                    runtime_error("Undefined method '%s'.", name->chars);
+                    runtime_error(
+                        "Undefined static method '%s' for class '%s'.",
+                        name->chars,
+                        klass->name->chars);
                     return false;
                 }
 
@@ -229,11 +285,15 @@ static bool invoke(ObjString *name, int argc) {
         default:
             {
                 BuiltinMethodFn method;
-                if (!method_table_get(
+                if (vm.builtin_methods[receiver->type] == NULL ||
+                    !method_table_get(
                         vm.builtin_methods[receiver->type],
                         name->hash,
                         &method)) {
-                    runtime_error("Could not invode method.");
+                    runtime_error(
+                        "Could not invode method '%s' on '%s'.",
+                        name->chars,
+                        vm.obj_names[receiver->type]);
                     return false;
                 }
 
@@ -255,7 +315,10 @@ static bool invoke(ObjString *name, int argc) {
 static bool bind_method(ObjClass *klass, ObjString *name) {
     Obj *method;
     if (!table_get(&klass->methods, (Obj *)name, &method)) {
-        runtime_error("Undefined property '%s'.", name->chars);
+        runtime_error(
+            "Undefined property '%s' of class '%s'.",
+            name->chars,
+            klass->name->chars);
         return false;
     }
 
@@ -348,7 +411,11 @@ static InterpretResult run() {
             push(AS_OBJ(new_func_float(                                        \
                 AS_FLOAT(pop())->value op AS_FLOAT(pop())->value)));           \
         } else {                                                               \
-            runtime_error("Operands must be numbers.");                        \
+            runtime_error(                                                     \
+                "Unsupported operand types for '%s': '%s' and '%s'.",          \
+                #op,                                                           \
+                vm.obj_names[peek(0)->type],                                   \
+                vm.obj_names[peek(1)->type]);                                  \
             return INTERPRET_RUNTIME_ERROR;                                    \
         }                                                                      \
     }
@@ -390,7 +457,7 @@ static InterpretResult run() {
                     if (IS_LIST(value)) {
                         if (!IS_INT(index_value)) {
                             runtime_error(
-                                "Lists can only be indexed using numbers.");
+                                "Lists can only be indexed using integers.");
                             return INTERPRET_RUNTIME_ERROR;
                         }
 
@@ -418,7 +485,9 @@ static InterpretResult run() {
                             return INTERPRET_RUNTIME_ERROR;
                         }
                     } else {
-                        runtime_error("Only lists and maps can be indexed.");
+                        runtime_error(
+                            "'%s' cannot be indexed.",
+                            vm.obj_names[value->type]);
                         return INTERPRET_RUNTIME_ERROR;
                     }
 
@@ -459,7 +528,9 @@ static InterpretResult run() {
 
                         table_set(&map->table, (Obj *)index, to_be_assigned);
                     } else {
-                        runtime_error("Only lists and maps can be indexed.");
+                        runtime_error(
+                            "'%s' cannot be indexed.",
+                            vm.obj_names[value->type]);
                         return INTERPRET_RUNTIME_ERROR;
                     }
 
@@ -551,41 +622,78 @@ static InterpretResult run() {
             case OP_GET_PROPERTY:
                 {
                     Obj *obj = peek(0);
-                    if (IS_INSTANCE(obj)) {
-                        ObjInstance *instance = AS_INSTANCE(obj);
-                        ObjString *name = READ_STRING();
+                    switch (obj->type) {
+                        case OBJ_INSTANCE:
+                            {
+                                ObjInstance *instance = AS_INSTANCE(obj);
+                                ObjString *name = READ_STRING();
 
-                        Obj *value;
-                        if (table_get(&instance->fields, (Obj *)name, &value)) {
-                            pop();
-                            push(value);
-                            break;
-                        }
+                                Obj *value;
+                                if (table_get(
+                                        &instance->fields,
+                                        (Obj *)name,
+                                        &value)) {
+                                    pop();
+                                    push(value);
+                                    break;
+                                }
 
-                        if (!bind_method(instance->klass, name)) {
-                            return INTERPRET_RUNTIME_ERROR;
-                        }
-                        break;
-                    } else if (vm.builtin_methods[obj->type] != NULL) {
-                        ObjString *method_name = READ_STRING();
-                        BuiltinMethodFn method;
-                        if (method_table_get(
-                                vm.builtin_methods[obj->type],
-                                method_name->hash,
-                                &method)) {
-                            pop();
-                            push(AS_OBJ(new_builtin_bound_method(
-                                method, obj, method_name->chars)));
-                        } else {
-                            runtime_error(
-                                "No method named '%s'", method_name->chars);
-                            return INTERPRET_RUNTIME_ERROR;
-                        }
+                                if (!bind_method(instance->klass, name)) {
+                                    runtime_error(
+                                        "Could not bind '%s' from class '%s'.",
+                                        name->chars,
+                                        instance->klass->name->chars);
+                                    return INTERPRET_RUNTIME_ERROR;
+                                }
+                                break;
+                            }
+                        case OBJ_CLASS:
+                            {
+                                ObjClass *klass = AS_CLASS(obj);
+                                ObjString *name = READ_STRING();
+
+                                Obj *value;
+                                if (table_get(
+                                        &klass->statics, (Obj *)name, &value)) {
+                                    pop();
+                                    push(value);
+                                    break;
+                                } else {
+                                    runtime_error(
+                                        "No static method '%s' on class '%s'.",
+                                        name->chars,
+                                        klass->name->chars);
+                                    return INTERPRET_RUNTIME_ERROR;
+                                }
+                                break;
+                            }
+                        default:
+                            if (vm.builtin_methods[obj->type] != NULL) {
+                                ObjString *method_name = READ_STRING();
+                                BuiltinMethodFn method;
+                                if (method_table_get(
+                                        vm.builtin_methods[obj->type],
+                                        method_name->hash,
+                                        &method)) {
+                                    pop();
+                                    push(AS_OBJ(new_builtin_bound_method(
+                                        method, obj, method_name->chars)));
+                                } else {
+                                    runtime_error(
+                                        "No method named '%s' on '%s'",
+                                        method_name->chars,
+                                        vm.obj_names[obj->type]);
+                                    return INTERPRET_RUNTIME_ERROR;
+                                }
+                            } else {
+                                runtime_error(
+                                    "Properties and methods do not exist for "
+                                    "'%s'.",
+                                    vm.obj_names[obj->type]);
+                                return INTERPRET_RUNTIME_ERROR;
+                            }
                     }
-
-                    runtime_error(
-                        "Properties and methods do not exist for the type.");
-                    return INTERPRET_RUNTIME_ERROR;
+                    break;
                 }
             case OP_SET_PROPERTY:
                 {
@@ -638,7 +746,9 @@ static InterpretResult run() {
                             AS_FLOAT(pop())->value + AS_FLOAT(pop())->value)));
                     } else {
                         runtime_error(
-                            "Operands must be two numbers or two strings.");
+                            "Unsupported operand types for '+', '%s' and '%s'.",
+                            vm.obj_names[peek(0)->type],
+                            vm.obj_names[peek(1)->type]);
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     break;
@@ -672,7 +782,8 @@ static InterpretResult run() {
                         push(AS_OBJ(new_float(-(AS_FLOAT(pop())->value))));
                         break;
                     }
-                    runtime_error("Operand must be a number.");
+                    runtime_error(
+                        "Cannot negate '%s'.", vm.obj_names[peek(0)->type]);
                     return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_JUMP:

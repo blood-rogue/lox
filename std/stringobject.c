@@ -26,12 +26,18 @@ BuiltinResult _string_to_upper(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(str);
 }
 
+BuiltinResult _string_len(int argc, UNUSED(Obj **, argv), Obj *caller) {
+    CHECK_ARG_COUNT(0)
+    return OK(new_int(AS_STRING(caller)->length));
+}
+
 BuiltinMethodTable *string_methods() {
     BuiltinMethodTable *table = malloc(sizeof(BuiltinMethodTable));
     init_method_table(table, 8);
 
     SET_BLTIN_METHOD(string, to_upper);
     SET_BLTIN_METHOD(string, to_lower);
+    SET_BLTIN_METHOD(string, len);
 
     return table;
 }

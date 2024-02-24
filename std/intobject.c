@@ -2,10 +2,7 @@
 
 BuiltinResult _int_abs(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-
-    ObjInt *_int = AS_INT(caller);
-
-    return OK(AS_OBJ(new_int(labs(_int->value))));
+    return OK(AS_OBJ(new_int(labs(AS_INT(caller)->value))));
 }
 
 BuiltinResult _int_to_str(int argc, UNUSED(Obj **, argv), Obj *caller) {

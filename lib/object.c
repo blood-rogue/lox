@@ -2,9 +2,9 @@
 #include "memory.h"
 #include "vm.h"
 
-static ObjNil *_NIL = NULL;
-static ObjBool *_TRUE = NULL;
-static ObjBool *_FALSE = NULL;
+ObjNil *_NIL = NULL;
+ObjBool *_TRUE = NULL;
+ObjBool *_FALSE = NULL;
 
 #define ALLOCATE_OBJ(type, object_type)                                        \
     (type *)allocate_object(sizeof(type), object_type)

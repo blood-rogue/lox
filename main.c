@@ -19,6 +19,8 @@ static void repl() {
 
         interpret(line);
     }
+
+    free_vm();
 }
 
 static char *read_file(const char *path) {
@@ -55,6 +57,8 @@ static void run_file(const char *path) {
     _source = source;
     InterpretResult result = interpret(source);
 
+    free_vm();
+
     if (result == INTERPRET_COMPILE_ERROR)
         exit(65);
     if (result == INTERPRET_RUNTIME_ERROR)
@@ -71,8 +75,6 @@ int main(int argc, const char **argv) {
         repl();
     else
         run_file(argv[1]);
-
-    free_vm();
 
     return 0;
 }

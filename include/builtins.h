@@ -30,12 +30,12 @@ BLTIN_FN(clock);
 BLTIN_FN(exit);
 BLTIN_FN(print);
 BLTIN_FN(input);
-BLTIN_FN(len);
 BLTIN_FN(argv);
 BLTIN_FN(run_gc);
 BLTIN_FN(parse_int);
 BLTIN_FN(parse_float);
 BLTIN_FN(sleep);
+BLTIN_FN(type);
 
 BuiltinMethodTable **get_builtin_methods();
 

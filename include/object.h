@@ -2,7 +2,6 @@
 #define clox_object_h
 
 #include "array.h"
-// #include "builtin_table.h"
 #include "chunk.h"
 #include "common.h"
 #include "method_table.h"

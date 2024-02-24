@@ -1,6 +1,7 @@
 #include <unistd.h>
 
 #include "builtins.h"
+#include "vm.h"
 
 extern void free_vm();
 extern char *_source;
@@ -70,32 +71,6 @@ input_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
 }
 
 BuiltinResult
-len_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
-    CHECK_ARG_COUNT(1)
-
-    Obj *obj = argv[0];
-    switch (obj->type) {
-        case OBJ_LIST:
-            {
-                ObjList *list = AS_LIST(obj);
-                return OK(new_int(list->elems.count));
-            }
-        case OBJ_MAP:
-            {
-                ObjMap *map = AS_MAP(obj);
-                return OK(new_int(map->table.count));
-            }
-        case OBJ_STRING:
-            {
-                ObjString *string = AS_STRING(obj);
-                return OK(new_int(string->length));
-            }
-        default:
-            return ERR("len() is not defined for the type");
-    }
-}
-
-BuiltinResult
 argv_builtin_function(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(0)
 
@@ -154,4 +129,12 @@ sleep_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     sleep(duration);
 
     return OK(new_nil());
+}
+
+BuiltinResult
+type_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
+    CHECK_ARG_COUNT(1)
+
+    return OK(new_string(
+        vm.obj_names[argv[0]->type], (int)strlen(vm.obj_names[argv[0]->type])));
 }

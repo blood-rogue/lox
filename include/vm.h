@@ -32,6 +32,7 @@ typedef struct {
     size_t bytes_allocated;
     size_t next_gc;
 
+    const char *obj_names[16];
     Obj *objects;
 
     int gray_count;
