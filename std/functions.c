@@ -1,3 +1,5 @@
+#include <unistd.h>
+
 #include "builtins.h"
 
 extern void free_vm();
@@ -131,4 +133,14 @@ BuiltinResult parse_float_builtin_function(int argc, Obj **argv, UNUSED(Obj *, c
         default:
             return ERR("Cannot parse to int.");
     }
+}
+
+BuiltinResult sleep_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
+    CHECK_ARG_COUNT(1)
+
+    int64_t duration = AS_INT(argv[1])->value;
+
+    sleep(duration);
+
+    return OK(new_nil());
 }

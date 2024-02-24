@@ -198,4 +198,7 @@ uint32_t get_hash(Obj *);
 
 bool obj_equal(Obj *, Obj *);
 
+void init_literals();
+void free_literals();
+
 #endif // clox_object_h

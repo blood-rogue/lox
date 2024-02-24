@@ -2,6 +2,10 @@
 #include "memory.h"
 #include "vm.h"
 
+static ObjNil *_NIL = NULL;
+static ObjBool *_TRUE = NULL;
+static ObjBool *_FALSE = NULL;
+
 #define ALLOCATE_OBJ(type, object_type) (type *)allocate_object(sizeof(type), object_type)
 
 static Obj *allocate_object(size_t size, ObjType type) {
@@ -29,7 +33,7 @@ static ObjString *allocate_string(char *chars, int length, uint32_t hash) {
     return string;
 }
 
-ObjNil *new_nil() { return ALLOCATE_OBJ(ObjNil, OBJ_NIL); }
+ObjNil *new_nil() { return _NIL; }
 
 ObjInt *new_int(int64_t value) {
     ObjInt *integer = ALLOCATE_OBJ(ObjInt, OBJ_INT);
@@ -73,12 +77,7 @@ ObjList *new_list(Obj **elems, int elem_count) {
     return list;
 }
 
-ObjBool *new_bool(bool value) {
-    ObjBool *boolean = ALLOCATE_OBJ(ObjBool, OBJ_BOOL);
-    boolean->value = value;
-
-    return boolean;
-}
+ObjBool *new_bool(bool value) { return value ? _TRUE : _FALSE; }
 
 ObjFloat *new_float(double value) {
     ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
@@ -359,4 +358,19 @@ bool obj_equal(Obj *a, Obj *b) {
         default:
             return a == b;
     }
+}
+
+void init_literals() {
+    _NIL = ALLOCATE_OBJ(ObjNil, OBJ_NIL);
+    _TRUE = ALLOCATE_OBJ(ObjBool, OBJ_BOOL);
+    _FALSE = ALLOCATE_OBJ(ObjBool, OBJ_BOOL);
+
+    _TRUE->value = true;
+    _FALSE->value = false;
+}
+
+void free_literals() {
+    free(_NIL);
+    free(_TRUE);
+    free(_FALSE);
 }

@@ -99,7 +99,7 @@ bool table_delete(Table *table, Obj *key) {
         return false;
 
     entry->key = NULL;
-    entry->value = NULL;
+    entry->value = AS_OBJ(new_bool(true));
     return true;
 }
 

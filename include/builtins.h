@@ -22,6 +22,8 @@
 
 #define UNUSED(typ, name) typ name##_UNUSED __attribute__((unused))
 #define BLTIN_FN(name)    BuiltinResult name##_builtin_function(int, Obj **, Obj *)
+#define SET_BLTIN_METHOD(obj, name, len)                                                           \
+    method_table_set(table, #name, hash_string(#name, len), _##obj##_##name)
 
 BLTIN_FN(clock);
 BLTIN_FN(exit);
@@ -32,6 +34,7 @@ BLTIN_FN(argv);
 BLTIN_FN(run_gc);
 BLTIN_FN(parse_int);
 BLTIN_FN(parse_float);
+BLTIN_FN(sleep);
 
 BuiltinMethodTable **get_builtin_methods();
 

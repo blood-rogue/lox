@@ -48,10 +48,10 @@ BuiltinMethodTable *int_methods() {
     BuiltinMethodTable *table = malloc(sizeof(BuiltinMethodTable));
     init_method_table(table, 8);
 
-    method_table_set(table, "abs", hash_string("abs", 3), _int_abs);
-    method_table_set(table, "to_str", hash_string("to_str", 6), _int_to_str);
-    method_table_set(table, "to_hex", hash_string("to_hex", 6), _int_to_hex);
-    method_table_set(table, "to_oct", hash_string("to_oct", 6), _int_to_oct);
+    SET_BLTIN_METHOD(int, abs, 3);
+    SET_BLTIN_METHOD(int, to_str, 6);
+    SET_BLTIN_METHOD(int, to_hex, 6);
+    SET_BLTIN_METHOD(int, to_oct, 6);
 
     return table;
 }

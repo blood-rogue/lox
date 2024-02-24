@@ -26,11 +26,9 @@ void *reallocate(void *pointer, size_t old_size, size_t new_size) {
 
 static void free_object(Obj *object) {
     switch (object->type) {
+        case OBJ_BOOL:
         case OBJ_NIL:
-            {
-                FREE(ObjNil, object);
-                break;
-            }
+            break;
         case OBJ_FLOAT:
             {
                 FREE(ObjFloat, object);
@@ -39,11 +37,6 @@ static void free_object(Obj *object) {
         case OBJ_INT:
             {
                 FREE(ObjInt, object);
-                break;
-            }
-        case OBJ_BOOL:
-            {
-                FREE(ObjBool, object);
                 break;
             }
         case OBJ_CHAR:

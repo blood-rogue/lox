@@ -56,6 +56,8 @@ static void runtime_error(const char *format, ...) {
 }
 
 void init_vm() {
+    init_literals();
+
     reset_stack();
     vm.objects = NULL;
     vm.bytes_allocated = 0;
@@ -88,6 +90,7 @@ void init_vm() {
     SET_BLTIN_FN(run_gc);
     SET_BLTIN_FN(parse_int);
     SET_BLTIN_FN(parse_float);
+    SET_BLTIN_FN(sleep);
 
 #undef SET_BLTIN_FN
 }
@@ -97,6 +100,8 @@ void free_vm() {
     free_table(&vm.strings);
 
     vm.init_string = NULL;
+
+    free_literals();
 
     free_objects();
     free_method_table(&vm.builtin_functions);
