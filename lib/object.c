@@ -6,7 +6,8 @@ static ObjNil *_NIL = NULL;
 static ObjBool *_TRUE = NULL;
 static ObjBool *_FALSE = NULL;
 
-#define ALLOCATE_OBJ(type, object_type) (type *)allocate_object(sizeof(type), object_type)
+#define ALLOCATE_OBJ(type, object_type)                                        \
+    (type *)allocate_object(sizeof(type), object_type)
 
 static Obj *allocate_object(size_t size, ObjType type) {
     Obj *object = (Obj *)reallocate(NULL, 0, size);
@@ -160,7 +161,8 @@ ObjBoundMethod *new_bound_method(Obj *receiver, ObjClosure *method) {
 }
 
 ObjBuiltinFunction *new_builtin_function(BuiltinMethodFn fn, char *name) {
-    ObjBuiltinFunction *builtin = ALLOCATE_OBJ(ObjBuiltinFunction, OBJ_BUILTIN_FUNCTION);
+    ObjBuiltinFunction *builtin =
+        ALLOCATE_OBJ(ObjBuiltinFunction, OBJ_BUILTIN_FUNCTION);
 
     builtin->method = fn;
     builtin->name = name;
@@ -168,7 +170,8 @@ ObjBuiltinFunction *new_builtin_function(BuiltinMethodFn fn, char *name) {
     return builtin;
 }
 
-ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinMethodFn fn, Obj *caller, char *name) {
+ObjBuiltinBoundMethod *
+new_builtin_bound_method(BuiltinMethodFn fn, Obj *caller, char *name) {
     ObjBuiltinBoundMethod *bound_method =
         ALLOCATE_OBJ(ObjBuiltinBoundMethod, OBJ_BUILTIN_BOUND_METHOD);
 
@@ -342,18 +345,19 @@ bool obj_equal(Obj *a, Obj *b) {
 
     switch (a->type) {
         case OBJ_BOOL:
-            {
-                ObjBool *a = AS_BOOL(a);
-                ObjBool *b = AS_BOOL(b);
-                return a->value == b->value;
-            }
+            return a == b;
         case OBJ_NIL:
             return true;
         case OBJ_INT:
+            return AS_INT(a)->value == AS_INT(b)->value;
+        case OBJ_STRING:
             {
-                ObjInt *a = AS_INT(a);
-                ObjInt *b = AS_INT(b);
-                return a->value == b->value;
+                ObjString *str_a = AS_STRING(a);
+                ObjString *str_b = AS_STRING(b);
+
+                return str_a->hash == str_b->hash &&
+                       str_a->length == str_b->length &&
+                       memcmp(str_a->chars, str_b->chars, str_a->length) == 0;
             }
         default:
             return a == b;
@@ -361,11 +365,19 @@ bool obj_equal(Obj *a, Obj *b) {
 }
 
 void init_literals() {
-    _NIL = ALLOCATE_OBJ(ObjNil, OBJ_NIL);
-    _TRUE = ALLOCATE_OBJ(ObjBool, OBJ_BOOL);
-    _FALSE = ALLOCATE_OBJ(ObjBool, OBJ_BOOL);
+    _NIL = malloc(sizeof(ObjNil));
+    _NIL->obj.type = OBJ_NIL;
+    _NIL->obj.is_marked = false;
 
+    _TRUE = malloc(sizeof(ObjBool));
+    _FALSE = malloc(sizeof(ObjBool));
+
+    _TRUE->obj.type = OBJ_BOOL;
+    _TRUE->obj.is_marked = false;
     _TRUE->value = true;
+
+    _FALSE->obj.type = OBJ_BOOL;
+    _FALSE->obj.is_marked = false;
     _FALSE->value = false;
 }
 

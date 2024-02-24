@@ -10,8 +10,8 @@ void init_method_table(BuiltinMethodTable *table, int methods) {
 
 void free_method_table(BuiltinMethodTable *table) { free(table->entries); }
 
-static BuiltinMethodEntry *find_method_entry(BuiltinMethodEntry *entries, int capacity,
-                                             uint32_t hash) {
+static BuiltinMethodEntry *
+find_method_entry(BuiltinMethodEntry *entries, int capacity, uint32_t hash) {
     uint32_t index = hash & (capacity - 1);
 
     for (;;) {
@@ -25,11 +25,15 @@ static BuiltinMethodEntry *find_method_entry(BuiltinMethodEntry *entries, int ca
     }
 }
 
-bool method_table_get(BuiltinMethodTable *table, uint32_t hash, BuiltinMethodFn *value) {
+bool method_table_get(
+    BuiltinMethodTable *table,
+    uint32_t hash,
+    BuiltinMethodFn *value) {
     if (table->count == 0)
         return false;
 
-    BuiltinMethodEntry *entry = find_method_entry(table->entries, table->capacity, hash);
+    BuiltinMethodEntry *entry =
+        find_method_entry(table->entries, table->capacity, hash);
 
     if (entry->key != NULL) {
         *value = entry->value;
@@ -39,8 +43,13 @@ bool method_table_get(BuiltinMethodTable *table, uint32_t hash, BuiltinMethodFn 
     return false;
 }
 
-bool method_table_set(BuiltinMethodTable *table, char *key, uint32_t hash, BuiltinMethodFn fn) {
-    BuiltinMethodEntry *entry = find_method_entry(table->entries, table->capacity, hash);
+bool method_table_set(
+    BuiltinMethodTable *table,
+    char *key,
+    uint32_t hash,
+    BuiltinMethodFn fn) {
+    BuiltinMethodEntry *entry =
+        find_method_entry(table->entries, table->capacity, hash);
     bool is_new_key = entry->key == NULL;
 
     if (is_new_key && entry->value == NULL)
@@ -57,7 +66,8 @@ bool method_table_delete(BuiltinMethodTable *table, uint32_t hash) {
     if (table->count == 0)
         return false;
 
-    BuiltinMethodEntry *entry = find_method_entry(table->entries, table->capacity, hash);
+    BuiltinMethodEntry *entry =
+        find_method_entry(table->entries, table->capacity, hash);
     if (entry->key == NULL)
         return false;
 

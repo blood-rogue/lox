@@ -8,22 +8,23 @@
 #include "memory.h"
 #include "object.h"
 
-#define ERR(err)                                                                                   \
+#define ERR(err)                                                               \
     (BuiltinResult) { .error = err, .value = AS_OBJ(new_nil()) }
-#define OK(ok)                                                                                     \
+#define OK(ok)                                                                 \
     (BuiltinResult) { .value = AS_OBJ(ok), .error = NULL }
 
-#define CHECK_ARG_COUNT(expected)                                                                  \
-    if (argc != expected) {                                                                        \
-        char buf[100];                                                                             \
-        sprintf(buf, "Expected %d arguments but got %d", expected, argc);                          \
-        return ERR(buf);                                                                           \
+#define CHECK_ARG_COUNT(expected)                                              \
+    if (argc != expected) {                                                    \
+        char buf[100];                                                         \
+        sprintf(buf, "Expected %d arguments but got %d", expected, argc);      \
+        return ERR(buf);                                                       \
     }
 
 #define UNUSED(typ, name) typ name##_UNUSED __attribute__((unused))
 #define BLTIN_FN(name)    BuiltinResult name##_builtin_function(int, Obj **, Obj *)
-#define SET_BLTIN_METHOD(obj, name, len)                                                           \
-    method_table_set(table, #name, hash_string(#name, len), _##obj##_##name)
+#define SET_BLTIN_METHOD(obj, name)                                            \
+    method_table_set(                                                          \
+        table, #name, hash_string(#name, (int)strlen(#name)), _##obj##_##name)
 
 BLTIN_FN(clock);
 BLTIN_FN(exit);
@@ -38,7 +39,6 @@ BLTIN_FN(sleep);
 
 BuiltinMethodTable **get_builtin_methods();
 
-BuiltinMethodTable *nil_methods();
 BuiltinMethodTable *float_methods();
 BuiltinMethodTable *int_methods();
 BuiltinMethodTable *bool_methods();

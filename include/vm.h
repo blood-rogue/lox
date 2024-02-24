@@ -39,7 +39,11 @@ typedef struct {
     Obj **gray_stack;
 } VM;
 
-typedef enum { INTERPRET_OK, INTERPRET_COMPILE_ERROR, INTERPRET_RUNTIME_ERROR } InterpretResult;
+typedef enum {
+    INTERPRET_OK,
+    INTERPRET_COMPILE_ERROR,
+    INTERPRET_RUNTIME_ERROR
+} InterpretResult;
 
 extern VM vm;
 

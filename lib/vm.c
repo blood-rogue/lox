@@ -77,9 +77,12 @@ void init_vm() {
 
     init_method_table(&vm.builtin_functions, 16);
 
-#define SET_BLTIN_FN(name)                                                                         \
-    method_table_set(&vm.builtin_functions, #name, hash_string(#name, (int)strlen(#name)),         \
-                     name##_builtin_function)
+#define SET_BLTIN_FN(name)                                                     \
+    method_table_set(                                                          \
+        &vm.builtin_functions,                                                 \
+        #name,                                                                 \
+        hash_string(#name, (int)strlen(#name)),                                \
+        name##_builtin_function)
 
     SET_BLTIN_FN(clock);
     SET_BLTIN_FN(exit);
@@ -118,7 +121,10 @@ void free_vm() {
 
 static bool call(ObjClosure *closure, int argc) {
     if (argc != closure->function->arity) {
-        runtime_error("Expected %d arguments but got %d.", closure->function->arity, argc);
+        runtime_error(
+            "Expected %d arguments but got %d.",
+            closure->function->arity,
+            argc);
         return false;
     }
 
@@ -148,7 +154,8 @@ static bool call_value(Obj *callee, int argc) {
                 vm.stack_top[-argc - 1] = AS_OBJ(new_instance(klass));
 
                 Obj *initializer;
-                if (table_get(&klass->methods, (Obj *)vm.init_string, &initializer)) {
+                if (table_get(
+                        &klass->methods, (Obj *)vm.init_string, &initializer)) {
                     return call(AS_CLOSURE(initializer), argc);
                 } else if (argc != 0) {
                     runtime_error("Expected 0 arguments but got %d.", argc);
@@ -162,7 +169,8 @@ static bool call_value(Obj *callee, int argc) {
         case OBJ_BUILTIN_FUNCTION:
             {
                 BuiltinMethodFn builtin = AS_BUILTIN_FUNCTION(callee)->method;
-                BuiltinResult result = builtin(argc, vm.stack_top - argc, callee);
+                BuiltinResult result =
+                    builtin(argc, vm.stack_top - argc, callee);
 
                 if (result.error != NULL) {
                     runtime_error(result.error);
@@ -221,12 +229,16 @@ static bool invoke(ObjString *name, int argc) {
         default:
             {
                 BuiltinMethodFn method;
-                if (!method_table_get(vm.builtin_methods[receiver->type], name->hash, &method)) {
+                if (!method_table_get(
+                        vm.builtin_methods[receiver->type],
+                        name->hash,
+                        &method)) {
                     runtime_error("Could not invode method.");
                     return false;
                 }
 
-                BuiltinResult result = method(argc, vm.stack_top - argc, receiver);
+                BuiltinResult result =
+                    method(argc, vm.stack_top - argc, receiver);
 
                 if (result.error != NULL) {
                     runtime_error(result.error);
@@ -298,7 +310,9 @@ static void define_method(ObjString *name, bool is_static) {
     pop();
 }
 
-static bool is_falsey(Obj *value) { return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value)); }
+static bool is_falsey(Obj *value) {
+    return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+}
 
 static void concatenate() {
     ObjString *b = AS_STRING(peek(0));
@@ -319,20 +333,24 @@ static void concatenate() {
 static InterpretResult run() {
     CallFrame *frame = &vm.frames[vm.frame_count - 1];
 
-#define READ_BYTE()     (*frame->ip++)
-#define READ_SHORT()    (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
-#define READ_CONSTANT() (frame->closure->function->chunk.constants.values[READ_BYTE()])
-#define READ_STRING()   AS_STRING(READ_CONSTANT())
-#define BINARY_OP(new_func_int, new_func_float, op)                                                \
-    {                                                                                              \
-        if (IS_INT(peek(0)) && IS_INT(peek(1))) {                                                  \
-            push(AS_OBJ(new_func_int(AS_INT(pop())->value op AS_INT(pop())->value)));              \
-        } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {                                       \
-            push(AS_OBJ(new_func_float(AS_FLOAT(pop())->value op AS_FLOAT(pop())->value)));        \
-        } else {                                                                                   \
-            runtime_error("Operands must be numbers.");                                            \
-            return INTERPRET_RUNTIME_ERROR;                                                        \
-        }                                                                                          \
+#define READ_BYTE() (*frame->ip++)
+#define READ_SHORT()                                                           \
+    (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
+#define READ_CONSTANT()                                                        \
+    (frame->closure->function->chunk.constants.values[READ_BYTE()])
+#define READ_STRING() AS_STRING(READ_CONSTANT())
+#define BINARY_OP(new_func_int, new_func_float, op)                            \
+    {                                                                          \
+        if (IS_INT(peek(0)) && IS_INT(peek(1))) {                              \
+            push(AS_OBJ(                                                       \
+                new_func_int(AS_INT(pop())->value op AS_INT(pop())->value)));  \
+        } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {                   \
+            push(AS_OBJ(new_func_float(                                        \
+                AS_FLOAT(pop())->value op AS_FLOAT(pop())->value)));           \
+        } else {                                                               \
+            runtime_error("Operands must be numbers.");                        \
+            return INTERPRET_RUNTIME_ERROR;                                    \
+        }                                                                      \
     }
 
     for (;;) {
@@ -346,7 +364,8 @@ static InterpretResult run() {
             case OP_LIST:
                 {
                     int elem_count = READ_BYTE();
-                    ObjList *list = new_list(vm.stack_top - elem_count, elem_count);
+                    ObjList *list =
+                        new_list(vm.stack_top - elem_count, elem_count);
                     vm.stack_top -= elem_count;
                     push(AS_OBJ(list));
 
@@ -355,7 +374,8 @@ static InterpretResult run() {
             case OP_MAP:
                 {
                     int pair_count = READ_BYTE();
-                    ObjMap *map = new_map(vm.stack_top - pair_count * 2, pair_count);
+                    ObjMap *map =
+                        new_map(vm.stack_top - pair_count * 2, pair_count);
                     vm.stack_top -= pair_count * 2;
                     push(AS_OBJ(map));
 
@@ -369,7 +389,8 @@ static InterpretResult run() {
                     Obj *indexed;
                     if (IS_LIST(value)) {
                         if (!IS_INT(index_value)) {
-                            runtime_error("Lists can only be indexed using numbers.");
+                            runtime_error(
+                                "Lists can only be indexed using numbers.");
                             return INTERPRET_RUNTIME_ERROR;
                         }
 
@@ -384,7 +405,8 @@ static InterpretResult run() {
                         indexed = list->elems.values[index];
                     } else if (IS_MAP(value)) {
                         if (!IS_STRING(index_value)) {
-                            runtime_error("Maps can only be indexed using strings.");
+                            runtime_error(
+                                "Maps can only be indexed using strings.");
                             return INTERPRET_RUNTIME_ERROR;
                         }
 
@@ -411,7 +433,8 @@ static InterpretResult run() {
 
                     if (IS_LIST(value)) {
                         if (!IS_INT(index_value)) {
-                            runtime_error("Lists can only be indexed using numbers.");
+                            runtime_error(
+                                "Lists can only be indexed using numbers.");
                             return INTERPRET_RUNTIME_ERROR;
                         }
 
@@ -426,7 +449,8 @@ static InterpretResult run() {
                         list->elems.values[index] = to_be_assigned;
                     } else if (IS_MAP(value)) {
                         if (!IS_STRING(index_value)) {
-                            runtime_error("Maps can only be indexed using strings.");
+                            runtime_error(
+                                "Maps can only be indexed using strings.");
                             return INTERPRET_RUNTIME_ERROR;
                         }
 
@@ -487,7 +511,8 @@ static InterpretResult run() {
                     if (table_get(&vm.globals, (Obj *)name, &value)) {
                         push(value);
                         break;
-                    } else if (method_table_get(&vm.builtin_functions, name->hash, &fn)) {
+                    } else if (method_table_get(
+                                   &vm.builtin_functions, name->hash, &fn)) {
                         push(AS_OBJ(new_builtin_function(fn, name->chars)));
                         break;
                     }
@@ -544,17 +569,22 @@ static InterpretResult run() {
                     } else if (vm.builtin_methods[obj->type] != NULL) {
                         ObjString *method_name = READ_STRING();
                         BuiltinMethodFn method;
-                        if (method_table_get(vm.builtin_methods[obj->type], method_name->hash,
-                                             &method)) {
+                        if (method_table_get(
+                                vm.builtin_methods[obj->type],
+                                method_name->hash,
+                                &method)) {
                             pop();
-                            push(AS_OBJ(new_builtin_bound_method(method, obj, method_name->chars)));
+                            push(AS_OBJ(new_builtin_bound_method(
+                                method, obj, method_name->chars)));
                         } else {
-                            runtime_error("No method named '%s'", method_name->chars);
+                            runtime_error(
+                                "No method named '%s'", method_name->chars);
                             return INTERPRET_RUNTIME_ERROR;
                         }
                     }
 
-                    runtime_error("Properties and methods do not exist for the type.");
+                    runtime_error(
+                        "Properties and methods do not exist for the type.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_SET_PROPERTY:
@@ -562,7 +592,8 @@ static InterpretResult run() {
                     if (IS_INSTANCE(peek(1))) {
 
                         ObjInstance *instance = AS_INSTANCE(peek(1));
-                        table_set(&instance->fields, (Obj *)READ_STRING(), peek(0));
+                        table_set(
+                            &instance->fields, (Obj *)READ_STRING(), peek(0));
                         Obj *value = pop();
                         pop();
                         push(value);
@@ -600,11 +631,14 @@ static InterpretResult run() {
                     if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
                         concatenate();
                     } else if (IS_INT(peek(0)) && IS_INT(peek(1))) {
-                        push(AS_OBJ(new_int(AS_INT(pop())->value + AS_INT(pop())->value)));
+                        push(AS_OBJ(new_int(
+                            AS_INT(pop())->value + AS_INT(pop())->value)));
                     } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {
-                        push(AS_OBJ(new_float(AS_FLOAT(pop())->value + AS_FLOAT(pop())->value)));
+                        push(AS_OBJ(new_float(
+                            AS_FLOAT(pop())->value + AS_FLOAT(pop())->value)));
                     } else {
-                        runtime_error("Operands must be two numbers or two strings.");
+                        runtime_error(
+                            "Operands must be two numbers or two strings.");
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     break;
@@ -700,9 +734,11 @@ static InterpretResult run() {
                         uint8_t is_local = READ_BYTE();
                         uint8_t index = READ_BYTE();
                         if (is_local) {
-                            closure->upvalues[i] = capture_upvalue(frame->slots + index);
+                            closure->upvalues[i] =
+                                capture_upvalue(frame->slots + index);
                         } else {
-                            closure->upvalues[i] = frame->closure->upvalues[index];
+                            closure->upvalues[i] =
+                                frame->closure->upvalues[index];
                         }
                     }
 
@@ -740,7 +776,8 @@ static InterpretResult run() {
                     }
 
                     ObjClass *subclass = AS_CLASS(peek(0));
-                    table_add_all(&AS_CLASS(superclass)->methods, &subclass->methods);
+                    table_add_all(
+                        &AS_CLASS(superclass)->methods, &subclass->methods);
                     pop();
                     break;
                 }

@@ -34,10 +34,10 @@ BuiltinMethodTable *float_methods() {
     BuiltinMethodTable *table = malloc(sizeof(BuiltinMethodTable));
     init_method_table(table, 8);
 
-    SET_BLTIN_METHOD(float, abs, 3);
-    SET_BLTIN_METHOD(float, to_str, 6);
-    SET_BLTIN_METHOD(float, ceil, 4);
-    SET_BLTIN_METHOD(float, floor, 5);
+    SET_BLTIN_METHOD(float, abs);
+    SET_BLTIN_METHOD(float, to_str);
+    SET_BLTIN_METHOD(float, ceil);
+    SET_BLTIN_METHOD(float, floor);
 
     return table;
 }

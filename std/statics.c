@@ -3,7 +3,6 @@
 BuiltinMethodTable **get_builtin_methods() {
     BuiltinMethodTable **statics = calloc(16, sizeof(BuiltinMethodTable *));
 
-    statics[OBJ_NIL] = nil_methods();
     statics[OBJ_FLOAT] = float_methods();
     statics[OBJ_INT] = int_methods();
     statics[OBJ_CHAR] = char_methods();

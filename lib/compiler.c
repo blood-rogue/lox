@@ -26,7 +26,9 @@ static void error_at(Token *token, const char *message) {
     parser.had_error = true;
 }
 
-static void error_at_current(const char *message) { error_at(&parser.current, message); }
+static void error_at_current(const char *message) {
+    error_at(&parser.current, message);
+}
 
 static void error(const char *message) { error_at(&parser.previous, message); }
 
@@ -60,7 +62,9 @@ static bool match(TokenType type) {
     return true;
 }
 
-static void emit_byte(uint8_t byte) { write_chunk(current_chunk(), byte, parser.previous.line); }
+static void emit_byte(uint8_t byte) {
+    write_chunk(current_chunk(), byte, parser.previous.line);
+}
 
 static void emit_bytes(uint8_t byte1, uint8_t byte2) {
     emit_byte(byte1);
@@ -199,7 +203,9 @@ static void declare_variable() {
     add_local(*name);
 }
 
-static void emit_constant(Obj *value) { emit_bytes(OP_CONSTANT, make_constant(value)); }
+static void emit_constant(Obj *value) {
+    emit_bytes(OP_CONSTANT, make_constant(value));
+}
 
 static void patch_jump(int offset) {
     int jump = current_chunk()->count - offset - 2;
@@ -224,7 +230,8 @@ static void init_compiler(Compiler *compiler, FunctionType type) {
     current = compiler;
 
     if (type != TYPE_SCRIPT) {
-        current->function->name = new_string(parser.previous.start, parser.previous.length);
+        current->function->name =
+            new_string(parser.previous.start, parser.previous.length);
     }
 
     Local *local = &current->locals[current->local_count++];
@@ -254,7 +261,8 @@ static void end_scope() {
     current->scope_depth--;
 
     while (current->local_count > 0 &&
-           current->locals[current->local_count - 1].depth > current->scope_depth) {
+           current->locals[current->local_count - 1].depth >
+               current->scope_depth) {
         if (current->locals[current->local_count - 1].is_captured) {
             emit_byte(OP_CLOSE_UPVALUE);
         } else {
@@ -449,7 +457,8 @@ static void and (bool) {
 }
 
 static void string(bool) {
-    emit_constant(AS_OBJ(new_string(parser.previous.start + 1, parser.previous.length - 2)));
+    emit_constant(AS_OBJ(
+        new_string(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
 static void unary(bool) {
@@ -492,7 +501,9 @@ static void named_variable(Token name, bool can_assign) {
     }
 }
 
-static void variable(bool can_assign) { named_variable(parser.previous, can_assign); }
+static void variable(bool can_assign) {
+    named_variable(parser.previous, can_assign);
+}
 
 static Token synthetic_token(const char *text) {
     Token token;
@@ -668,7 +679,8 @@ static void function(FunctionType type) {
     emit_bytes(OP_CLOSURE, make_constant(AS_OBJ(function)));
 
     for (int i = 0; i < function->upvalue_count; i++) {
-        emit_bytes(compiler.upvalues[i].is_local ? 1 : 0, compiler.upvalues[i].index);
+        emit_bytes(
+            compiler.upvalues[i].is_local ? 1 : 0, compiler.upvalues[i].index);
     }
 }
 
@@ -687,7 +699,8 @@ static void method() {
     consume(TOKEN_IDENTIFIER, "Expect method name.");
     uint8_t constant = identifier_constant(&parser.previous);
 
-    if (parser.previous.length == 4 && memcmp(parser.previous.start, "init", 4) == 0) {
+    if (parser.previous.length == 4 &&
+        memcmp(parser.previous.start, "init", 4) == 0) {
         type = TYPE_INITIALIZER;
     }
 

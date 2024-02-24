@@ -74,7 +74,8 @@ static void free_object(Obj *object) {
         case OBJ_CLOSURE:
             {
                 ObjClosure *closure = AS_CLOSURE(object);
-                FREE_ARRAY(ObjUpvalue *, closure->upvalues, closure->upvalue_count);
+                FREE_ARRAY(
+                    ObjUpvalue *, closure->upvalues, closure->upvalue_count);
                 FREE(ObjClosure, object);
                 break;
             }
@@ -136,7 +137,8 @@ void mark_object(Obj *object) {
 
     if (vm.gray_capacity < vm.gray_count + 1) {
         vm.gray_capacity = GROW_CAPACITY(vm.gray_capacity);
-        vm.gray_stack = (Obj **)realloc(vm.gray_stack, sizeof(Obj *) * vm.gray_capacity);
+        vm.gray_stack =
+            (Obj **)realloc(vm.gray_stack, sizeof(Obj *) * vm.gray_capacity);
 
         if (vm.gray_stack == NULL)
             exit(1);
@@ -227,7 +229,8 @@ static void mark_roots() {
         mark_object((Obj *)vm.frames[i].closure);
     }
 
-    for (ObjUpvalue *upvalue = vm.open_upvalues; upvalue != NULL; upvalue = upvalue->next) {
+    for (ObjUpvalue *upvalue = vm.open_upvalues; upvalue != NULL;
+         upvalue = upvalue->next) {
         mark_object((Obj *)upvalue);
     }
 

@@ -52,7 +52,8 @@ BuiltinResult _char_is_control(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(new_bool(iscntrl(AS_CHAR(caller)->value)));
 }
 
-BuiltinResult _char_is_punctuation(int argc, UNUSED(Obj **, argv), Obj *caller) {
+BuiltinResult
+_char_is_punctuation(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     return OK(new_bool(ispunct(AS_CHAR(caller)->value)));
 }
@@ -62,22 +63,34 @@ BuiltinResult _char_is_alnum(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(new_bool(isalnum(AS_CHAR(caller)->value)));
 }
 
+BuiltinResult _char_to_lower(int argc, UNUSED(Obj **, argv), Obj *caller) {
+    CHECK_ARG_COUNT(0)
+    return OK(new_char((uint8_t)tolower(AS_CHAR(caller)->value)));
+}
+
+BuiltinResult _char_to_upper(int argc, UNUSED(Obj **, argv), Obj *caller) {
+    CHECK_ARG_COUNT(0)
+    return OK(new_char((uint8_t)toupper(AS_CHAR(caller)->value)));
+}
+
 BuiltinMethodTable *char_methods() {
     BuiltinMethodTable *table = malloc(sizeof(BuiltinMethodTable));
     init_method_table(table, 16);
 
-    SET_BLTIN_METHOD(char, is_upper, 8);
-    SET_BLTIN_METHOD(char, is_lower, 8);
-    SET_BLTIN_METHOD(char, is_alpha, 8);
-    SET_BLTIN_METHOD(char, is_digit, 8);
-    SET_BLTIN_METHOD(char, is_hex_digit, 12);
-    SET_BLTIN_METHOD(char, is_space, 8);
-    SET_BLTIN_METHOD(char, is_printable, 12);
-    SET_BLTIN_METHOD(char, is_graphical, 12);
-    SET_BLTIN_METHOD(char, is_blank, 8);
-    SET_BLTIN_METHOD(char, is_control, 10);
-    SET_BLTIN_METHOD(char, is_punctuation, 14);
-    SET_BLTIN_METHOD(char, is_alnum, 8);
+    SET_BLTIN_METHOD(char, is_upper);
+    SET_BLTIN_METHOD(char, is_lower);
+    SET_BLTIN_METHOD(char, is_alpha);
+    SET_BLTIN_METHOD(char, is_digit);
+    SET_BLTIN_METHOD(char, is_hex_digit);
+    SET_BLTIN_METHOD(char, is_space);
+    SET_BLTIN_METHOD(char, is_printable);
+    SET_BLTIN_METHOD(char, is_graphical);
+    SET_BLTIN_METHOD(char, is_blank);
+    SET_BLTIN_METHOD(char, is_control);
+    SET_BLTIN_METHOD(char, is_punctuation);
+    SET_BLTIN_METHOD(char, is_alnum);
+    SET_BLTIN_METHOD(char, to_lower);
+    SET_BLTIN_METHOD(char, to_upper);
 
     return table;
 }
