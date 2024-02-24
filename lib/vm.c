@@ -11,6 +11,10 @@
 
 VM vm;
 
+ObjNil *_NIL;
+ObjBool *_TRUE;
+ObjBool *_FALSE;
+
 static void reset_stack() {
     vm.stack_top = vm.stack;
     vm.frame_count = 0;
@@ -69,21 +73,23 @@ void init_vm() {
     vm.init_string = NULL;
     vm.init_string = new_string("init", 4);
 
-    init_method_table(&vm.builtin_functions, 8);
+    init_method_table(&vm.builtin_functions, 16);
 
-#define SET_BUILTIN_FUNCTION(name)                                                                 \
+#define SET_BLTIN_FN(name)                                                                         \
     method_table_set(&vm.builtin_functions, #name, hash_string(#name, (int)strlen(#name)),         \
                      name##_builtin_function)
 
-    SET_BUILTIN_FUNCTION(clock);
-    SET_BUILTIN_FUNCTION(exit);
-    SET_BUILTIN_FUNCTION(print);
-    SET_BUILTIN_FUNCTION(input);
-    SET_BUILTIN_FUNCTION(len);
-    SET_BUILTIN_FUNCTION(argv);
-    SET_BUILTIN_FUNCTION(run_gc);
+    SET_BLTIN_FN(clock);
+    SET_BLTIN_FN(exit);
+    SET_BLTIN_FN(print);
+    SET_BLTIN_FN(input);
+    SET_BLTIN_FN(len);
+    SET_BLTIN_FN(argv);
+    SET_BLTIN_FN(run_gc);
+    SET_BLTIN_FN(parse_int);
+    SET_BLTIN_FN(parse_float);
 
-#undef SET_BUILTIN_FUNCTION
+#undef SET_BLTIN_FN
 }
 
 void free_vm() {
@@ -210,7 +216,7 @@ static bool invoke(ObjString *name, int argc) {
         default:
             {
                 BuiltinMethodFn method;
-                if (!method_table_get(receiver->statics, name->hash, &method)) {
+                if (!method_table_get(vm.builtin_methods[receiver->type], name->hash, &method)) {
                     runtime_error("Could not invode method.");
                     return false;
                 }
@@ -530,10 +536,11 @@ static InterpretResult run() {
                             return INTERPRET_RUNTIME_ERROR;
                         }
                         break;
-                    } else if (obj->statics != NULL) {
+                    } else if (vm.builtin_methods[obj->type] != NULL) {
                         ObjString *method_name = READ_STRING();
                         BuiltinMethodFn method;
-                        if (method_table_get(obj->statics, method_name->hash, &method)) {
+                        if (method_table_get(vm.builtin_methods[obj->type], method_name->hash,
+                                             &method)) {
                             pop();
                             push(AS_OBJ(new_builtin_bound_method(method, obj, method_name->chars)));
                         } else {
@@ -619,12 +626,15 @@ static InterpretResult run() {
                 }
             case OP_NEGATE:
                 {
-                    if (!IS_INT(peek(0))) {
-                        runtime_error("Operand must be a number.");
-                        return INTERPRET_RUNTIME_ERROR;
+                    if (IS_INT(peek(0))) {
+                        push(AS_OBJ(new_int(-(AS_INT(pop())->value))));
+                        break;
+                    } else if (IS_FLOAT(peek(0))) {
+                        push(AS_OBJ(new_float(-(AS_FLOAT(pop())->value))));
+                        break;
                     }
-                    push(AS_OBJ(new_int(-(AS_INT(pop())->value))));
-                    break;
+                    runtime_error("Operand must be a number.");
+                    return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_JUMP:
                 {

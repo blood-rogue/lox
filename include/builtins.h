@@ -14,7 +14,7 @@
 #define ERR(err)                                                                                   \
     (BuiltinResult) { .error = err, .value = AS_OBJ(new_nil()) }
 #define OK(ok)                                                                                     \
-    (BuiltinResult) { .value = ok, .error = NULL }
+    (BuiltinResult) { .value = AS_OBJ(ok), .error = NULL }
 
 #define CHECK_ARG_COUNT(expected)                                                                  \
     if (argc != expected) {                                                                        \
@@ -33,6 +33,8 @@ BLTIN_FN(input);
 BLTIN_FN(len);
 BLTIN_FN(argv);
 BLTIN_FN(run_gc);
+BLTIN_FN(parse_int);
+BLTIN_FN(parse_float);
 
 BuiltinMethodTable **get_builtin_methods();
 

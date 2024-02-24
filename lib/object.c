@@ -13,8 +13,6 @@ static Obj *allocate_object(size_t size, ObjType type) {
     object->type = type;
     object->is_marked = false;
 
-    object->statics = vm.builtin_methods[type];
-
     object->next = vm.objects;
     vm.objects = object;
 
