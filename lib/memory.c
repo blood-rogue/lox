@@ -4,6 +4,8 @@
 
 #define GC_HEAP_GROW_FACTOR 2
 
+extern VM vm;
+
 void *reallocate(void *pointer, size_t old_size, size_t new_size) {
     vm.bytes_allocated += new_size - old_size;
 
@@ -112,6 +114,13 @@ static void free_object(Obj *object) {
                 FREE(ObjBuiltinFunction, object);
                 break;
             }
+        case OBJ_MODULE:
+            {
+                ObjModule *module = AS_MODULE(object);
+                free_table(&module->globals);
+                FREE(ObjModule, object);
+                break;
+            }
     }
 }
 
@@ -171,13 +180,13 @@ static void blacken_object(Obj *object) {
             {
                 ObjBoundMethod *bound = AS_BOUND_METHOD(object);
                 mark_object(bound->receiver);
-                mark_object((Obj *)bound->method);
+                mark_object(AS_OBJ(bound->method));
                 break;
             }
         case OBJ_CLASS:
             {
                 ObjClass *klass = AS_CLASS(object);
-                mark_object((Obj *)klass->name);
+                mark_object(AS_OBJ(klass->name));
                 mark_table(&klass->methods);
                 mark_table(&klass->statics);
                 break;
@@ -185,29 +194,36 @@ static void blacken_object(Obj *object) {
         case OBJ_CLOSURE:
             {
                 ObjClosure *closure = AS_CLOSURE(object);
-                mark_object((Obj *)closure->function);
+                mark_object(AS_OBJ(closure->function));
                 for (int i = 0; i < closure->upvalue_count; i++) {
-                    mark_object((Obj *)closure->upvalues[i]);
+                    mark_object(AS_OBJ(closure->upvalues[i]));
                 }
                 break;
             }
         case OBJ_FUNCTION:
             {
                 ObjFunction *function = AS_FUNCTION(object);
-                mark_object((Obj *)function->name);
+                mark_object(AS_OBJ(function->name));
                 mark_array(&function->chunk.constants);
                 break;
             }
         case OBJ_INSTANCE:
             {
                 ObjInstance *instance = AS_INSTANCE(object);
-                mark_object((Obj *)instance->klass);
+                mark_object(AS_OBJ(instance->klass));
                 mark_table(&instance->fields);
                 break;
             }
         case OBJ_UPVALUE:
             mark_object(AS_UPVALUE(object)->closed);
             break;
+        case OBJ_MODULE:
+            {
+                ObjModule *module = AS_MODULE(object);
+                mark_object(AS_OBJ(module->name));
+                mark_table(&module->globals);
+                break;
+            }
         case OBJ_BUILTIN_BOUND_METHOD:
         case OBJ_BUILTIN_FUNCTION:
         case OBJ_STRING:
@@ -226,17 +242,17 @@ static void mark_roots() {
     }
 
     for (int i = 0; i < vm.frame_count; i++) {
-        mark_object((Obj *)vm.frames[i].closure);
+        mark_object(AS_OBJ(vm.frames[i].closure));
     }
 
     for (ObjUpvalue *upvalue = vm.open_upvalues; upvalue != NULL;
          upvalue = upvalue->next) {
-        mark_object((Obj *)upvalue);
+        mark_object(AS_OBJ(upvalue));
     }
 
     mark_table(&vm.globals);
     mark_compiler_roots();
-    mark_object((Obj *)vm.init_string);
+    mark_object(AS_OBJ(vm.init_string));
 }
 
 static void trace_references() {

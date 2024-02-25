@@ -46,6 +46,7 @@ typedef enum {
     OP_INHERIT,
     OP_METHOD,
     OP_STATIC_METHOD,
+    OP_IMPORT,
 } OpCode;
 
 typedef struct {

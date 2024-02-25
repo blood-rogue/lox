@@ -123,10 +123,7 @@ parse_float_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
 BuiltinResult
 sleep_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
-
-    int64_t duration = AS_INT(argv[1])->value;
-
-    sleep(duration);
+    sleep(AS_INT(argv[0])->value);
 
     return OK(new_nil());
 }
@@ -136,5 +133,5 @@ type_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
 
     return OK(new_string(
-        vm.obj_names[argv[0]->type], (int)strlen(vm.obj_names[argv[0]->type])));
+        OBJ_NAMES[argv[0]->type], (int)strlen(OBJ_NAMES[argv[0]->type])));
 }

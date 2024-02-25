@@ -32,7 +32,6 @@ typedef struct {
     size_t bytes_allocated;
     size_t next_gc;
 
-    const char *obj_names[16];
     Obj *objects;
 
     int gray_count;
@@ -45,8 +44,6 @@ typedef enum {
     INTERPRET_COMPILE_ERROR,
     INTERPRET_RUNTIME_ERROR
 } InterpretResult;
-
-extern VM vm;
 
 void init_vm();
 void free_vm();

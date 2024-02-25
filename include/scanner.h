@@ -16,6 +16,7 @@ typedef enum {
     TOKEN_SEMICOLON,
     TOKEN_SLASH,
     TOKEN_STAR,
+    TOKEN_COLON_COLON,
 
     TOKEN_BANG,
     TOKEN_BANG_EQUAL,
@@ -49,6 +50,8 @@ typedef enum {
     TOKEN_WHILE,
     TOKEN_MAP,
     TOKEN_STATIC,
+    TOKEN_IMPORT,
+    TOKEN_AS,
 
     TOKEN_ERROR,
     TOKEN_EOF

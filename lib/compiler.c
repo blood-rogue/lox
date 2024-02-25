@@ -599,6 +599,8 @@ static void this(bool) {
     variable(false);
 }
 
+static void scope(bool) {}
+
 ParseRule rules[] = {
     [TOKEN_LEFT_PAREN] = {grouping, call, PREC_CALL},
     [TOKEN_RIGHT_PAREN] = {NULL, NULL, PREC_NONE},
@@ -613,6 +615,7 @@ ParseRule rules[] = {
     [TOKEN_SEMICOLON] = {NULL, NULL, PREC_NONE},
     [TOKEN_SLASH] = {NULL, binary, PREC_FACTOR},
     [TOKEN_STAR] = {NULL, binary, PREC_FACTOR},
+    [TOKEN_COLON_COLON] = {NULL, scope, PREC_CALL},
     [TOKEN_BANG] = {unary, NULL, PREC_NONE},
     [TOKEN_BANG_EQUAL] = {NULL, binary, PREC_EQUALITY},
     [TOKEN_EQUAL] = {NULL, NULL, PREC_NONE},
@@ -642,6 +645,8 @@ ParseRule rules[] = {
     [TOKEN_VAR] = {NULL, NULL, PREC_NONE},
     [TOKEN_WHILE] = {NULL, NULL, PREC_NONE},
     [TOKEN_MAP] = {map, NULL, PREC_CALL},
+    [TOKEN_IMPORT] = {NULL, NULL, PREC_NONE},
+    [TOKEN_AS] = {NULL, NULL, PREC_NONE},
     [TOKEN_ERROR] = {NULL, NULL, PREC_NONE},
     [TOKEN_EOF] = {NULL, NULL, PREC_NONE},
 };
@@ -934,6 +939,22 @@ static void while_statement() {
     emit_byte(OP_POP);
 }
 
+static void import_statement() {
+    consume(TOKEN_STRING, "Expect import path after 'import'.");
+
+    ObjString *import_path =
+        new_string(parser.previous.start + 1, parser.previous.length - 2);
+
+    emit_bytes(OP_IMPORT, make_constant(AS_OBJ(import_path)));
+
+    consume(TOKEN_AS, "Expect 'as' after import path");
+
+    uint8_t global = parse_variable("Expect alias after 'as'.");
+    define_variable(global);
+
+    consume(TOKEN_SEMICOLON, "Expect ';' after import.");
+}
+
 static void synchronize() {
     parser.panic_mode = false;
     while (parser.current.type != TOKEN_EOF) {
@@ -947,6 +968,7 @@ static void synchronize() {
             case TOKEN_IF:
             case TOKEN_WHILE:
             case TOKEN_RETURN:
+            case TOKEN_IMPORT:
                 return;
             default:;
         }
@@ -979,6 +1001,8 @@ static void statement() {
         while_statement();
     } else if (match(TOKEN_FOR)) {
         for_statement();
+    } else if (match(TOKEN_IMPORT)) {
+        import_statement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         begin_scope();
         block();
@@ -1009,7 +1033,7 @@ ObjFunction *compile(const char *source) {
 void mark_compiler_roots() {
     Compiler *compiler = current;
     while (compiler != NULL) {
-        mark_object((Obj *)compiler->function);
+        mark_object(AS_OBJ(compiler->function));
         compiler = compiler->enclosing;
     }
 }

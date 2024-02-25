@@ -11,23 +11,34 @@
 
 VM vm;
 
-const char *obj_names[] = {
-    "NIL",
-    "INT",
-    "MAP",
-    "CHAR",
-    "LIST",
-    "BOOL",
-    "FLOAT",
-    "STRING",
-    "CLOSURE",
-    "FUNCTION",
-    "UPVALUE",
-    "CLASS",
-    "INSTANCE",
-    "BOUND_METHOD",
-    "BUILTIN_METHOD",
-    "BUILTIN_BOUND_METHOD"};
+static char *read_file(char *path) {
+    FILE *file = fopen(path, "rb");
+    if (file == NULL) {
+        fprintf(stderr, "Could not open file \"%s\".\n", path);
+        exit(74);
+    }
+
+    fseek(file, 0L, SEEK_END);
+    size_t file_size = (size_t)ftell(file);
+    rewind(file);
+
+    char *buffer = malloc(file_size + 1);
+    if (buffer == NULL) {
+        fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
+        exit(74);
+    }
+
+    size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
+    if (bytes_read < file_size) {
+        fprintf(stderr, "Could not read file \"%s\".\n", path);
+        exit(74);
+    }
+
+    buffer[bytes_read] = '\0';
+
+    fclose(file);
+    return buffer;
+}
 
 static void reset_stack() {
     vm.stack_top = vm.stack;
@@ -71,25 +82,6 @@ static void runtime_error(const char *format, ...) {
 
 void init_vm() {
     init_literals();
-
-#define SET_OBJ_NAME(obj) vm.obj_names[OBJ_##obj] = #obj;
-    SET_OBJ_NAME(NIL);
-    SET_OBJ_NAME(INT);
-    SET_OBJ_NAME(MAP);
-    SET_OBJ_NAME(CHAR);
-    SET_OBJ_NAME(LIST);
-    SET_OBJ_NAME(BOOL);
-    SET_OBJ_NAME(FLOAT);
-    SET_OBJ_NAME(STRING);
-    SET_OBJ_NAME(CLOSURE);
-    SET_OBJ_NAME(FUNCTION);
-    SET_OBJ_NAME(UPVALUE);
-    SET_OBJ_NAME(CLASS);
-    SET_OBJ_NAME(INSTANCE);
-    SET_OBJ_NAME(BOUND_METHOD);
-    SET_OBJ_NAME(BUILTIN_FUNCTION);
-    SET_OBJ_NAME(BUILTIN_BOUND_METHOD);
-#undef SET_OBJ_NAME
 
     reset_stack();
     vm.objects = NULL;
@@ -232,7 +224,7 @@ static bool call_value(Obj *callee, int argc) {
                 return true;
             }
         default:
-            runtime_error("Cannot call %s", vm.obj_names[callee->type]);
+            runtime_error("Cannot call %s", OBJ_NAMES[callee->type]);
             return false;
     }
 }
@@ -293,7 +285,7 @@ static bool invoke(ObjString *name, int argc) {
                     runtime_error(
                         "Could not invode method '%s' on '%s'.",
                         name->chars,
-                        vm.obj_names[receiver->type]);
+                        OBJ_NAMES[receiver->type]);
                     return false;
                 }
 
@@ -377,22 +369,6 @@ static bool is_falsey(Obj *value) {
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
-static void concatenate() {
-    ObjString *b = AS_STRING(peek(0));
-    ObjString *a = AS_STRING(peek(1));
-
-    int length = a->length + b->length;
-    char *chars = ALLOCATE(char, length + 1);
-    memcpy(chars, a->chars, a->length);
-    memcpy(chars + a->length, b->chars, b->length);
-    chars[length] = '\0';
-
-    ObjString *result = take_string(chars, length);
-    pop();
-    pop();
-    push(AS_OBJ(result));
-}
-
 static InterpretResult run() {
     CallFrame *frame = &vm.frames[vm.frame_count - 1];
 
@@ -414,14 +390,14 @@ static InterpretResult run() {
             runtime_error(                                                     \
                 "Unsupported operand types for '%s': '%s' and '%s'.",          \
                 #op,                                                           \
-                vm.obj_names[peek(0)->type],                                   \
-                vm.obj_names[peek(1)->type]);                                  \
+                OBJ_NAMES[peek(0)->type],                                      \
+                OBJ_NAMES[peek(1)->type]);                                     \
             return INTERPRET_RUNTIME_ERROR;                                    \
         }                                                                      \
     }
 
     for (;;) {
-        switch (READ_BYTE()) {
+        switch ((OpCode)READ_BYTE()) {
             case OP_CONSTANT:
                 {
                     Obj *constant = READ_CONSTANT();
@@ -486,8 +462,7 @@ static InterpretResult run() {
                         }
                     } else {
                         runtime_error(
-                            "'%s' cannot be indexed.",
-                            vm.obj_names[value->type]);
+                            "'%s' cannot be indexed.", OBJ_NAMES[value->type]);
                         return INTERPRET_RUNTIME_ERROR;
                     }
 
@@ -529,8 +504,7 @@ static InterpretResult run() {
                         table_set(&map->table, (Obj *)index, to_be_assigned);
                     } else {
                         runtime_error(
-                            "'%s' cannot be indexed.",
-                            vm.obj_names[value->type]);
+                            "'%s' cannot be indexed.", OBJ_NAMES[value->type]);
                         return INTERPRET_RUNTIME_ERROR;
                     }
 
@@ -682,14 +656,14 @@ static InterpretResult run() {
                                     runtime_error(
                                         "No method named '%s' on '%s'",
                                         method_name->chars,
-                                        vm.obj_names[obj->type]);
+                                        OBJ_NAMES[obj->type]);
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
                             } else {
                                 runtime_error(
                                     "Properties and methods do not exist for "
                                     "'%s'.",
-                                    vm.obj_names[obj->type]);
+                                    OBJ_NAMES[obj->type]);
                                 return INTERPRET_RUNTIME_ERROR;
                             }
                     }
@@ -722,12 +696,8 @@ static InterpretResult run() {
                     break;
                 }
             case OP_EQUAL:
-                {
-                    Obj *b = pop();
-                    Obj *a = pop();
-                    push(AS_OBJ(new_bool(obj_equal(a, b))));
-                    break;
-                }
+                push(AS_OBJ(new_bool(obj_equal(pop(), pop()))));
+                break;
             case OP_GREATER:
                 BINARY_OP(new_bool, new_bool, >);
                 break;
@@ -737,7 +707,19 @@ static InterpretResult run() {
             case OP_ADD:
                 {
                     if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
-                        concatenate();
+                        ObjString *b = AS_STRING(peek(0));
+                        ObjString *a = AS_STRING(peek(1));
+
+                        int length = a->length + b->length;
+                        char *chars = ALLOCATE(char, length + 1);
+                        memcpy(chars, a->chars, a->length);
+                        memcpy(chars + a->length, b->chars, b->length);
+                        chars[length] = '\0';
+
+                        ObjString *result = take_string(chars, length);
+                        pop();
+                        pop();
+                        push(AS_OBJ(result));
                     } else if (IS_INT(peek(0)) && IS_INT(peek(1))) {
                         push(AS_OBJ(new_int(
                             AS_INT(pop())->value + AS_INT(pop())->value)));
@@ -747,8 +729,8 @@ static InterpretResult run() {
                     } else {
                         runtime_error(
                             "Unsupported operand types for '+', '%s' and '%s'.",
-                            vm.obj_names[peek(0)->type],
-                            vm.obj_names[peek(1)->type]);
+                            OBJ_NAMES[peek(0)->type],
+                            OBJ_NAMES[peek(1)->type]);
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     break;
@@ -770,20 +752,22 @@ static InterpretResult run() {
                 }
             case OP_NOT:
                 {
-                    push(AS_OBJ(new_bool(is_falsey(pop()))));
+                    vm.stack_top[-1] = AS_OBJ(new_bool(is_falsey(peek(0))));
                     break;
                 }
             case OP_NEGATE:
                 {
                     if (IS_INT(peek(0))) {
-                        push(AS_OBJ(new_int(-(AS_INT(pop())->value))));
+                        vm.stack_top[-1] =
+                            AS_OBJ(new_int(-(AS_INT(peek(0))->value)));
                         break;
                     } else if (IS_FLOAT(peek(0))) {
-                        push(AS_OBJ(new_float(-(AS_FLOAT(pop())->value))));
+                        vm.stack_top[-1] =
+                            AS_OBJ(new_float(-(AS_FLOAT(peek(0))->value)));
                         break;
                     }
                     runtime_error(
-                        "Cannot negate '%s'.", vm.obj_names[peek(0)->type]);
+                        "Cannot negate '%s'.", OBJ_NAMES[peek(0)->type]);
                     return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_JUMP:
@@ -898,6 +882,21 @@ static InterpretResult run() {
             case OP_STATIC_METHOD:
                 define_method(READ_STRING(), true);
                 break;
+            case OP_IMPORT:
+                {
+                    ObjString *import_path = READ_STRING();
+                    char *source = read_file(import_path->chars);
+
+                    printf("%s\n", source);
+
+                    // Table module_globals;
+                    // Table *current_globals = vm.globals;
+                    // init_table(&module_globals);
+                    // vm.globals = &module_globals;
+
+                    free(source);
+                    break;
+                }
         }
     }
 

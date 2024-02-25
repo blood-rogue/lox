@@ -23,6 +23,7 @@
 #define IS_CLASS(obj)                (obj->type == OBJ_CLASS)
 #define IS_INSTANCE(obj)             (obj->type == OBJ_INSTANCE)
 #define IS_BOUND_METHOD(obj)         (obj->type == OBJ_BOUND_METHOD)
+#define IS_MODULE(obj)               (obj->type == OBJ_MODULE)
 #define IS_BUILTIN_FUNCTION(obj)     (obj->type == OBJ_BUILTIN_FUNCTION)
 #define IS_BUILTIN_BOUND_METHOD(obj) (obj->type == OBJ_BUILTIN_BOUND_METHOD)
 
@@ -40,8 +41,28 @@
 #define AS_CLASS(obj)                ((ObjClass *)(obj))
 #define AS_INSTANCE(obj)             ((ObjInstance *)(obj))
 #define AS_BOUND_METHOD(obj)         ((ObjBoundMethod *)(obj))
+#define AS_MODULE(obj)               ((ObjModule *)(obj))
 #define AS_BUILTIN_FUNCTION(obj)     ((ObjBuiltinFunction *)(obj))
 #define AS_BUILTIN_BOUND_METHOD(obj) ((ObjBuiltinBoundMethod *)(obj))
+
+static char *const OBJ_NAMES[] = {
+    "NIL",
+    "INT",
+    "MAP",
+    "CHAR",
+    "LIST",
+    "BOOL",
+    "FLOAT",
+    "STRING",
+    "CLOSURE",
+    "FUNCTION",
+    "UPVALUE",
+    "CLASS",
+    "INSTANCE",
+    "BOUND_METHOD",
+    "MODULE",
+    "BUILTIN_METHOD",
+    "BUILTIN_BOUND_METHOD"};
 
 typedef enum {
     OBJ_NIL,
@@ -60,6 +81,8 @@ typedef enum {
     OBJ_CLASS,
     OBJ_INSTANCE,
     OBJ_BOUND_METHOD,
+
+    OBJ_MODULE,
 
     OBJ_BUILTIN_FUNCTION,
     OBJ_BUILTIN_BOUND_METHOD,
@@ -152,6 +175,12 @@ typedef struct {
     Obj *receiver;
     ObjClosure *method;
 } ObjBoundMethod;
+
+typedef struct {
+    Obj obj;
+    ObjString *name;
+    Table globals;
+} ObjModule;
 
 typedef struct {
     Obj obj;

@@ -6,6 +6,8 @@ ObjNil *_NIL = NULL;
 ObjBool *_TRUE = NULL;
 ObjBool *_FALSE = NULL;
 
+extern VM vm;
+
 #define ALLOCATE_OBJ(type, object_type)                                        \
     (type *)allocate_object(sizeof(type), object_type)
 
@@ -302,7 +304,13 @@ void print_object(Obj *obj) {
             printf("upvalue");
             break;
         case OBJ_BUILTIN_BOUND_METHOD:
-            printf("<bound method '%s'>", AS_BUILTIN_BOUND_METHOD(obj)->name);
+            printf(
+                "<bound method ''%s.%s'>",
+                OBJ_NAMES[AS_BUILTIN_BOUND_METHOD(obj)->caller->type],
+                AS_BUILTIN_BOUND_METHOD(obj)->name);
+            break;
+        case OBJ_MODULE:
+            printf("<module '%s'>", AS_MODULE(obj)->name->chars);
             break;
     }
 }
@@ -344,12 +352,12 @@ bool obj_equal(Obj *a, Obj *b) {
         return false;
 
     switch (a->type) {
-        case OBJ_BOOL:
-            return a == b;
         case OBJ_NIL:
             return true;
         case OBJ_INT:
             return AS_INT(a)->value == AS_INT(b)->value;
+        case OBJ_CHAR:
+            return AS_CHAR(a)->value == AS_CHAR(b)->value;
         case OBJ_STRING:
             {
                 ObjString *str_a = AS_STRING(a);
@@ -366,11 +374,11 @@ bool obj_equal(Obj *a, Obj *b) {
 
 void init_literals() {
     _NIL = malloc(sizeof(ObjNil));
-    _NIL->obj.type = OBJ_NIL;
-    _NIL->obj.is_marked = false;
-
     _TRUE = malloc(sizeof(ObjBool));
     _FALSE = malloc(sizeof(ObjBool));
+
+    _NIL->obj.type = OBJ_NIL;
+    _NIL->obj.is_marked = false;
 
     _TRUE->obj.type = OBJ_BOOL;
     _TRUE->obj.is_marked = false;
