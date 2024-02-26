@@ -2,6 +2,10 @@
 #include "common.h"
 #include "memory.h"
 
+#ifdef DEBUG
+#include "debug.h"
+#endif
+
 Parser parser;
 Compiler *current = NULL;
 ClassCompiler *current_class = NULL;
@@ -247,9 +251,20 @@ static void init_compiler(Compiler *compiler, FunctionType type) {
     }
 }
 
-static ObjFunction *end_compiler() {
-    emit_return();
+static ObjFunction *end_compiler(bool ended) {
+    if (ended)
+        emit_byte(OP_END);
+    else
+        emit_return();
     ObjFunction *function = current->function;
+
+#ifdef DEBUG
+    if (!parser.had_error) {
+        disassemble_chunk(
+            current_chunk(),
+            function->name != NULL ? function->name->chars : "<script>");
+    }
+#endif
 
     current = current->enclosing;
     return function;
@@ -371,7 +386,7 @@ static void dot(bool can_assign) {
         emit_bytes(OP_SET_PROPERTY, name);
     } else if (match(TOKEN_LEFT_PAREN)) {
         uint8_t argc = expression_list(TOKEN_RIGHT_PAREN);
-        emit_bytes(OP_INVOKE, name);
+        emit_bytes(OP_METHOD_INVOKE, name);
         emit_byte(argc);
     } else {
         emit_bytes(OP_GET_PROPERTY, name);
@@ -599,7 +614,21 @@ static void this(bool) {
     variable(false);
 }
 
-static void scope(bool) {}
+static void scope(bool) {
+    consume(TOKEN_IDENTIFIER, "Expect scoped member after '::'.");
+    uint8_t name = identifier_constant(&parser.previous);
+
+    if (match(TOKEN_EQUAL)) {
+        error("Cannot set scoped member");
+        return;
+    } else if (match(TOKEN_LEFT_PAREN)) {
+        uint8_t argc = expression_list(TOKEN_RIGHT_PAREN);
+        emit_bytes(OP_SCOPE_INVOKE, name);
+        emit_byte(argc);
+    } else {
+        emit_bytes(OP_GET_SCOPED, name);
+    }
+}
 
 ParseRule rules[] = {
     [TOKEN_LEFT_PAREN] = {grouping, call, PREC_CALL},
@@ -731,7 +760,7 @@ static void function(FunctionType type) {
     consume(TOKEN_LEFT_BRACE, "Expect '{' before function body.");
     block();
 
-    ObjFunction *function = end_compiler();
+    ObjFunction *function = end_compiler(false);
     emit_bytes(OP_CLOSURE, make_constant(AS_OBJ(function)));
 
     for (int i = 0; i < function->upvalue_count; i++) {
@@ -1026,7 +1055,7 @@ ObjFunction *compile(const char *source) {
         declaration();
     }
 
-    ObjFunction *function = end_compiler();
+    ObjFunction *function = end_compiler(true);
     return parser.had_error ? NULL : function;
 }
 

@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Werror -Wextra -pedantic -Ofast -Iinclude -flto=auto -ffunction-sections -fdata-sections -g
-LDFLAGS = -flto=auto -Wl,--gc-sections
+CFLAGS = -Wall -Werror -Wextra -pedantic -Iinclude
+LDFLAGS = -Wl,--gc-sections
 
 LIB_DIR = lib
 STD_DIR = std
@@ -15,7 +15,14 @@ STD_OBJS = $(patsubst $(STD_DIR)/%.c, $(BUILD_DIR)/%.o, $(STD_SRCS))
 
 TARGET = lox
 
-all: $(TARGET)
+all: release
+
+debug: CFLAGS += -g -O0 -DDEBUG
+debug: $(TARGET)
+
+release: LDFLAGS += -s -flto=auto
+release: CFLAGS += -Ofast -flto=auto -ffunction-sections -fdata-sections
+release: $(TARGET)
 
 $(TARGET): $(MAIN_OBJ) $(LIB_OBJS) $(STD_OBJS)
 	$(CC) $(LDFLAGS) -o $@ build/*.o -lm
@@ -41,6 +48,6 @@ fmt:
 lint:
 	clang-tidy std/*.c lib/*.c include/*.h -- -Iinclude
 
-rebuild: clean all
+rebuild: clean release
 
-.PHONY: all clean fmt rebuild lint
+.PHONY: all clean fmt rebuild lint debug release

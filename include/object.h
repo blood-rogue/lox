@@ -211,6 +211,7 @@ ObjUpvalue *new_upvalue(Obj **);
 ObjClass *new_class(ObjString *);
 ObjInstance *new_instance(ObjClass *);
 ObjBoundMethod *new_bound_method(Obj *, ObjClosure *);
+ObjModule *new_module(ObjString *);
 
 ObjBuiltinFunction *new_builtin_function(BuiltinMethodFn, char *);
 ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinMethodFn, Obj *, char *);

@@ -37,7 +37,7 @@ typedef enum {
     OP_JUMP_IF_FALSE,
     OP_LOOP,
     OP_CALL,
-    OP_INVOKE,
+    OP_METHOD_INVOKE,
     OP_SUPER_INVOKE,
     OP_CLOSURE,
     OP_CLOSE_UPVALUE,
@@ -47,6 +47,9 @@ typedef enum {
     OP_METHOD,
     OP_STATIC_METHOD,
     OP_IMPORT,
+    OP_GET_SCOPED,
+    OP_SCOPE_INVOKE,
+    OP_END
 } OpCode;
 
 typedef struct {

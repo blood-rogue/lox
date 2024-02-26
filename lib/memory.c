@@ -251,8 +251,11 @@ static void mark_roots() {
     }
 
     mark_table(&vm.globals);
+
     mark_compiler_roots();
     mark_object(AS_OBJ(vm.init_string));
+    if (vm.current_module != NULL)
+        mark_object(AS_OBJ(vm.current_module));
 }
 
 static void trace_references() {

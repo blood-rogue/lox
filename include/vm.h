@@ -23,6 +23,9 @@ typedef struct {
     Table globals;
     Table strings;
 
+    int current_module_frame;
+    ObjModule *current_module;
+
     BuiltinMethodTable **builtin_methods;
     BuiltinMethodTable builtin_functions;
 

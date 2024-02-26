@@ -9,6 +9,10 @@
 #include "object.h"
 #include "vm.h"
 
+#ifdef DEBUG
+#include "debug.h"
+#endif // DEBUG
+
 VM vm;
 
 static char *read_file(char *path) {
@@ -95,6 +99,9 @@ void init_vm() {
     init_table(&vm.globals);
     init_table(&vm.strings);
 
+    vm.current_module_frame = 0;
+    vm.current_module = NULL;
+
     vm.builtin_methods = get_builtin_methods();
 
     vm.init_string = NULL;
@@ -128,6 +135,7 @@ void free_vm() {
     free_table(&vm.strings);
 
     vm.init_string = NULL;
+    vm.current_module = NULL;
 
     free_literals();
 
@@ -142,6 +150,19 @@ void free_vm() {
     }
 
     free(vm.builtin_methods);
+}
+
+static Table *get_current_global() {
+    if (vm.current_module_frame == 0) {
+        return &vm.globals;
+    }
+
+    if (vm.current_module != NULL)
+        return &vm.current_module->globals;
+
+    runtime_error(
+        "Could not import module '%s'.", vm.current_module->name->chars);
+    return NULL;
 }
 
 static bool call(ObjClosure *closure, int argc) {
@@ -231,8 +252,8 @@ static bool call_value(Obj *callee, int argc) {
 
 static bool invoke_from_class(ObjClass *klass, ObjString *name, int argc) {
     Obj *method;
-    if (!table_get(&klass->methods, (Obj *)name, &method) &&
-        !table_get(&klass->statics, (Obj *)name, &method)) {
+    if (!table_get(&klass->methods, AS_OBJ(name), &method) &&
+        !table_get(&klass->statics, AS_OBJ(name), &method)) {
         runtime_error(
             "Undefined property '%s' for class '%s'.",
             name->chars,
@@ -241,6 +262,19 @@ static bool invoke_from_class(ObjClass *klass, ObjString *name, int argc) {
     }
 
     return call(AS_CLOSURE(method), argc);
+}
+
+static bool invoke_scoped_member(ObjModule *module, ObjString *name, int argc) {
+    Obj *member;
+    if (table_get(&module->globals, AS_OBJ(name), &member)) {
+        return call_value(member, argc);
+    }
+
+    runtime_error(
+        "No member named '%s' in module '%s'.",
+        name->chars,
+        module->name->chars);
+    return false;
 }
 
 static bool invoke(ObjString *name, int argc) {
@@ -252,7 +286,7 @@ static bool invoke(ObjString *name, int argc) {
                 ObjInstance *instance = AS_INSTANCE(receiver);
 
                 Obj *value;
-                if (table_get(&instance->fields, (Obj *)name, &value)) {
+                if (table_get(&instance->fields, AS_OBJ(name), &value)) {
                     vm.stack_top[-argc - 1] = value;
                     return call_value(value, argc);
                 }
@@ -264,7 +298,7 @@ static bool invoke(ObjString *name, int argc) {
                 ObjClass *klass = AS_CLASS(receiver);
 
                 Obj *method;
-                if (!table_get(&klass->statics, (Obj *)name, &method)) {
+                if (!table_get(&klass->statics, AS_OBJ(name), &method)) {
                     runtime_error(
                         "Undefined static method '%s' for class '%s'.",
                         name->chars,
@@ -306,7 +340,7 @@ static bool invoke(ObjString *name, int argc) {
 
 static bool bind_method(ObjClass *klass, ObjString *name) {
     Obj *method;
-    if (!table_get(&klass->methods, (Obj *)name, &method)) {
+    if (!table_get(&klass->methods, AS_OBJ(name), &method)) {
         runtime_error(
             "Undefined property '%s' of class '%s'.",
             name->chars,
@@ -358,9 +392,9 @@ static void define_method(ObjString *name, bool is_static) {
     Obj *method = peek(0);
     ObjClass *klass = AS_CLASS(peek(1));
     if (is_static)
-        table_set(&klass->statics, (Obj *)name, method);
+        table_set(&klass->statics, AS_OBJ(name), method);
     else
-        table_set(&klass->methods, (Obj *)name, method);
+        table_set(&klass->methods, AS_OBJ(name), method);
 
     pop();
 }
@@ -397,6 +431,19 @@ static InterpretResult run() {
     }
 
     for (;;) {
+#ifdef DEBUG
+        printf("          ");
+        for (Obj **slot = vm.stack; slot < vm.stack_top; slot++) {
+            printf("[ ");
+            repr_object(*slot);
+            printf(" ]");
+        }
+        printf("\n");
+        disassemble_instruction(
+            &frame->closure->function->chunk,
+            (int)(frame->ip - frame->closure->function->chunk.code));
+#endif // DEBUG
+
         switch ((OpCode)READ_BYTE()) {
             case OP_CONSTANT:
                 {
@@ -553,7 +600,13 @@ static InterpretResult run() {
                     ObjString *name = READ_STRING();
                     Obj *value;
                     BuiltinMethodFn fn;
-                    if (table_get(&vm.globals, (Obj *)name, &value)) {
+                    Table *globals = get_current_global();
+
+                    if (globals == NULL) {
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+
+                    if (table_get(globals, AS_OBJ(name), &value)) {
                         push(value);
                         break;
                     } else if (method_table_get(
@@ -567,15 +620,27 @@ static InterpretResult run() {
             case OP_DEFINE_GLOBAL:
                 {
                     ObjString *name = READ_STRING();
-                    table_set(&vm.globals, (Obj *)name, peek(0));
+                    Table *globals = get_current_global();
+
+                    if (globals == NULL) {
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+
+                    table_set(globals, AS_OBJ(name), peek(0));
                     pop();
                     break;
                 }
             case OP_SET_GLOBAL:
                 {
                     ObjString *name = READ_STRING();
-                    if (table_set(&vm.globals, (Obj *)name, peek(0))) {
-                        table_delete(&vm.globals, (Obj *)name);
+                    Table *globals = get_current_global();
+
+                    if (globals == NULL) {
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+
+                    if (table_set(globals, AS_OBJ(name), peek(0))) {
+                        table_delete(globals, (Obj *)name);
                         runtime_error("Undefined variable '%s'.", name->chars);
                         return INTERPRET_RUNTIME_ERROR;
                     }
@@ -596,16 +661,16 @@ static InterpretResult run() {
             case OP_GET_PROPERTY:
                 {
                     Obj *obj = peek(0);
+                    ObjString *name = READ_STRING();
                     switch (obj->type) {
                         case OBJ_INSTANCE:
                             {
                                 ObjInstance *instance = AS_INSTANCE(obj);
-                                ObjString *name = READ_STRING();
 
                                 Obj *value;
                                 if (table_get(
                                         &instance->fields,
-                                        (Obj *)name,
+                                        AS_OBJ(name),
                                         &value)) {
                                     pop();
                                     push(value);
@@ -624,11 +689,12 @@ static InterpretResult run() {
                         case OBJ_CLASS:
                             {
                                 ObjClass *klass = AS_CLASS(obj);
-                                ObjString *name = READ_STRING();
 
                                 Obj *value;
                                 if (table_get(
-                                        &klass->statics, (Obj *)name, &value)) {
+                                        &klass->statics,
+                                        AS_OBJ(name),
+                                        &value)) {
                                     pop();
                                     push(value);
                                     break;
@@ -643,19 +709,18 @@ static InterpretResult run() {
                             }
                         default:
                             if (vm.builtin_methods[obj->type] != NULL) {
-                                ObjString *method_name = READ_STRING();
                                 BuiltinMethodFn method;
                                 if (method_table_get(
                                         vm.builtin_methods[obj->type],
-                                        method_name->hash,
+                                        name->hash,
                                         &method)) {
                                     pop();
                                     push(AS_OBJ(new_builtin_bound_method(
-                                        method, obj, method_name->chars)));
+                                        method, obj, name->chars)));
                                 } else {
                                     runtime_error(
                                         "No method named '%s' on '%s'",
-                                        method_name->chars,
+                                        name->chars,
                                         OBJ_NAMES[obj->type]);
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
@@ -694,6 +759,24 @@ static InterpretResult run() {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     break;
+                }
+            case OP_GET_SCOPED:
+                {
+                    ObjModule *module = AS_MODULE(peek(0));
+                    ObjString *name = READ_STRING();
+
+                    Obj *member;
+                    if (table_get(&module->globals, AS_OBJ(name), &member)) {
+                        pop();
+                        push(member);
+                        break;
+                    }
+
+                    runtime_error(
+                        "No method named '%s' found in module '%s'.",
+                        name->chars,
+                        module->name->chars);
+                    return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_EQUAL:
                 push(AS_OBJ(new_bool(obj_equal(pop(), pop()))));
@@ -798,7 +881,7 @@ static InterpretResult run() {
                     frame = &vm.frames[vm.frame_count - 1];
                     break;
                 }
-            case OP_INVOKE:
+            case OP_METHOD_INVOKE:
                 {
                     ObjString *method = READ_STRING();
                     int argc = READ_BYTE();
@@ -816,6 +899,18 @@ static InterpretResult run() {
                     if (!invoke_from_class(superclass, method, argc)) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
+                    frame = &vm.frames[vm.frame_count - 1];
+                    break;
+                }
+            case OP_SCOPE_INVOKE:
+                {
+                    ObjString *method = READ_STRING();
+                    int argc = READ_BYTE();
+
+                    if (!invoke_scoped_member(
+                            AS_MODULE(peek(argc)), method, argc))
+                        return INTERPRET_RUNTIME_ERROR;
+
                     frame = &vm.frames[vm.frame_count - 1];
                     break;
                 }
@@ -856,6 +951,22 @@ static InterpretResult run() {
                     vm.stack_top = frame->slots;
                     push(result);
                     frame = &vm.frames[vm.frame_count - 1];
+
+                    break;
+                }
+            case OP_END:
+                {
+                    close_upvalues(frame->slots);
+                    vm.frame_count--;
+                    if (vm.frame_count == 0) {
+                        return INTERPRET_OK;
+                    }
+
+                    if (vm.frame_count == vm.current_module_frame) {
+                        vm.current_module_frame = 0;
+                        push(AS_OBJ(vm.current_module));
+                        vm.current_module = NULL;
+                    }
                     break;
                 }
             case OP_CLASS:
@@ -887,12 +998,20 @@ static InterpretResult run() {
                     ObjString *import_path = READ_STRING();
                     char *source = read_file(import_path->chars);
 
-                    printf("%s\n", source);
+                    ObjFunction *module_function = compile(source);
+                    if (module_function == NULL) {
+                        return INTERPRET_COMPILE_ERROR;
+                    }
 
-                    // Table module_globals;
-                    // Table *current_globals = vm.globals;
-                    // init_table(&module_globals);
-                    // vm.globals = &module_globals;
+                    push(AS_OBJ(module_function));
+
+                    ObjClosure *closure = new_closure(module_function);
+                    pop();
+                    call(closure, 0);
+
+                    frame = &vm.frames[vm.frame_count - 1];
+                    vm.current_module_frame = vm.frame_count - 1;
+                    vm.current_module = new_module(import_path);
 
                     free(source);
                     break;

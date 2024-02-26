@@ -162,6 +162,15 @@ ObjBoundMethod *new_bound_method(Obj *receiver, ObjClosure *method) {
     return bound;
 }
 
+ObjModule *new_module(ObjString *name) {
+    ObjModule *module = ALLOCATE_OBJ(ObjModule, OBJ_MODULE);
+
+    init_table(&module->globals);
+    module->name = name;
+
+    return module;
+}
+
 ObjBuiltinFunction *new_builtin_function(BuiltinMethodFn fn, char *name) {
     ObjBuiltinFunction *builtin =
         ALLOCATE_OBJ(ObjBuiltinFunction, OBJ_BUILTIN_FUNCTION);
