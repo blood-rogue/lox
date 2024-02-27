@@ -1,5 +1,5 @@
-#ifndef clox_method_table_h
-#define clox_method_table_h
+#ifndef lox_method_table_h
+#define lox_method_table_h
 
 #include "common.h"
 
@@ -8,27 +8,27 @@ typedef struct {
     char *error;
 } BuiltinResult;
 
-typedef BuiltinResult (*BuiltinMethodFn)(int, Obj **, Obj *);
+typedef BuiltinResult (*BuiltinFn)(int, Obj **, Obj *);
 
 typedef struct {
     uint32_t hash;
     char *key;
-    BuiltinMethodFn value;
-} BuiltinMethodEntry;
+    BuiltinFn value;
+} BuiltinEntry;
 
 typedef struct {
     int count;
     int capacity;
-    BuiltinMethodEntry *entries;
-} BuiltinMethodTable;
+    BuiltinEntry *entries;
+} BuiltinTable;
 
-void init_method_table(BuiltinMethodTable *, int);
-void free_method_table(BuiltinMethodTable *);
+void init_method_table(BuiltinTable *, int);
+void free_method_table(BuiltinTable *);
 
-bool method_table_get(BuiltinMethodTable *, uint32_t, BuiltinMethodFn *);
-bool method_table_set(BuiltinMethodTable *, char *, uint32_t, BuiltinMethodFn);
-bool method_table_delete(BuiltinMethodTable *, uint32_t);
+bool method_table_get(BuiltinTable *, uint32_t, BuiltinFn *);
+bool method_table_set(BuiltinTable *, char *, uint32_t, BuiltinFn);
+bool method_table_delete(BuiltinTable *, uint32_t);
 
-void method_table_add_all(BuiltinMethodTable *, BuiltinMethodTable *);
+void method_table_add_all(BuiltinTable *, BuiltinTable *);
 
-#endif // clox_method_table_h
+#endif // lox_method_table_h

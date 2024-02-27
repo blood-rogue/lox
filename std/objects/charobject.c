@@ -73,8 +73,8 @@ BuiltinResult _char_to_upper(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(new_char((uint8_t)toupper(AS_CHAR(caller)->value)));
 }
 
-BuiltinMethodTable *char_methods() {
-    BuiltinMethodTable *table = malloc(sizeof(BuiltinMethodTable));
+BuiltinTable *char_methods() {
+    BuiltinTable *table = malloc(sizeof(BuiltinTable));
     init_method_table(table, 16);
 
     SET_BLTIN_METHOD(char, is_upper);

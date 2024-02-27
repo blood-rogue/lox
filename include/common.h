@@ -1,5 +1,5 @@
-#ifndef clox_common_h
-#define clox_common_h
+#ifndef lox_common_h
+#define lox_common_h
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -15,4 +15,4 @@ typedef struct Obj Obj;
 extern int _argc;
 extern const char **_argv;
 
-#endif // clox_common_h
+#endif // lox_common_h

@@ -1,5 +1,5 @@
-#ifndef clox_chunk_h
-#define clox_chunk_h
+#ifndef lox_chunk_h
+#define lox_chunk_h
 
 #include "array.h"
 #include "common.h"
@@ -66,4 +66,4 @@ void write_chunk(Chunk *, uint8_t, int);
 
 int add_constant(Chunk *, Obj *);
 
-#endif // clox_chunk_h
+#endif // lox_chunk_h

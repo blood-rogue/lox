@@ -14,8 +14,8 @@ BuiltinResult _list_len(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(new_int(AS_LIST(caller)->elems.count));
 }
 
-BuiltinMethodTable *list_methods() {
-    BuiltinMethodTable *table = malloc(sizeof(BuiltinMethodTable));
+BuiltinTable *list_methods() {
+    BuiltinTable *table = malloc(sizeof(BuiltinTable));
     init_method_table(table, 8);
 
     SET_BLTIN_METHOD(list, append);

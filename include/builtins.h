@@ -1,5 +1,5 @@
-#ifndef clox_builtin_h
-#define clox_builtin_h
+#ifndef lox_builtin_h
+#define lox_builtin_h
 
 #include <math.h>
 #include <time.h>
@@ -37,14 +37,19 @@ BLTIN_FN(parse_float);
 BLTIN_FN(sleep);
 BLTIN_FN(type);
 
-BuiltinMethodTable **get_builtin_methods();
+BuiltinTable **get_builtin_methods();
 
-BuiltinMethodTable *float_methods();
-BuiltinMethodTable *int_methods();
-BuiltinMethodTable *bool_methods();
-BuiltinMethodTable *char_methods();
-BuiltinMethodTable *string_methods();
-BuiltinMethodTable *list_methods();
-BuiltinMethodTable *map_methods();
+BuiltinTable *float_methods();
+BuiltinTable *int_methods();
+BuiltinTable *bool_methods();
+BuiltinTable *char_methods();
+BuiltinTable *string_methods();
+BuiltinTable *list_methods();
+BuiltinTable *map_methods();
 
-#endif // clox_builtin_h
+ObjModule *get_module(char *);
+
+ObjModule *get_math_module();
+ObjModule *get_fs_module();
+
+#endif // lox_builtin_h

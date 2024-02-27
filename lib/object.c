@@ -171,7 +171,7 @@ ObjModule *new_module(ObjString *name) {
     return module;
 }
 
-ObjBuiltinFunction *new_builtin_function(BuiltinMethodFn fn, char *name) {
+ObjBuiltinFunction *new_builtin_function(BuiltinFn fn, char *name) {
     ObjBuiltinFunction *builtin =
         ALLOCATE_OBJ(ObjBuiltinFunction, OBJ_BUILTIN_FUNCTION);
 
@@ -182,7 +182,7 @@ ObjBuiltinFunction *new_builtin_function(BuiltinMethodFn fn, char *name) {
 }
 
 ObjBuiltinBoundMethod *
-new_builtin_bound_method(BuiltinMethodFn fn, Obj *caller, char *name) {
+new_builtin_bound_method(BuiltinFn fn, Obj *caller, char *name) {
     ObjBuiltinBoundMethod *bound_method =
         ALLOCATE_OBJ(ObjBuiltinBoundMethod, OBJ_BUILTIN_BOUND_METHOD);
 

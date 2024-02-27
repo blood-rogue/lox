@@ -1,5 +1,5 @@
-#ifndef clox_compiler_h
-#define clox_compiler_h
+#ifndef lox_compiler_h
+#define lox_compiler_h
 
 #include "object.h"
 #include "scanner.h"
@@ -72,4 +72,4 @@ typedef struct {
 ObjFunction *compile(const char *);
 void mark_compiler_roots();
 
-#endif // clox_compiler_h
+#endif // lox_compiler_h

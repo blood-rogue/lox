@@ -254,8 +254,12 @@ static void mark_roots() {
 
     mark_compiler_roots();
     mark_object(AS_OBJ(vm.init_string));
-    if (vm.current_module != NULL)
-        mark_object(AS_OBJ(vm.current_module));
+
+    Module *module = vm.modules;
+    while (module != NULL) {
+        mark_object(AS_OBJ(module->current));
+        module = module->prev;
+    }
 }
 
 static void trace_references() {

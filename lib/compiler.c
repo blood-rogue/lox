@@ -258,13 +258,13 @@ static ObjFunction *end_compiler(bool ended) {
         emit_return();
     ObjFunction *function = current->function;
 
-#ifdef DEBUG
-    if (!parser.had_error) {
-        disassemble_chunk(
-            current_chunk(),
-            function->name != NULL ? function->name->chars : "<script>");
-    }
-#endif
+    // #ifdef DEBUG
+    //     if (!parser.had_error) {
+    //         disassemble_chunk(
+    //             current_chunk(),
+    //             function->name != NULL ? function->name->chars : "<script>");
+    //     }
+    // #endif
 
     current = current->enclosing;
     return function;

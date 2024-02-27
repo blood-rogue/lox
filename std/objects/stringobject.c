@@ -31,8 +31,8 @@ BuiltinResult _string_len(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(new_int(AS_STRING(caller)->length));
 }
 
-BuiltinMethodTable *string_methods() {
-    BuiltinMethodTable *table = malloc(sizeof(BuiltinMethodTable));
+BuiltinTable *string_methods() {
+    BuiltinTable *table = malloc(sizeof(BuiltinTable));
     init_method_table(table, 8);
 
     SET_BLTIN_METHOD(string, to_upper);

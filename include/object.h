@@ -1,11 +1,13 @@
-#ifndef clox_object_h
-#define clox_object_h
+#ifndef lox_object_h
+#define lox_object_h
 
 #include "array.h"
 #include "chunk.h"
 #include "common.h"
 #include "method_table.h"
 #include "table.h"
+
+#define NUM_OBJS                     17
 
 #define AS_OBJ(obj)                  ((Obj *)(obj))
 
@@ -185,14 +187,14 @@ typedef struct {
 typedef struct {
     Obj obj;
     char *name;
-    BuiltinMethodFn method;
+    BuiltinFn method;
 } ObjBuiltinFunction;
 
 typedef struct {
     Obj obj;
     Obj *caller;
     char *name;
-    BuiltinMethodFn function;
+    BuiltinFn function;
 } ObjBuiltinBoundMethod;
 
 ObjNil *new_nil();
@@ -213,8 +215,8 @@ ObjInstance *new_instance(ObjClass *);
 ObjBoundMethod *new_bound_method(Obj *, ObjClosure *);
 ObjModule *new_module(ObjString *);
 
-ObjBuiltinFunction *new_builtin_function(BuiltinMethodFn, char *);
-ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinMethodFn, Obj *, char *);
+ObjBuiltinFunction *new_builtin_function(BuiltinFn, char *);
+ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinFn, Obj *, char *);
 
 ObjList *argv_list(int, const char **);
 ObjString *take_string(char *, int);
@@ -230,4 +232,4 @@ bool obj_equal(Obj *, Obj *);
 void init_literals();
 void free_literals();
 
-#endif // clox_object_h
+#endif // lox_object_h

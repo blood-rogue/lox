@@ -1,5 +1,5 @@
-#ifndef clox_scanner_h
-#define clox_scanner_h
+#ifndef lox_scanner_h
+#define lox_scanner_h
 
 typedef enum {
     TOKEN_LEFT_PAREN,
@@ -67,4 +67,4 @@ typedef struct {
 void init_scanner(const char *);
 Token scan_token();
 
-#endif // clox_scanner_h
+#endif // lox_scanner_h

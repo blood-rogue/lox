@@ -1,5 +1,5 @@
-#ifndef clox_array_h
-#define clox_array_h
+#ifndef lox_array_h
+#define lox_array_h
 
 #include "common.h"
 
@@ -13,4 +13,4 @@ void init_array(Array *);
 void write_array(Array *, Obj *);
 void free_array(Array *);
 
-#endif // clox_array_h
+#endif // lox_array_h

@@ -1,5 +1,5 @@
-#ifndef clox_table_h
-#define clox_table_h
+#ifndef lox_table_h
+#define lox_table_h
 
 #include "common.h"
 
@@ -27,4 +27,4 @@ void table_remove_white(Table *);
 
 void mark_table(Table *);
 
-#endif // clox_table_h
+#endif // lox_table_h

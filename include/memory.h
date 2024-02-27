@@ -1,5 +1,5 @@
-#ifndef clox_memory_h
-#define clox_memory_h
+#ifndef lox_memory_h
+#define lox_memory_h
 
 #include "common.h"
 #include "object.h"
@@ -20,4 +20,4 @@ void free_objects();
 void sweep();
 void collect_garbage();
 
-#endif // clox_memory_h
+#endif // lox_memory_h

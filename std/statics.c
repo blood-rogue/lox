@@ -1,7 +1,7 @@
 #include "builtins.h"
 
-BuiltinMethodTable **get_builtin_methods() {
-    BuiltinMethodTable **statics = calloc(16, sizeof(BuiltinMethodTable *));
+BuiltinTable **get_builtin_methods() {
+    BuiltinTable **statics = calloc(NUM_OBJS, sizeof(BuiltinTable *));
 
     statics[OBJ_FLOAT] = float_methods();
     statics[OBJ_INT] = int_methods();

@@ -14,6 +14,7 @@
 #endif // DEBUG
 
 VM vm;
+extern char *_source;
 
 static char *read_file(char *path) {
     FILE *file = fopen(path, "rb");
@@ -99,8 +100,8 @@ void init_vm() {
     init_table(&vm.globals);
     init_table(&vm.strings);
 
-    vm.current_module_frame = 0;
-    vm.current_module = NULL;
+    vm.modules = NULL;
+    vm.module_count = 0;
 
     vm.builtin_methods = get_builtin_methods();
 
@@ -135,14 +136,19 @@ void free_vm() {
     free_table(&vm.strings);
 
     vm.init_string = NULL;
-    vm.current_module = NULL;
+
+    if (vm.modules != NULL) {
+        free(vm.modules);
+    }
+
+    vm.module_count = 0;
 
     free_literals();
 
     free_objects();
     free_method_table(&vm.builtin_functions);
 
-    for (int i = 0; i < 16; i++) {
+    for (int i = 0; i < NUM_OBJS; i++) {
         if (vm.builtin_methods[i] != NULL) {
             free_method_table(vm.builtin_methods[i]);
             free(vm.builtin_methods[i]);
@@ -150,19 +156,26 @@ void free_vm() {
     }
 
     free(vm.builtin_methods);
+
+    if (_source != NULL)
+        free(_source);
 }
 
 static Table *get_current_global() {
-    if (vm.current_module_frame == 0) {
+    if (vm.modules == NULL) {
         return &vm.globals;
     }
 
-    if (vm.current_module != NULL)
-        return &vm.current_module->globals;
+    if (vm.modules != NULL)
+        return &vm.modules->current->globals;
 
     runtime_error(
-        "Could not import module '%s'.", vm.current_module->name->chars);
+        "Could not import module '%s'.", vm.modules->current->name->chars);
     return NULL;
+}
+
+static bool is_std_import(ObjString *path) {
+    return path->length > 6 && memcmp(path->chars, "@std/", 5) == 0;
 }
 
 static bool call(ObjClosure *closure, int argc) {
@@ -214,7 +227,7 @@ static bool call_value(Obj *callee, int argc) {
             return call(AS_CLOSURE(callee), argc);
         case OBJ_BUILTIN_FUNCTION:
             {
-                BuiltinMethodFn builtin = AS_BUILTIN_FUNCTION(callee)->method;
+                BuiltinFn builtin = AS_BUILTIN_FUNCTION(callee)->method;
                 BuiltinResult result =
                     builtin(argc, vm.stack_top - argc, callee);
 
@@ -310,7 +323,7 @@ static bool invoke(ObjString *name, int argc) {
             }
         default:
             {
-                BuiltinMethodFn method;
+                BuiltinFn method;
                 if (vm.builtin_methods[receiver->type] == NULL ||
                     !method_table_get(
                         vm.builtin_methods[receiver->type],
@@ -477,40 +490,77 @@ static InterpretResult run() {
                     Obj *value = pop();
 
                     Obj *indexed;
-                    if (IS_LIST(value)) {
-                        if (!IS_INT(index_value)) {
-                            runtime_error(
-                                "Lists can only be indexed using integers.");
-                            return INTERPRET_RUNTIME_ERROR;
-                        }
+                    switch (value->type) {
+                        case OBJ_LIST:
+                            {
+                                if (!IS_INT(index_value)) {
+                                    runtime_error("Lists can only be indexed "
+                                                  "using integers.");
+                                    return INTERPRET_RUNTIME_ERROR;
+                                }
 
-                        int64_t index = AS_INT(index_value)->value;
-                        ObjList *list = AS_LIST(value);
+                                int64_t index = AS_INT(index_value)->value;
+                                ObjList *list = AS_LIST(value);
 
-                        if (index >= list->elems.count) {
-                            runtime_error("Index out of bounds.");
-                            return INTERPRET_RUNTIME_ERROR;
-                        }
+                                if (index < 0)
+                                    index = list->elems.count + index;
 
-                        indexed = list->elems.values[index];
-                    } else if (IS_MAP(value)) {
-                        if (!IS_STRING(index_value)) {
-                            runtime_error(
-                                "Maps can only be indexed using strings.");
-                            return INTERPRET_RUNTIME_ERROR;
-                        }
+                                if (index >= list->elems.count) {
+                                    runtime_error("Index out of bounds.");
+                                    return INTERPRET_RUNTIME_ERROR;
+                                }
 
-                        ObjString *index = AS_STRING(index_value);
-                        ObjMap *map = AS_MAP(value);
+                                indexed = list->elems.values[index];
+                                break;
+                            }
+                        case OBJ_MAP:
+                            {
+                                if (!IS_STRING(index_value)) {
+                                    runtime_error("Maps can only be indexed "
+                                                  "using strings.");
+                                    return INTERPRET_RUNTIME_ERROR;
+                                }
 
-                        if (!table_get(&map->table, (Obj *)index, &indexed)) {
-                            runtime_error("Key not found.");
-                            return INTERPRET_RUNTIME_ERROR;
-                        }
-                    } else {
-                        runtime_error(
-                            "'%s' cannot be indexed.", OBJ_NAMES[value->type]);
-                        return INTERPRET_RUNTIME_ERROR;
+                                ObjString *index = AS_STRING(index_value);
+                                ObjMap *map = AS_MAP(value);
+
+                                if (!table_get(
+                                        &map->table, (Obj *)index, &indexed)) {
+                                    runtime_error("Key not found.");
+                                    return INTERPRET_RUNTIME_ERROR;
+                                }
+                                break;
+                            }
+                        case OBJ_STRING:
+                            {
+                                if (!IS_INT(index_value)) {
+                                    runtime_error("Strings can only be indexed "
+                                                  "using integers.");
+                                    return INTERPRET_RUNTIME_ERROR;
+                                }
+
+                                int64_t index = AS_INT(index_value)->value;
+                                ObjString *string = AS_STRING(value);
+
+                                if (index < 0)
+                                    index = string->length + index;
+
+                                if (index >= string->length) {
+                                    runtime_error("Index out of bounds.");
+                                    return INTERPRET_RUNTIME_ERROR;
+                                }
+
+                                indexed =
+                                    AS_OBJ(new_char(string->chars[index]));
+                                break;
+                            }
+                        default:
+                            {
+                                runtime_error(
+                                    "'%s' cannot be indexed.",
+                                    OBJ_NAMES[value->type]);
+                                return INTERPRET_RUNTIME_ERROR;
+                            }
                     }
 
                     push(indexed);
@@ -599,7 +649,7 @@ static InterpretResult run() {
                 {
                     ObjString *name = READ_STRING();
                     Obj *value;
-                    BuiltinMethodFn fn;
+                    BuiltinFn fn;
                     Table *globals = get_current_global();
 
                     if (globals == NULL) {
@@ -709,7 +759,7 @@ static InterpretResult run() {
                             }
                         default:
                             if (vm.builtin_methods[obj->type] != NULL) {
-                                BuiltinMethodFn method;
+                                BuiltinFn method;
                                 if (method_table_get(
                                         vm.builtin_methods[obj->type],
                                         name->hash,
@@ -762,6 +812,12 @@ static InterpretResult run() {
                 }
             case OP_GET_SCOPED:
                 {
+                    if (!IS_MODULE(peek(0))) {
+                        runtime_error(
+                            "Cannot scope %s.", OBJ_NAMES[peek(0)->type]);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+
                     ObjModule *module = AS_MODULE(peek(0));
                     ObjString *name = READ_STRING();
 
@@ -962,11 +1018,18 @@ static InterpretResult run() {
                         return INTERPRET_OK;
                     }
 
-                    if (vm.frame_count == vm.current_module_frame) {
-                        vm.current_module_frame = 0;
-                        push(AS_OBJ(vm.current_module));
-                        vm.current_module = NULL;
+                    if (vm.modules != NULL) {
+                        push(AS_OBJ(vm.modules->current));
+
+                        Module *prev = vm.modules->prev;
+                        free(vm.modules);
+
+                        vm.modules = prev;
+                        vm.module_count--;
                     }
+
+                    frame = &vm.frames[vm.frame_count - 1];
+
                     break;
                 }
             case OP_CLASS:
@@ -995,25 +1058,49 @@ static InterpretResult run() {
                 break;
             case OP_IMPORT:
                 {
-                    ObjString *import_path = READ_STRING();
-                    char *source = read_file(import_path->chars);
-
-                    ObjFunction *module_function = compile(source);
-                    if (module_function == NULL) {
-                        return INTERPRET_COMPILE_ERROR;
+                    if (vm.module_count == UINT8_MAX) {
+                        runtime_error("Exceeded max import limit.");
+                        return INTERPRET_RUNTIME_ERROR;
                     }
 
-                    push(AS_OBJ(module_function));
+                    ObjString *import_path = READ_STRING();
 
-                    ObjClosure *closure = new_closure(module_function);
-                    pop();
-                    call(closure, 0);
+                    if (is_std_import(import_path)) {
+                        strtok(import_path->chars, "/");
+                        ObjModule *std_module = get_module(strtok(NULL, "/"));
+                        if (std_module == NULL) {
+                            runtime_error(
+                                "No standard module named '%s'.",
+                                import_path->chars);
+                            return INTERPRET_RUNTIME_ERROR;
+                        } else
+                            push(AS_OBJ(std_module));
+                    } else {
+                        char *source = read_file(import_path->chars);
 
-                    frame = &vm.frames[vm.frame_count - 1];
-                    vm.current_module_frame = vm.frame_count - 1;
-                    vm.current_module = new_module(import_path);
+                        ObjFunction *module_function = compile(source);
+                        if (module_function == NULL) {
+                            return INTERPRET_COMPILE_ERROR;
+                        }
 
-                    free(source);
+                        push(AS_OBJ(module_function));
+
+                        ObjClosure *closure = new_closure(module_function);
+                        pop();
+                        call(closure, 0);
+
+                        frame = &vm.frames[vm.frame_count - 1];
+
+                        Module *module = malloc(sizeof(Module));
+
+                        module->prev = vm.modules;
+                        module->current = new_module(import_path);
+
+                        vm.modules = module;
+                        vm.module_count++;
+
+                        free(source);
+                    }
                     break;
                 }
         }

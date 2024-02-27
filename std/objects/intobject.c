@@ -1,10 +1,5 @@
 #include "builtins.h"
 
-BuiltinResult _int_abs(int argc, UNUSED(Obj **, argv), Obj *caller) {
-    CHECK_ARG_COUNT(0)
-    return OK(AS_OBJ(new_int(labs(AS_INT(caller)->value))));
-}
-
 BuiltinResult _int_to_str(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
@@ -41,11 +36,10 @@ BuiltinResult _int_to_oct(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(AS_OBJ(take_string(buf, (int)strlen(buf))));
 }
 
-BuiltinMethodTable *int_methods() {
-    BuiltinMethodTable *table = malloc(sizeof(BuiltinMethodTable));
-    init_method_table(table, 8);
+BuiltinTable *int_methods() {
+    BuiltinTable *table = malloc(sizeof(BuiltinTable));
+    init_method_table(table, 4);
 
-    SET_BLTIN_METHOD(int, abs);
     SET_BLTIN_METHOD(int, to_str);
     SET_BLTIN_METHOD(int, to_hex);
     SET_BLTIN_METHOD(int, to_oct);

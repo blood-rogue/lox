@@ -1,5 +1,5 @@
-#ifndef clox_vm_h
-#define clox_vm_h
+#ifndef lox_vm_h
+#define lox_vm_h
 
 #include "object.h"
 #include "table.h"
@@ -13,6 +13,11 @@ typedef struct {
     Obj **slots;
 } CallFrame;
 
+typedef struct Module {
+    struct Module *prev;
+    ObjModule *current;
+} Module;
+
 typedef struct {
     CallFrame frames[FRAMES_MAX];
     int frame_count;
@@ -23,11 +28,11 @@ typedef struct {
     Table globals;
     Table strings;
 
-    int current_module_frame;
-    ObjModule *current_module;
+    Module *modules;
+    uint8_t module_count;
 
-    BuiltinMethodTable **builtin_methods;
-    BuiltinMethodTable builtin_functions;
+    BuiltinTable **builtin_methods;
+    BuiltinTable builtin_functions;
 
     ObjString *init_string;
     ObjUpvalue *open_upvalues;
@@ -56,4 +61,4 @@ InterpretResult interpret(char *);
 void push(Obj *);
 Obj *pop();
 
-#endif // clox_vm_h
+#endif // lox_vm_h

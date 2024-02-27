@@ -35,8 +35,8 @@ BuiltinResult _map_values(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(values);
 }
 
-BuiltinMethodTable *map_methods() {
-    BuiltinMethodTable *table = malloc(sizeof(BuiltinMethodTable));
+BuiltinTable *map_methods() {
+    BuiltinTable *table = malloc(sizeof(BuiltinTable));
     init_method_table(table, 8);
 
     SET_BLTIN_METHOD(map, len);
