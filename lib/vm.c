@@ -413,7 +413,7 @@ static void define_method(ObjString *name, bool is_static) {
 }
 
 static bool is_falsey(Obj *value) {
-    return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
+    return IS_NIL(value) || (IS_BOOL(value) && !(AS_BOOL(value)->value));
 }
 
 static InterpretResult run() {
@@ -1070,8 +1070,8 @@ static InterpretResult run() {
                         ObjModule *std_module = get_module(strtok(NULL, "/"));
                         if (std_module == NULL) {
                             runtime_error(
-                                "No standard module named '%s'.",
-                                import_path->chars);
+                                "No standard module named '@std/%s'.",
+                                std_module);
                             return INTERPRET_RUNTIME_ERROR;
                         } else
                             push(AS_OBJ(std_module));

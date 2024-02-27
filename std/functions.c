@@ -54,13 +54,13 @@ input_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
             s = (char *)realloc(s, (capacity *= 2));
 
         c = (char)getchar();
-        if (c == '\n' || c == EOF)
+        if (c == '\n' || c == EOF) {
+            s[--len] = '\0';
             break;
-        else
+        } else
             s[len - 1] = c;
     }
 
-    s[len - 1] = '\0';
     return OK(take_string(s, len));
 }
 
