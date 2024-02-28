@@ -110,11 +110,11 @@ void init_vm() {
 
     init_method_table(&vm.builtin_functions, 16);
 
-#define SET_BLTIN_FN(name)                                                     \
-    method_table_set(                                                          \
-        &vm.builtin_functions,                                                 \
-        #name,                                                                 \
-        hash_string(#name, (int)strlen(#name)),                                \
+#define SET_BLTIN_FN(name)                                                                         \
+    method_table_set(                                                                              \
+        &vm.builtin_functions,                                                                     \
+        #name,                                                                                     \
+        hash_string(#name, (int)strlen(#name)),                                                    \
         name##_builtin_function)
 
     SET_BLTIN_FN(exit);
@@ -168,8 +168,7 @@ static Table *get_current_global() {
     if (vm.modules != NULL)
         return &vm.modules->current->globals;
 
-    runtime_error(
-        "Could not import module '%s'.", vm.modules->current->name->chars);
+    runtime_error("Could not import module '%s'.", vm.modules->current->name->chars);
     return NULL;
 }
 
@@ -179,10 +178,7 @@ static bool is_std_import(ObjString *path) {
 
 static bool call(ObjClosure *closure, int argc) {
     if (argc != closure->function->arity) {
-        runtime_error(
-            "Expected %d arguments but got %d.",
-            closure->function->arity,
-            argc);
+        runtime_error("Expected %d arguments but got %d.", closure->function->arity, argc);
         return false;
     }
 
@@ -209,11 +205,14 @@ static bool call_value(Obj *callee, int argc) {
         case OBJ_CLASS:
             {
                 ObjClass *klass = AS_CLASS(callee);
-                vm.stack_top[-argc - 1] = AS_OBJ(new_instance(klass));
+                ObjInstance *instance = new_instance(klass);
+
+                table_add_all(&klass->fields, &instance->fields);
+
+                vm.stack_top[-argc - 1] = AS_OBJ(instance);
 
                 Obj *initializer;
-                if (table_get(
-                        &klass->methods, (Obj *)vm.init_string, &initializer)) {
+                if (table_get(&klass->methods, (Obj *)vm.init_string, &initializer)) {
                     return call(AS_CLOSURE(initializer), argc);
                 } else if (argc != 0) {
                     runtime_error("Expected 0 arguments but got %d.", argc);
@@ -227,8 +226,7 @@ static bool call_value(Obj *callee, int argc) {
         case OBJ_BUILTIN_FUNCTION:
             {
                 BuiltinFn builtin = AS_BUILTIN_FUNCTION(callee)->method;
-                BuiltinResult result =
-                    builtin(argc, vm.stack_top - argc, callee);
+                BuiltinResult result = builtin(argc, vm.stack_top - argc, callee);
 
                 if (result.error != NULL) {
                     runtime_error(result.error);
@@ -241,11 +239,10 @@ static bool call_value(Obj *callee, int argc) {
             }
         case OBJ_BUILTIN_BOUND_METHOD:
             {
-                ObjBuiltinBoundMethod *bound_method =
-                    AS_BUILTIN_BOUND_METHOD(callee);
+                ObjBuiltinBoundMethod *bound_method = AS_BUILTIN_BOUND_METHOD(callee);
 
-                BuiltinResult result = bound_method->function(
-                    argc, vm.stack_top - argc, bound_method->caller);
+                BuiltinResult result =
+                    bound_method->function(argc, vm.stack_top - argc, bound_method->caller);
 
                 if (result.error != NULL) {
                     runtime_error(result.error);
@@ -265,11 +262,15 @@ static bool call_value(Obj *callee, int argc) {
 static bool invoke_from_class(ObjClass *klass, ObjString *name, int argc) {
     Obj *method;
     if (!table_get(&klass->methods, AS_OBJ(name), &method) &&
-        !table_get(&klass->statics, AS_OBJ(name), &method)) {
+        !table_get(&klass->statics, AS_OBJ(name), &method) &&
+        !table_get(&klass->fields, AS_OBJ(name), &method)) {
+        runtime_error("Undefined property '%s' for class '%s'.", name->chars, klass->name->chars);
+        return false;
+    }
+
+    if (!IS_CLOSURE(method)) {
         runtime_error(
-            "Undefined property '%s' for class '%s'.",
-            name->chars,
-            klass->name->chars);
+            "Property '%s' of class '%s' is not callable.", name->chars, klass->name->chars);
         return false;
     }
 
@@ -282,10 +283,7 @@ static bool invoke_scoped_member(ObjModule *module, ObjString *name, int argc) {
         return call_value(member, argc);
     }
 
-    runtime_error(
-        "No member named '%s' in module '%s'.",
-        name->chars,
-        module->name->chars);
+    runtime_error("No member named '%s' in module '%s'.", name->chars, module->name->chars);
     return false;
 }
 
@@ -310,9 +308,16 @@ static bool invoke(ObjString *name, int argc) {
                 ObjClass *klass = AS_CLASS(receiver);
 
                 Obj *method;
-                if (!table_get(&klass->statics, AS_OBJ(name), &method)) {
+                if (!table_get(&klass->statics, AS_OBJ(name), &method) &&
+                    !table_get(&klass->fields, AS_OBJ(name), &method)) {
                     runtime_error(
-                        "Undefined static method '%s' for class '%s'.",
+                        "Undefined property '%s' for class '%s'.", name->chars, klass->name->chars);
+                    return false;
+                }
+
+                if (!IS_CLOSURE(method)) {
+                    runtime_error(
+                        "Property '%s' for class '%s' is not callable.",
                         name->chars,
                         klass->name->chars);
                     return false;
@@ -324,10 +329,7 @@ static bool invoke(ObjString *name, int argc) {
             {
                 BuiltinFn method;
                 if (vm.builtin_methods[receiver->type] == NULL ||
-                    !method_table_get(
-                        vm.builtin_methods[receiver->type],
-                        name->hash,
-                        &method)) {
+                    !method_table_get(vm.builtin_methods[receiver->type], name->hash, &method)) {
                     runtime_error(
                         "Could not invode method '%s' on '%s'.",
                         name->chars,
@@ -335,8 +337,7 @@ static bool invoke(ObjString *name, int argc) {
                     return false;
                 }
 
-                BuiltinResult result =
-                    method(argc, vm.stack_top - argc, receiver);
+                BuiltinResult result = method(argc, vm.stack_top - argc, receiver);
 
                 if (result.error != NULL) {
                     runtime_error(result.error);
@@ -353,10 +354,7 @@ static bool invoke(ObjString *name, int argc) {
 static bool bind_method(ObjClass *klass, ObjString *name) {
     Obj *method;
     if (!table_get(&klass->methods, AS_OBJ(name), &method)) {
-        runtime_error(
-            "Undefined property '%s' of class '%s'.",
-            name->chars,
-            klass->name->chars);
+        runtime_error("Undefined property '%s' of class '%s'.", name->chars, klass->name->chars);
         return false;
     }
 
@@ -418,28 +416,24 @@ static bool is_falsey(Obj *value) {
 static InterpretResult run() {
     CallFrame *frame = &vm.frames[vm.frame_count - 1];
 
-#define READ_BYTE() (*frame->ip++)
-#define READ_SHORT()                                                           \
-    (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
-#define READ_CONSTANT()                                                        \
-    (frame->closure->function->chunk.constants.values[READ_BYTE()])
-#define READ_STRING() AS_STRING(READ_CONSTANT())
-#define BINARY_OP(new_func_int, new_func_float, op)                            \
-    {                                                                          \
-        if (IS_INT(peek(0)) && IS_INT(peek(1))) {                              \
-            push(AS_OBJ(                                                       \
-                new_func_int(AS_INT(pop())->value op AS_INT(pop())->value)));  \
-        } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {                   \
-            push(AS_OBJ(new_func_float(                                        \
-                AS_FLOAT(pop())->value op AS_FLOAT(pop())->value)));           \
-        } else {                                                               \
-            runtime_error(                                                     \
-                "Unsupported operand types for '%s': '%s' and '%s'.",          \
-                #op,                                                           \
-                OBJ_NAMES[peek(0)->type],                                      \
-                OBJ_NAMES[peek(1)->type]);                                     \
-            return INTERPRET_RUNTIME_ERROR;                                    \
-        }                                                                      \
+#define READ_BYTE()     (*frame->ip++)
+#define READ_SHORT()    (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
+#define READ_CONSTANT() (frame->closure->function->chunk.constants.values[READ_BYTE()])
+#define READ_STRING()   AS_STRING(READ_CONSTANT())
+#define BINARY_OP(new_func_int, new_func_float, op)                                                \
+    {                                                                                              \
+        if (IS_INT(peek(0)) && IS_INT(peek(1))) {                                                  \
+            push(AS_OBJ(new_func_int(AS_INT(pop())->value op AS_INT(pop())->value)));              \
+        } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {                                       \
+            push(AS_OBJ(new_func_float(AS_FLOAT(pop())->value op AS_FLOAT(pop())->value)));        \
+        } else {                                                                                   \
+            runtime_error(                                                                         \
+                "Unsupported operand types for '%s': '%s' and '%s'.",                              \
+                #op,                                                                               \
+                OBJ_NAMES[peek(0)->type],                                                          \
+                OBJ_NAMES[peek(1)->type]);                                                         \
+            return INTERPRET_RUNTIME_ERROR;                                                        \
+        }                                                                                          \
     }
 
     for (;;) {
@@ -466,8 +460,7 @@ static InterpretResult run() {
             case OP_LIST:
                 {
                     int elem_count = READ_BYTE();
-                    ObjList *list =
-                        new_list(vm.stack_top - elem_count, elem_count);
+                    ObjList *list = new_list(vm.stack_top - elem_count, elem_count);
                     vm.stack_top -= elem_count;
                     push(AS_OBJ(list));
 
@@ -476,8 +469,7 @@ static InterpretResult run() {
             case OP_MAP:
                 {
                     int pair_count = READ_BYTE();
-                    ObjMap *map =
-                        new_map(vm.stack_top - pair_count * 2, pair_count);
+                    ObjMap *map = new_map(vm.stack_top - pair_count * 2, pair_count);
                     vm.stack_top -= pair_count * 2;
                     push(AS_OBJ(map));
 
@@ -523,8 +515,7 @@ static InterpretResult run() {
                                 ObjString *index = AS_STRING(index_value);
                                 ObjMap *map = AS_MAP(value);
 
-                                if (!table_get(
-                                        &map->table, (Obj *)index, &indexed)) {
+                                if (!table_get(&map->table, (Obj *)index, &indexed)) {
                                     runtime_error("Key not found.");
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
@@ -549,15 +540,12 @@ static InterpretResult run() {
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
 
-                                indexed =
-                                    AS_OBJ(new_char(string->chars[index]));
+                                indexed = AS_OBJ(new_char(string->chars[index]));
                                 break;
                             }
                         default:
                             {
-                                runtime_error(
-                                    "'%s' cannot be indexed.",
-                                    OBJ_NAMES[value->type]);
+                                runtime_error("'%s' cannot be indexed.", OBJ_NAMES[value->type]);
                                 return INTERPRET_RUNTIME_ERROR;
                             }
                     }
@@ -573,8 +561,7 @@ static InterpretResult run() {
 
                     if (IS_LIST(value)) {
                         if (!IS_INT(index_value)) {
-                            runtime_error(
-                                "Lists can only be indexed using numbers.");
+                            runtime_error("Lists can only be indexed using numbers.");
                             return INTERPRET_RUNTIME_ERROR;
                         }
 
@@ -589,8 +576,7 @@ static InterpretResult run() {
                         list->elems.values[index] = to_be_assigned;
                     } else if (IS_MAP(value)) {
                         if (!IS_STRING(index_value)) {
-                            runtime_error(
-                                "Maps can only be indexed using strings.");
+                            runtime_error("Maps can only be indexed using strings.");
                             return INTERPRET_RUNTIME_ERROR;
                         }
 
@@ -599,8 +585,7 @@ static InterpretResult run() {
 
                         table_set(&map->table, (Obj *)index, to_be_assigned);
                     } else {
-                        runtime_error(
-                            "'%s' cannot be indexed.", OBJ_NAMES[value->type]);
+                        runtime_error("'%s' cannot be indexed.", OBJ_NAMES[value->type]);
                         return INTERPRET_RUNTIME_ERROR;
                     }
 
@@ -658,8 +643,7 @@ static InterpretResult run() {
                     if (table_get(globals, AS_OBJ(name), &value)) {
                         push(value);
                         break;
-                    } else if (method_table_get(
-                                   &vm.builtin_functions, name->hash, &fn)) {
+                    } else if (method_table_get(&vm.builtin_functions, name->hash, &fn)) {
                         push(AS_OBJ(new_builtin_function(fn, name->chars)));
                         break;
                     }
@@ -717,10 +701,7 @@ static InterpretResult run() {
                                 ObjInstance *instance = AS_INSTANCE(obj);
 
                                 Obj *value;
-                                if (table_get(
-                                        &instance->fields,
-                                        AS_OBJ(name),
-                                        &value)) {
+                                if (table_get(&instance->fields, AS_OBJ(name), &value)) {
                                     pop();
                                     push(value);
                                     break;
@@ -740,10 +721,8 @@ static InterpretResult run() {
                                 ObjClass *klass = AS_CLASS(obj);
 
                                 Obj *value;
-                                if (table_get(
-                                        &klass->statics,
-                                        AS_OBJ(name),
-                                        &value)) {
+                                if (table_get(&klass->statics, AS_OBJ(name), &value) ||
+                                    table_get(&klass->fields, AS_OBJ(name), &value)) {
                                     pop();
                                     push(value);
                                     break;
@@ -760,12 +739,10 @@ static InterpretResult run() {
                             if (vm.builtin_methods[obj->type] != NULL) {
                                 BuiltinFn method;
                                 if (method_table_get(
-                                        vm.builtin_methods[obj->type],
-                                        name->hash,
-                                        &method)) {
+                                        vm.builtin_methods[obj->type], name->hash, &method)) {
                                     pop();
-                                    push(AS_OBJ(new_builtin_bound_method(
-                                        method, obj, name->chars)));
+                                    push(
+                                        AS_OBJ(new_builtin_bound_method(method, obj, name->chars)));
                                 } else {
                                     runtime_error(
                                         "No method named '%s' on '%s'",
@@ -786,13 +763,19 @@ static InterpretResult run() {
             case OP_SET_PROPERTY:
                 {
                     if (IS_INSTANCE(peek(1))) {
-
                         ObjInstance *instance = AS_INSTANCE(peek(1));
-                        table_set(
-                            &instance->fields, (Obj *)READ_STRING(), peek(0));
+                        table_set(&instance->fields, (Obj *)READ_STRING(), peek(0));
+
                         Obj *value = pop();
                         pop();
+
                         push(value);
+                        break;
+                    } else if (IS_CLASS(peek(1))) {
+                        ObjClass *klass = AS_CLASS(peek(1));
+                        table_set(&klass->fields, AS_OBJ(READ_STRING()), peek(0));
+
+                        pop();
                         break;
                     }
 
@@ -812,8 +795,7 @@ static InterpretResult run() {
             case OP_GET_SCOPED:
                 {
                     if (!IS_MODULE(peek(0))) {
-                        runtime_error(
-                            "Cannot scope %s.", OBJ_NAMES[peek(0)->type]);
+                        runtime_error("Cannot scope %s.", OBJ_NAMES[peek(0)->type]);
                         return INTERPRET_RUNTIME_ERROR;
                     }
 
@@ -859,11 +841,9 @@ static InterpretResult run() {
                         pop();
                         push(AS_OBJ(result));
                     } else if (IS_INT(peek(0)) && IS_INT(peek(1))) {
-                        push(AS_OBJ(new_int(
-                            AS_INT(pop())->value + AS_INT(pop())->value)));
+                        push(AS_OBJ(new_int(AS_INT(pop())->value + AS_INT(pop())->value)));
                     } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {
-                        push(AS_OBJ(new_float(
-                            AS_FLOAT(pop())->value + AS_FLOAT(pop())->value)));
+                        push(AS_OBJ(new_float(AS_FLOAT(pop())->value + AS_FLOAT(pop())->value)));
                     } else {
                         runtime_error(
                             "Unsupported operand types for '+', '%s' and '%s'.",
@@ -896,16 +876,13 @@ static InterpretResult run() {
             case OP_NEGATE:
                 {
                     if (IS_INT(peek(0))) {
-                        vm.stack_top[-1] =
-                            AS_OBJ(new_int(-(AS_INT(peek(0))->value)));
+                        vm.stack_top[-1] = AS_OBJ(new_int(-(AS_INT(peek(0))->value)));
                         break;
                     } else if (IS_FLOAT(peek(0))) {
-                        vm.stack_top[-1] =
-                            AS_OBJ(new_float(-(AS_FLOAT(peek(0))->value)));
+                        vm.stack_top[-1] = AS_OBJ(new_float(-(AS_FLOAT(peek(0))->value)));
                         break;
                     }
-                    runtime_error(
-                        "Cannot negate '%s'.", OBJ_NAMES[peek(0)->type]);
+                    runtime_error("Cannot negate '%s'.", OBJ_NAMES[peek(0)->type]);
                     return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_JUMP:
@@ -962,8 +939,7 @@ static InterpretResult run() {
                     ObjString *method = READ_STRING();
                     int argc = READ_BYTE();
 
-                    if (!invoke_scoped_member(
-                            AS_MODULE(peek(argc)), method, argc))
+                    if (!invoke_scoped_member(AS_MODULE(peek(argc)), method, argc))
                         return INTERPRET_RUNTIME_ERROR;
 
                     frame = &vm.frames[vm.frame_count - 1];
@@ -979,11 +955,9 @@ static InterpretResult run() {
                         uint8_t is_local = READ_BYTE();
                         uint8_t index = READ_BYTE();
                         if (is_local) {
-                            closure->upvalues[i] =
-                                capture_upvalue(frame->slots + index);
+                            closure->upvalues[i] = capture_upvalue(frame->slots + index);
                         } else {
-                            closure->upvalues[i] =
-                                frame->closure->upvalues[index];
+                            closure->upvalues[i] = frame->closure->upvalues[index];
                         }
                     }
 
@@ -1044,8 +1018,7 @@ static InterpretResult run() {
                     }
 
                     ObjClass *subclass = AS_CLASS(peek(0));
-                    table_add_all(
-                        &AS_CLASS(superclass)->methods, &subclass->methods);
+                    table_add_all(&AS_CLASS(superclass)->methods, &subclass->methods);
                     pop();
                     break;
                 }
@@ -1068,9 +1041,7 @@ static InterpretResult run() {
                         strtok(import_path->chars, "/");
                         ObjModule *std_module = get_module(strtok(NULL, "/"));
                         if (std_module == NULL) {
-                            runtime_error(
-                                "No standard module named '@std/%s'.",
-                                std_module);
+                            runtime_error("No standard module named '@std/%s'.", std_module);
                             return INTERPRET_RUNTIME_ERROR;
                         } else
                             push(AS_OBJ(std_module));

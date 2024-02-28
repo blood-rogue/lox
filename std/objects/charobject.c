@@ -52,8 +52,7 @@ BuiltinResult _char_is_control(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(new_bool(iscntrl(AS_CHAR(caller)->value)));
 }
 
-BuiltinResult
-_char_is_punctuation(int argc, UNUSED(Obj **, argv), Obj *caller) {
+BuiltinResult _char_is_punctuation(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     return OK(new_bool(ispunct(AS_CHAR(caller)->value)));
 }

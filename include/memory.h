@@ -9,9 +9,8 @@
 #define GROW_CAPACITY(capacity)  ((capacity) < 8 ? 8 : (capacity) * 2)
 #define FREE_ARRAY(type, ptr, n) reallocate(ptr, sizeof(type) * (size_t)(n), 0)
 
-#define GROW_ARRAY(type, ptr, m, n)                                            \
-    (type *)reallocate(                                                        \
-        ptr, sizeof(type) * (size_t)(m), sizeof(type) * (size_t)(n))
+#define GROW_ARRAY(type, ptr, m, n)                                                                \
+    (type *)reallocate(ptr, sizeof(type) * (size_t)(m), sizeof(type) * (size_t)(n))
 
 void *reallocate(void *, size_t, size_t);
 void mark_object(Obj *);

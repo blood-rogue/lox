@@ -5,8 +5,7 @@
 
 extern void free_vm();
 
-BuiltinResult
-exit_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
+BuiltinResult exit_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
 
     if (IS_INT(argv[0])) {
@@ -21,8 +20,7 @@ exit_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     return OK(new_nil());
 }
 
-BuiltinResult
-print_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
+BuiltinResult print_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     for (int i = 0; i < argc; i++) {
         print_object(argv[i]);
         printf(" ");
@@ -32,8 +30,7 @@ print_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     return OK(new_nil());
 }
 
-BuiltinResult
-input_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
+BuiltinResult input_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     if (argc > 0)
         print_object(argv[0]);
 
@@ -58,16 +55,14 @@ input_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     return OK(take_string(s, len));
 }
 
-BuiltinResult
-argv_builtin_function(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, callee)) {
+BuiltinResult argv_builtin_function(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(0)
 
     ObjList *args = argv_list(_argc, _argv);
     return OK(args);
 }
 
-BuiltinResult
-run_gc_builtin_function(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, callee)) {
+BuiltinResult run_gc_builtin_function(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(0)
 
     collect_garbage();
@@ -75,14 +70,12 @@ run_gc_builtin_function(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, callee)) {
     return OK(new_nil());
 }
 
-BuiltinResult
-parse_int_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
+BuiltinResult parse_int_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
 
     switch (argv[0]->type) {
         case OBJ_STRING:
-            return OK(
-                new_int((int64_t)strtol(AS_STRING(argv[0])->chars, NULL, 10)));
+            return OK(new_int((int64_t)strtol(AS_STRING(argv[0])->chars, NULL, 10)));
         case OBJ_INT:
             return OK(argv[0]);
         case OBJ_FLOAT:
@@ -92,8 +85,7 @@ parse_int_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     }
 }
 
-BuiltinResult
-parse_float_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
+BuiltinResult parse_float_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
 
     switch (argv[0]->type) {
@@ -108,18 +100,15 @@ parse_float_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     }
 }
 
-BuiltinResult
-sleep_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
+BuiltinResult sleep_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
     sleep(AS_INT(argv[0])->value);
 
     return OK(new_nil());
 }
 
-BuiltinResult
-type_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
+BuiltinResult type_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
 
-    return OK(new_string(
-        OBJ_NAMES[argv[0]->type], (int)strlen(OBJ_NAMES[argv[0]->type])));
+    return OK(new_string(OBJ_NAMES[argv[0]->type], (int)strlen(OBJ_NAMES[argv[0]->type])));
 }

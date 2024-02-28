@@ -8,8 +8,7 @@ ObjBool *_FALSE = NULL;
 
 extern VM vm;
 
-#define ALLOCATE_OBJ(type, object_type)                                        \
-    (type *)allocate_object(sizeof(type), object_type)
+#define ALLOCATE_OBJ(type, object_type) (type *)allocate_object(sizeof(type), object_type)
 
 static Obj *allocate_object(size_t size, ObjType type) {
     Obj *object = (Obj *)reallocate(NULL, 0, size);
@@ -142,6 +141,7 @@ ObjClass *new_class(ObjString *name) {
     klass->name = name;
     init_table(&klass->methods);
     init_table(&klass->statics);
+    init_table(&klass->fields);
 
     return klass;
 }
@@ -172,8 +172,7 @@ ObjModule *new_module(ObjString *name) {
 }
 
 ObjBuiltinFunction *new_builtin_function(BuiltinFn fn, char *name) {
-    ObjBuiltinFunction *builtin =
-        ALLOCATE_OBJ(ObjBuiltinFunction, OBJ_BUILTIN_FUNCTION);
+    ObjBuiltinFunction *builtin = ALLOCATE_OBJ(ObjBuiltinFunction, OBJ_BUILTIN_FUNCTION);
 
     builtin->method = fn;
     builtin->name = name;
@@ -181,8 +180,7 @@ ObjBuiltinFunction *new_builtin_function(BuiltinFn fn, char *name) {
     return builtin;
 }
 
-ObjBuiltinBoundMethod *
-new_builtin_bound_method(BuiltinFn fn, Obj *caller, char *name) {
+ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinFn fn, Obj *caller, char *name) {
     ObjBuiltinBoundMethod *bound_method =
         ALLOCATE_OBJ(ObjBuiltinBoundMethod, OBJ_BUILTIN_BOUND_METHOD);
 
@@ -372,8 +370,7 @@ bool obj_equal(Obj *a, Obj *b) {
                 ObjString *str_a = AS_STRING(a);
                 ObjString *str_b = AS_STRING(b);
 
-                return str_a->hash == str_b->hash &&
-                       str_a->length == str_b->length &&
+                return str_a->hash == str_b->hash && str_a->length == str_b->length &&
                        memcmp(str_a->chars, str_b->chars, str_a->length) == 0;
             }
         default:

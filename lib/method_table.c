@@ -10,8 +10,7 @@ void init_method_table(BuiltinTable *table, int methods) {
 
 void free_method_table(BuiltinTable *table) { free(table->entries); }
 
-static BuiltinEntry *
-find_method_entry(BuiltinEntry *entries, int capacity, uint32_t hash) {
+static BuiltinEntry *find_method_entry(BuiltinEntry *entries, int capacity, uint32_t hash) {
     uint32_t index = hash & (capacity - 1);
 
     for (;;) {
@@ -29,8 +28,7 @@ bool method_table_get(BuiltinTable *table, uint32_t hash, BuiltinFn *value) {
     if (table->count == 0)
         return false;
 
-    BuiltinEntry *entry =
-        find_method_entry(table->entries, table->capacity, hash);
+    BuiltinEntry *entry = find_method_entry(table->entries, table->capacity, hash);
 
     if (entry->key != NULL) {
         *value = entry->value;
@@ -40,13 +38,8 @@ bool method_table_get(BuiltinTable *table, uint32_t hash, BuiltinFn *value) {
     return false;
 }
 
-bool method_table_set(
-    BuiltinTable *table,
-    char *key,
-    uint32_t hash,
-    BuiltinFn fn) {
-    BuiltinEntry *entry =
-        find_method_entry(table->entries, table->capacity, hash);
+bool method_table_set(BuiltinTable *table, char *key, uint32_t hash, BuiltinFn fn) {
+    BuiltinEntry *entry = find_method_entry(table->entries, table->capacity, hash);
     bool is_new_key = entry->key == NULL;
 
     if (is_new_key && entry->value == NULL)
@@ -63,8 +56,7 @@ bool method_table_delete(BuiltinTable *table, uint32_t hash) {
     if (table->count == 0)
         return false;
 
-    BuiltinEntry *entry =
-        find_method_entry(table->entries, table->capacity, hash);
+    BuiltinEntry *entry = find_method_entry(table->entries, table->capacity, hash);
     if (entry->key == NULL)
         return false;
 

@@ -30,9 +30,7 @@ static void error_at(Token *token, const char *message) {
     parser.had_error = true;
 }
 
-static void error_at_current(const char *message) {
-    error_at(&parser.current, message);
-}
+static void error_at_current(const char *message) { error_at(&parser.current, message); }
 
 static void error(const char *message) { error_at(&parser.previous, message); }
 
@@ -66,9 +64,7 @@ static bool match(TokenType type) {
     return true;
 }
 
-static void emit_byte(uint8_t byte) {
-    write_chunk(current_chunk(), byte, parser.previous.line);
-}
+static void emit_byte(uint8_t byte) { write_chunk(current_chunk(), byte, parser.previous.line); }
 
 static void emit_bytes(uint8_t byte1, uint8_t byte2) {
     emit_byte(byte1);
@@ -207,9 +203,7 @@ static void declare_variable() {
     add_local(*name);
 }
 
-static void emit_constant(Obj *value) {
-    emit_bytes(OP_CONSTANT, make_constant(value));
-}
+static void emit_constant(Obj *value) { emit_bytes(OP_CONSTANT, make_constant(value)); }
 
 static void patch_jump(int offset) {
     int jump = current_chunk()->count - offset - 2;
@@ -234,8 +228,7 @@ static void init_compiler(Compiler *compiler, FunctionType type) {
     current = compiler;
 
     if (type != TYPE_SCRIPT) {
-        current->function->name =
-            new_string(parser.previous.start, parser.previous.length);
+        current->function->name = new_string(parser.previous.start, parser.previous.length);
     }
 
     Local *local = &current->locals[current->local_count++];
@@ -261,8 +254,7 @@ static ObjFunction *end_compiler(bool ended) {
 #ifdef DEBUG
     if (!parser.had_error) {
         disassemble_chunk(
-            current_chunk(),
-            function->name != NULL ? function->name->chars : "<script>");
+            current_chunk(), function->name != NULL ? function->name->chars : "<script>");
     }
 #endif
 
@@ -276,8 +268,7 @@ static void end_scope() {
     current->scope_depth--;
 
     while (current->local_count > 0 &&
-           current->locals[current->local_count - 1].depth >
-               current->scope_depth) {
+           current->locals[current->local_count - 1].depth > current->scope_depth) {
         if (current->locals[current->local_count - 1].is_captured) {
             emit_byte(OP_CLOSE_UPVALUE);
         } else {
@@ -568,9 +559,7 @@ static void named_variable(Token name, bool can_assign) {
     }
 }
 
-static void variable(bool can_assign) {
-    named_variable(parser.previous, can_assign);
-}
+static void variable(bool can_assign) { named_variable(parser.previous, can_assign); }
 
 static Token synthetic_token(const char *text) {
     Token token;
@@ -767,16 +756,15 @@ static void function(FunctionType type) {
     emit_bytes(OP_CLOSURE, make_constant(AS_OBJ(function)));
 
     for (int i = 0; i < function->upvalue_count; i++) {
-        emit_bytes(
-            compiler.upvalues[i].is_local ? 1 : 0, compiler.upvalues[i].index);
+        emit_bytes(compiler.upvalues[i].is_local ? 1 : 0, compiler.upvalues[i].index);
     }
 }
 
-static void method() {
+static void method(bool is_static) {
     OpCode op_code;
     FunctionType type;
 
-    if (match(TOKEN_STATIC)) {
+    if (is_static) {
         op_code = OP_STATIC_METHOD;
         type = TYPE_METHOD_STATIC;
     } else {
@@ -787,13 +775,26 @@ static void method() {
     consume(TOKEN_IDENTIFIER, "Expect method name.");
     uint8_t constant = identifier_constant(&parser.previous);
 
-    if (parser.previous.length == 4 &&
-        memcmp(parser.previous.start, "init", 4) == 0) {
+    if (parser.previous.length == 4 && memcmp(parser.previous.start, "init", 4) == 0) {
         type = TYPE_INITIALIZER;
     }
 
     function(type);
     emit_bytes(op_code, constant);
+}
+
+static void field() {
+    consume(TOKEN_IDENTIFIER, "Expect field name.");
+    uint8_t constant = identifier_constant(&parser.previous);
+
+    if (match(TOKEN_EQUAL)) {
+        expression();
+    } else {
+        emit_byte(OP_NIL);
+    }
+
+    consume(TOKEN_SEMICOLON, "Expect ';' after field declaration.");
+    emit_bytes(OP_SET_PROPERTY, constant);
 }
 
 static void class_declaration() {
@@ -832,7 +833,13 @@ static void class_declaration() {
     consume(TOKEN_LEFT_BRACE, "Expect '{' before class body.");
 
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
-        method();
+        if (match(TOKEN_FUN)) {
+            method(false);
+        } else if (match(TOKEN_STATIC) && match(TOKEN_FUN)) {
+            method(true);
+        } else if (match(TOKEN_VAR)) {
+            field();
+        }
     }
 
     consume(TOKEN_RIGHT_BRACE, "Expect '}' after class body.");
@@ -985,8 +992,7 @@ static void break_statement() {
 static void import_statement() {
     consume(TOKEN_STRING, "Expect import path after 'import'.");
 
-    ObjString *import_path =
-        new_string(parser.previous.start + 1, parser.previous.length - 2);
+    ObjString *import_path = new_string(parser.previous.start + 1, parser.previous.length - 2);
 
     emit_bytes(OP_IMPORT, make_constant(AS_OBJ(import_path)));
 

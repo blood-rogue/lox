@@ -70,14 +70,14 @@ static void free_object(Obj *object) {
                 ObjClass *klass = AS_CLASS(object);
                 free_table(&klass->methods);
                 free_table(&klass->statics);
+                free_table(&klass->fields);
                 FREE(ObjClass, object);
                 break;
             }
         case OBJ_CLOSURE:
             {
                 ObjClosure *closure = AS_CLOSURE(object);
-                FREE_ARRAY(
-                    ObjUpvalue *, closure->upvalues, closure->upvalue_count);
+                FREE_ARRAY(ObjUpvalue *, closure->upvalues, closure->upvalue_count);
                 FREE(ObjClosure, object);
                 break;
             }
@@ -146,8 +146,7 @@ void mark_object(Obj *object) {
 
     if (vm.gray_capacity < vm.gray_count + 1) {
         vm.gray_capacity = GROW_CAPACITY(vm.gray_capacity);
-        vm.gray_stack =
-            (Obj **)realloc(vm.gray_stack, sizeof(Obj *) * vm.gray_capacity);
+        vm.gray_stack = (Obj **)realloc(vm.gray_stack, sizeof(Obj *) * vm.gray_capacity);
 
         if (vm.gray_stack == NULL)
             exit(1);
@@ -189,6 +188,7 @@ static void blacken_object(Obj *object) {
                 mark_object(AS_OBJ(klass->name));
                 mark_table(&klass->methods);
                 mark_table(&klass->statics);
+                mark_table(&klass->fields);
                 break;
             }
         case OBJ_CLOSURE:
@@ -245,8 +245,7 @@ static void mark_roots() {
         mark_object(AS_OBJ(vm.frames[i].closure));
     }
 
-    for (ObjUpvalue *upvalue = vm.open_upvalues; upvalue != NULL;
-         upvalue = upvalue->next) {
+    for (ObjUpvalue *upvalue = vm.open_upvalues; upvalue != NULL; upvalue = upvalue->next) {
         mark_object(AS_OBJ(upvalue));
     }
 
