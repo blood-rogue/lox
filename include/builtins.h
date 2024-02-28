@@ -2,7 +2,6 @@
 #define lox_builtin_h
 
 #include <math.h>
-#include <time.h>
 
 #include "common.h"
 #include "memory.h"
@@ -26,7 +25,12 @@
     method_table_set(                                                          \
         table, #name, hash_string(#name, (int)strlen(#name)), _##obj##_##name)
 
-BLTIN_FN(clock);
+#define SET_MODULE_TABLE(module_name, name)                                    \
+    table_set(                                                                 \
+        &module->globals,                                                      \
+        AS_OBJ(new_string(#name, (int)strlen(#name))),                         \
+        AS_OBJ(new_builtin_function(_##module_name##_##name, #name)))
+
 BLTIN_FN(exit);
 BLTIN_FN(print);
 BLTIN_FN(input);
@@ -51,5 +55,6 @@ ObjModule *get_module(char *);
 
 ObjModule *get_math_module();
 ObjModule *get_fs_module();
+ObjModule *get_time_module();
 
 #endif // lox_builtin_h

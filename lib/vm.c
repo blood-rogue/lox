@@ -117,7 +117,6 @@ void init_vm() {
         hash_string(#name, (int)strlen(#name)),                                \
         name##_builtin_function)
 
-    SET_BLTIN_FN(clock);
     SET_BLTIN_FN(exit);
     SET_BLTIN_FN(print);
     SET_BLTIN_FN(input);

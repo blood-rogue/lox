@@ -52,6 +52,8 @@ typedef enum {
     TOKEN_STATIC,
     TOKEN_IMPORT,
     TOKEN_AS,
+    TOKEN_BREAK,
+    TOKEN_CONTINUE,
 
     TOKEN_ERROR,
     TOKEN_EOF

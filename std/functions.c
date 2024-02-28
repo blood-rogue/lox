@@ -6,12 +6,6 @@
 extern void free_vm();
 
 BuiltinResult
-clock_builtin_function(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, callee)) {
-    CHECK_ARG_COUNT(0)
-    return OK(new_int(clock() / CLOCKS_PER_SEC));
-}
-
-BuiltinResult
 exit_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
 

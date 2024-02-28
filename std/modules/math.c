@@ -3,12 +3,6 @@
 #include "builtins.h"
 #include "object.h"
 
-#define SET_TABLE(name)                                                        \
-    table_set(                                                                 \
-        &module->globals,                                                      \
-        AS_OBJ(new_string(#name, (int)strlen(#name))),                         \
-        AS_OBJ(new_builtin_function(_math_##name, #name)))
-
 #define DEFINE_MEMBER(func)                                                    \
     BuiltinResult _math_##func(int argc, Obj **argv, UNUSED(Obj *, caller)) {  \
         CHECK_ARG_COUNT(1)                                                     \
@@ -16,6 +10,8 @@
             return OK(new_float(func(AS_FLOAT(argv[0])->value)));              \
         return ERR("Expected float argument.");                                \
     }
+
+#define SET_TABLE(name) SET_MODULE_TABLE(math, name)
 
 DEFINE_MEMBER(fabs)
 DEFINE_MEMBER(exp)

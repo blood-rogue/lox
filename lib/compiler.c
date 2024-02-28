@@ -290,6 +290,7 @@ static void end_scope() {
 static void expression();
 static void statement();
 static void declaration();
+static void function(FunctionType);
 static ParseRule *get_rule(TokenType type);
 static void parse_precedence(Precedence precedence);
 
@@ -630,6 +631,8 @@ static void scope(bool) {
     }
 }
 
+static void lambda(bool) { function(TYPE_FUNCTION); }
+
 ParseRule rules[] = {
     [TOKEN_LEFT_PAREN] = {grouping, call, PREC_CALL},
     [TOKEN_RIGHT_PAREN] = {NULL, NULL, PREC_NONE},
@@ -663,7 +666,7 @@ ParseRule rules[] = {
     [TOKEN_ELSE] = {NULL, NULL, PREC_NONE},
     [TOKEN_FALSE] = {literal, NULL, PREC_NONE},
     [TOKEN_FOR] = {NULL, NULL, PREC_NONE},
-    [TOKEN_FUN] = {NULL, NULL, PREC_NONE},
+    [TOKEN_FUN] = {lambda, NULL, PREC_NONE},
     [TOKEN_IF] = {NULL, NULL, PREC_NONE},
     [TOKEN_NIL] = {literal, NULL, PREC_NONE},
     [TOKEN_OR] = {NULL, or, PREC_OR},
@@ -959,6 +962,9 @@ static void while_statement() {
     consume(TOKEN_RIGHT_PAREN, "Expect ')' after condition.");
 
     int exit_jump = emit_jump(OP_JUMP_IF_FALSE);
+
+    current->in_loop = true;
+
     emit_byte(OP_POP);
     statement();
 
@@ -966,6 +972,14 @@ static void while_statement() {
 
     patch_jump(exit_jump);
     emit_byte(OP_POP);
+}
+
+static void break_statement() {
+    if (!current->in_loop) {
+        error("Cannot use 'break' outside of loop.");
+    }
+
+    consume(TOKEN_SEMICOLON, "Expect ';' after 'break'.");
 }
 
 static void import_statement() {
@@ -1032,6 +1046,8 @@ static void statement() {
         for_statement();
     } else if (match(TOKEN_IMPORT)) {
         import_statement();
+    } else if (match(TOKEN_BREAK)) {
+        break_statement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         begin_scope();
         block();

@@ -36,10 +36,15 @@ typedef struct Compiler {
     struct Compiler *enclosing;
     ObjFunction *function;
     FunctionType type;
+
     Local locals[UINT8_COUNT];
     int local_count;
+
     Upvalue upvalues[UINT8_COUNT];
     int scope_depth;
+
+    bool in_loop;
+    int loop_exit_offset;
 } Compiler;
 
 typedef struct ClassCompiler {
