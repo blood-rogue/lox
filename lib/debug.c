@@ -98,6 +98,12 @@ int disassemble_instruction(Chunk *chunk, int offset) {
             return simple_instruction("OP_LESS", offset);
         case OP_ADD:
             return simple_instruction("OP_ADD", offset);
+        case OP_BINARY_OR:
+            return simple_instruction("OP_BINARY_OR", offset);
+        case OP_BINARY_XOR:
+            return simple_instruction("OP_BINARY_XOR", offset);
+        case OP_BINARY_AND:
+            return simple_instruction("OP_BINARY_AND", offset);
         case OP_SUBTRACT:
             return simple_instruction("OP_SUBTRACT", offset);
         case OP_MULTIPLY:

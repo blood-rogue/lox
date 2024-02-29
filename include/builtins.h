@@ -17,7 +17,15 @@
 #define CHECK_ARG_COUNT(expected)                                                                  \
     if (argc != expected) {                                                                        \
         char buf[100];                                                                             \
-        sprintf(buf, "Expected %d arguments but got %d", expected, argc);                          \
+        snprintf(buf, 99, "Expected %d arguments but got %d", expected, argc);                     \
+        return ERR(buf);                                                                           \
+    }
+
+#define CHECK_ARG_TYPE(typ, pos)                                                                   \
+    if (!IS_##typ(argv[pos])) {                                                                    \
+        char buf[100];                                                                             \
+        snprintf(                                                                                  \
+            buf, 99, "Expected %s at pos %d but got %s", #typ, pos, OBJ_NAMES[argv[pos]->type]);   \
         return ERR(buf);                                                                           \
     }
 

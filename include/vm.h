@@ -27,8 +27,9 @@ typedef struct {
 
     Table globals;
     Table strings;
+    Table modules;
 
-    Module *modules;
+    Module *current_module;
     uint8_t module_count;
 
     BuiltinTable **builtin_methods;

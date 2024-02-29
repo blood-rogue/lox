@@ -22,9 +22,8 @@ static BuiltinResult _time_clock(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, c
 
 static BuiltinResult _time_difftime(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(2)
-
-    if (!IS_INT(argv[0]) && !IS_INT(argv[1]))
-        return ERR("Only INT's can be diffed as time.");
+    CHECK_ARG_TYPE(INT, 0)
+    CHECK_ARG_TYPE(INT, 1)
 
     return OK(new_int(difftime(AS_INT(argv[0])->value, AS_INT(argv[1])->value)));
 }
@@ -32,11 +31,8 @@ static BuiltinResult _time_difftime(int argc, Obj **argv, UNUSED(Obj *, caller))
 static BuiltinResult _time_to_utc_str(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(2)
 
-    if (!IS_INT(argv[0]))
-        return ERR("Only INT can be converted to UTC time.");
-
-    if (!IS_STRING(argv[1]))
-        return ERR("Time format can only be a string.");
+    CHECK_ARG_TYPE(INT, 0)
+    CHECK_ARG_TYPE(STRING, 1)
 
     char *strf = malloc(70);
     struct tm *t = gmtime(&AS_INT(argv[0])->value);
@@ -48,11 +44,8 @@ static BuiltinResult _time_to_utc_str(int argc, Obj **argv, UNUSED(Obj *, caller
 static BuiltinResult _time_to_local_str(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(2)
 
-    if (!IS_INT(argv[0]))
-        return ERR("Only INT can be converted to Local time.");
-
-    if (!IS_STRING(argv[1]))
-        return ERR("Time format can only be a string.");
+    CHECK_ARG_TYPE(INT, 0)
+    CHECK_ARG_TYPE(STRING, 1)
 
     char *strf = malloc(70);
     struct tm *t = localtime(&AS_INT(argv[0])->value);
@@ -61,19 +54,25 @@ static BuiltinResult _time_to_local_str(int argc, Obj **argv, UNUSED(Obj *, call
     return OK(take_string(strf, strlen(strf)));
 }
 
+static ObjModule *__time_module = NULL;
+
 ObjModule *get_time_module() {
-    ObjModule *module = new_module(new_string("time", 4));
+    if (__time_module == NULL) {
+        ObjModule *module = new_module(new_string("time", 4));
 
-    SET_TABLE(time);
-    SET_TABLE(clock);
-    SET_TABLE(difftime);
-    SET_TABLE(to_utc_str);
-    SET_TABLE(to_local_str);
+        SET_TABLE(time);
+        SET_TABLE(clock);
+        SET_TABLE(difftime);
+        SET_TABLE(to_utc_str);
+        SET_TABLE(to_local_str);
 
-    table_set(
-        &module->globals,
-        AS_OBJ(new_string("CLOCKS_PER_SEC", 14)),
-        AS_OBJ(new_int(CLOCKS_PER_SEC)));
+        table_set(
+            &module->globals,
+            AS_OBJ(new_string("CLOCKS_PER_SEC", 14)),
+            AS_OBJ(new_int(CLOCKS_PER_SEC)));
 
-    return module;
+        __time_module = module;
+    }
+
+    return __time_module;
 }

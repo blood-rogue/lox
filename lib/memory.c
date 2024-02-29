@@ -250,11 +250,12 @@ static void mark_roots() {
     }
 
     mark_table(&vm.globals);
+    mark_table(&vm.modules);
 
     mark_compiler_roots();
     mark_object(AS_OBJ(vm.init_string));
 
-    Module *module = vm.modules;
+    Module *module = vm.current_module;
     while (module != NULL) {
         mark_object(AS_OBJ(module->current));
         module = module->prev;

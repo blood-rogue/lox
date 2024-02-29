@@ -16,35 +16,6 @@
 VM vm;
 extern char *_source;
 
-static char *read_file(char *path) {
-    FILE *file = fopen(path, "rb");
-    if (file == NULL) {
-        fprintf(stderr, "Could not open file \"%s\".\n", path);
-        exit(74);
-    }
-
-    fseek(file, 0L, SEEK_END);
-    size_t file_size = (size_t)ftell(file);
-    rewind(file);
-
-    char *buffer = malloc(file_size + 1);
-    if (buffer == NULL) {
-        fprintf(stderr, "Not enough memory to read \"%s\".\n", path);
-        exit(74);
-    }
-
-    size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
-    if (bytes_read < file_size) {
-        fprintf(stderr, "Could not read file \"%s\".\n", path);
-        exit(74);
-    }
-
-    buffer[bytes_read] = '\0';
-
-    fclose(file);
-    return buffer;
-}
-
 static void reset_stack() {
     vm.stack_top = vm.stack;
     vm.frame_count = 0;
@@ -85,6 +56,35 @@ static void runtime_error(const char *format, ...) {
     reset_stack();
 }
 
+static char *read_file(char *path) {
+    FILE *file = fopen(path, "rb");
+    if (file == NULL) {
+        runtime_error("Could not open file \"%s\".\n", path);
+        return NULL;
+    }
+
+    fseek(file, 0L, SEEK_END);
+    size_t file_size = (size_t)ftell(file);
+    rewind(file);
+
+    char *buffer = malloc(file_size + 1);
+    if (buffer == NULL) {
+        runtime_error("Not enough memory to read \"%s\".\n", path);
+        return NULL;
+    }
+
+    size_t bytes_read = fread(buffer, sizeof(char), file_size, file);
+    if (bytes_read < file_size) {
+        runtime_error("Could not read file \"%s\".\n", path);
+        return NULL;
+    }
+
+    buffer[bytes_read] = '\0';
+
+    fclose(file);
+    return buffer;
+}
+
 void init_vm() {
     init_literals();
 
@@ -99,8 +99,9 @@ void init_vm() {
 
     init_table(&vm.globals);
     init_table(&vm.strings);
+    init_table(&vm.modules);
 
-    vm.modules = NULL;
+    vm.current_module = NULL;
     vm.module_count = 0;
 
     vm.builtin_methods = get_builtin_methods();
@@ -133,11 +134,12 @@ void init_vm() {
 void free_vm() {
     free_table(&vm.globals);
     free_table(&vm.strings);
+    free_table(&vm.modules);
 
     vm.init_string = NULL;
 
-    if (vm.modules != NULL) {
-        free(vm.modules);
+    if (vm.current_module != NULL) {
+        free(vm.current_module);
     }
 
     vm.module_count = 0;
@@ -161,14 +163,14 @@ void free_vm() {
 }
 
 static Table *get_current_global() {
-    if (vm.modules == NULL) {
+    if (vm.current_module == NULL) {
         return &vm.globals;
     }
 
-    if (vm.modules != NULL)
-        return &vm.modules->current->globals;
+    if (vm.current_module != NULL)
+        return &vm.current_module->current->globals;
 
-    runtime_error("Could not import module '%s'.", vm.modules->current->name->chars);
+    runtime_error("Could not import module '%s'.", vm.current_module->current->name->chars);
     return NULL;
 }
 
@@ -194,7 +196,7 @@ static bool call(ObjClosure *closure, int argc) {
     return true;
 }
 
-static bool call_value(Obj *callee, int argc) {
+static bool call_value(Obj *callee, int argc, Obj *caller) {
     switch (callee->type) {
         case OBJ_BOUND_METHOD:
             {
@@ -226,7 +228,7 @@ static bool call_value(Obj *callee, int argc) {
         case OBJ_BUILTIN_FUNCTION:
             {
                 BuiltinFn builtin = AS_BUILTIN_FUNCTION(callee)->method;
-                BuiltinResult result = builtin(argc, vm.stack_top - argc, callee);
+                BuiltinResult result = builtin(argc, vm.stack_top - argc, caller);
 
                 if (result.error != NULL) {
                     runtime_error(result.error);
@@ -259,7 +261,7 @@ static bool call_value(Obj *callee, int argc) {
     }
 }
 
-static bool invoke_from_class(ObjClass *klass, ObjString *name, int argc) {
+static bool invoke_from_class(ObjClass *klass, ObjString *name, int argc, ObjInstance *caller) {
     Obj *method;
     if (!table_get(&klass->methods, AS_OBJ(name), &method) &&
         !table_get(&klass->statics, AS_OBJ(name), &method) &&
@@ -268,19 +270,19 @@ static bool invoke_from_class(ObjClass *klass, ObjString *name, int argc) {
         return false;
     }
 
-    if (!IS_CLOSURE(method)) {
+    if (!call_value(method, argc, AS_OBJ(caller))) {
         runtime_error(
             "Property '%s' of class '%s' is not callable.", name->chars, klass->name->chars);
         return false;
     }
 
-    return call(AS_CLOSURE(method), argc);
+    return true;
 }
 
 static bool invoke_scoped_member(ObjModule *module, ObjString *name, int argc) {
     Obj *member;
     if (table_get(&module->globals, AS_OBJ(name), &member)) {
-        return call_value(member, argc);
+        return call_value(member, argc, AS_OBJ(module));
     }
 
     runtime_error("No member named '%s' in module '%s'.", name->chars, module->name->chars);
@@ -298,10 +300,10 @@ static bool invoke(ObjString *name, int argc) {
                 Obj *value;
                 if (table_get(&instance->fields, AS_OBJ(name), &value)) {
                     vm.stack_top[-argc - 1] = value;
-                    return call_value(value, argc);
+                    return call_value(value, argc, AS_OBJ(instance));
                 }
 
-                return invoke_from_class(instance->klass, name, argc);
+                return invoke_from_class(instance->klass, name, argc, instance);
             }
         case OBJ_CLASS:
             {
@@ -315,7 +317,7 @@ static bool invoke(ObjString *name, int argc) {
                     return false;
                 }
 
-                if (!IS_CLOSURE(method)) {
+                if (!call_value(method, argc, AS_OBJ(klass))) {
                     runtime_error(
                         "Property '%s' for class '%s' is not callable.",
                         name->chars,
@@ -323,7 +325,7 @@ static bool invoke(ObjString *name, int argc) {
                     return false;
                 }
 
-                return call(AS_CLOSURE(method), argc);
+                return true;
             }
         default:
             {
@@ -426,6 +428,19 @@ static InterpretResult run() {
             push(AS_OBJ(new_func_int(AS_INT(pop())->value op AS_INT(pop())->value)));              \
         } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {                                       \
             push(AS_OBJ(new_func_float(AS_FLOAT(pop())->value op AS_FLOAT(pop())->value)));        \
+        } else {                                                                                   \
+            runtime_error(                                                                         \
+                "Unsupported operand types for '%s': '%s' and '%s'.",                              \
+                #op,                                                                               \
+                OBJ_NAMES[peek(0)->type],                                                          \
+                OBJ_NAMES[peek(1)->type]);                                                         \
+            return INTERPRET_RUNTIME_ERROR;                                                        \
+        }                                                                                          \
+    }
+#define BINARY_INT_OP(new_func, op)                                                                \
+    {                                                                                              \
+        if (IS_INT(peek(0)) && IS_INT(peek(1))) {                                                  \
+            push(AS_OBJ(new_func(AS_INT(pop())->value op AS_INT(pop())->value)));                  \
         } else {                                                                                   \
             runtime_error(                                                                         \
                 "Unsupported operand types for '%s': '%s' and '%s'.",                              \
@@ -858,6 +873,21 @@ static InterpretResult run() {
                     BINARY_OP(new_int, new_float, -);
                     break;
                 }
+            case OP_BINARY_AND:
+                {
+                    BINARY_INT_OP(new_int, &);
+                    break;
+                }
+            case OP_BINARY_OR:
+                {
+                    BINARY_INT_OP(new_int, |);
+                    break;
+                }
+            case OP_BINARY_XOR:
+                {
+                    BINARY_INT_OP(new_int, ^);
+                    break;
+                }
             case OP_MULTIPLY:
                 {
                     BINARY_OP(new_int, new_float, *);
@@ -907,7 +937,7 @@ static InterpretResult run() {
             case OP_CALL:
                 {
                     int argc = READ_BYTE();
-                    if (!call_value(peek(argc), argc)) {
+                    if (!call_value(peek(argc), argc, NULL)) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     frame = &vm.frames[vm.frame_count - 1];
@@ -928,7 +958,7 @@ static InterpretResult run() {
                     ObjString *method = READ_STRING();
                     int argc = READ_BYTE();
                     ObjClass *superclass = AS_CLASS(pop());
-                    if (!invoke_from_class(superclass, method, argc)) {
+                    if (!invoke_from_class(superclass, method, argc, NULL)) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     frame = &vm.frames[vm.frame_count - 1];
@@ -991,13 +1021,17 @@ static InterpretResult run() {
                         return INTERPRET_OK;
                     }
 
-                    if (vm.modules != NULL) {
-                        push(AS_OBJ(vm.modules->current));
+                    if (vm.current_module != NULL) {
+                        push(AS_OBJ(vm.current_module->current));
+                        table_set(
+                            &vm.modules,
+                            AS_OBJ(vm.current_module->current->name),
+                            AS_OBJ(vm.current_module->current));
 
-                        Module *prev = vm.modules->prev;
-                        free(vm.modules);
+                        Module *prev = vm.current_module->prev;
+                        free(vm.current_module);
 
-                        vm.modules = prev;
+                        vm.current_module = prev;
                         vm.module_count--;
                     }
 
@@ -1037,11 +1071,24 @@ static InterpretResult run() {
 
                     ObjString *import_path = READ_STRING();
 
+                    Obj *module;
+                    if (table_get(&vm.modules, AS_OBJ(import_path), &module)) {
+                        push(module);
+                        break;
+                    }
+
                     if (is_std_import(import_path)) {
-                        strtok(import_path->chars, "/");
+                        char *temp = malloc(import_path->length + 1);
+                        strcpy(temp, import_path->chars);
+
+                        strtok(temp, "/");
+
                         ObjModule *std_module = get_module(strtok(NULL, "/"));
+
+                        free(temp);
+
                         if (std_module == NULL) {
-                            runtime_error("No standard module named '@std/%s'.", std_module);
+                            runtime_error("No standard module named '%s'.", import_path->chars);
                             return INTERPRET_RUNTIME_ERROR;
                         } else
                             push(AS_OBJ(std_module));
@@ -1063,10 +1110,10 @@ static InterpretResult run() {
 
                         Module *module = malloc(sizeof(Module));
 
-                        module->prev = vm.modules;
+                        module->prev = vm.current_module;
                         module->current = new_module(import_path);
 
-                        vm.modules = module;
+                        vm.current_module = module;
                         vm.module_count++;
 
                         free(source);

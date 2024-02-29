@@ -321,6 +321,15 @@ static void binary(bool) {
         case TOKEN_SLASH:
             emit_byte(OP_DIVIDE);
             break;
+        case TOKEN_AMPERSAND:
+            emit_byte(OP_BINARY_AND);
+            break;
+        case TOKEN_PIPE:
+            emit_byte(OP_BINARY_OR);
+            break;
+        case TOKEN_CARET:
+            emit_byte(OP_BINARY_XOR);
+            break;
         default:
             return;
     }
@@ -636,6 +645,9 @@ ParseRule rules[] = {
     [TOKEN_SEMICOLON] = {NULL, NULL, PREC_NONE},
     [TOKEN_SLASH] = {NULL, binary, PREC_FACTOR},
     [TOKEN_STAR] = {NULL, binary, PREC_FACTOR},
+    [TOKEN_AMPERSAND] = {NULL, binary, PREC_BINARY_AND},
+    [TOKEN_PIPE] = {NULL, binary, PREC_BINARY_OR},
+    [TOKEN_CARET] = {NULL, binary, PREC_BINARY_XOR},
     [TOKEN_COLON_COLON] = {NULL, scope, PREC_CALL},
     [TOKEN_BANG] = {unary, NULL, PREC_NONE},
     [TOKEN_BANG_EQUAL] = {NULL, binary, PREC_EQUALITY},

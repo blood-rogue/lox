@@ -6,6 +6,11 @@
         AS_OBJ(new_string(#name, (int)strlen(#name))),                                             \
         AS_OBJ(new_builtin_function(_##module_name##_##name, #name)))
 
+#define SET_VAR(name, value)                                                                       \
+    table_set(&module->globals, AS_OBJ(new_string(#name, (int)strlen(#name))), AS_OBJ(value))
+
+#define SET_INT_VAR(name, value) SET_VAR(name, new_int(value))
+
 ObjModule *get_module(char *);
 
 ObjModule *get_math_module();

@@ -23,13 +23,19 @@ static BuiltinResult _random_random(int argc, UNUSED(Obj **, argv), UNUSED(Obj *
     return OK(new_int(rand()));
 }
 
+static ObjModule *__random_module = NULL;
+
 ObjModule *get_random_module() {
-    ObjModule *module = new_module(new_string("random", 6));
+    if (__random_module == NULL) {
+        ObjModule *module = new_module(new_string("random", 6));
 
-    SET_TABLE(seed);
-    SET_TABLE(random);
+        SET_TABLE(seed);
+        SET_TABLE(random);
 
-    table_set(&module->globals, AS_OBJ(new_string("MAX_RANDOM", 10)), AS_OBJ(new_int(RAND_MAX)));
+        SET_INT_VAR(MAX_RANDOM, RAND_MAX);
 
-    return module;
+        __random_module = module;
+    }
+
+    return __random_module;
 }
