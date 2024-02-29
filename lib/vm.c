@@ -779,6 +779,14 @@ static InterpretResult run() {
                 {
                     if (IS_INSTANCE(peek(1))) {
                         ObjInstance *instance = AS_INSTANCE(peek(1));
+
+                        if (instance->klass->is_builtin) {
+                            runtime_error(
+                                "Cannot set property of instance of builtin class '%s'.",
+                                instance->klass->name->chars);
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
+
                         table_set(&instance->fields, (Obj *)READ_STRING(), peek(0));
 
                         Obj *value = pop();
@@ -788,13 +796,20 @@ static InterpretResult run() {
                         break;
                     } else if (IS_CLASS(peek(1))) {
                         ObjClass *klass = AS_CLASS(peek(1));
+
+                        if (klass->is_builtin) {
+                            runtime_error(
+                                "Cannot set property of builtin class '%s'.", klass->name->chars);
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
+
                         table_set(&klass->fields, AS_OBJ(READ_STRING()), peek(0));
 
                         pop();
                         break;
                     }
 
-                    runtime_error("Only instances have properties.");
+                    runtime_error("Only instances and classes have properties.");
                     return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_GET_SUPER:

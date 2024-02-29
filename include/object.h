@@ -162,6 +162,7 @@ typedef struct {
 typedef struct {
     Obj obj;
     ObjString *name;
+    bool is_builtin;
     Table fields;
     Table methods;
     Table statics;

@@ -11,6 +11,9 @@
 
 #define SET_INT_VAR(name, value) SET_VAR(name, new_int(value))
 
+#define SET_FIELD(name, value)                                                                     \
+    table_set(&_instance->fields, AS_OBJ(new_string(#name, (int)strlen(#name))), AS_OBJ(value))
+
 ObjModule *get_module(char *);
 
 ObjModule *get_math_module();

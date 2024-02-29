@@ -12,10 +12,32 @@ static BuiltinResult __fs_file_open(int argc, Obj **argv, UNUSED(Obj *, caller))
     CHECK_ARG_TYPE(INT, 1)
 
     int fd = open(AS_STRING(argv[0])->chars, AS_INT(argv[1])->value);
+    struct stat stats;
+    fstat(fd, &stats);
 
     ObjInstance *_instance = new_instance(__fs_file_class);
 
-    table_set(&_instance->fields, AS_OBJ(new_string("fd", 2)), AS_OBJ(new_int(fd)));
+    SET_FIELD(fd, new_int(fd));
+    SET_FIELD(last_access_time, new_int(stats.st_atime));
+    SET_FIELD(last_modify_time, new_int(stats.st_mtime));
+
+    return OK(_instance);
+}
+
+static BuiltinResult __fs_file_create(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+    CHECK_ARG_COUNT(1)
+    CHECK_ARG_TYPE(STRING, 0)
+
+    int fd =
+        open(AS_STRING(argv[0])->chars, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+    struct stat stats;
+    fstat(fd, &stats);
+
+    ObjInstance *_instance = new_instance(__fs_file_class);
+
+    SET_FIELD(fd, new_int(fd));
+    SET_FIELD(last_access_time, new_int(stats.st_atime));
+    SET_FIELD(last_modify_time, new_int(stats.st_mtime));
 
     return OK(_instance);
 }
@@ -78,20 +100,6 @@ static BuiltinResult __fs_file_close(int argc, UNUSED(Obj **, argv), Obj *caller
     return OK(new_nil());
 }
 
-static BuiltinResult __fs_file_create(int argc, Obj **argv, UNUSED(Obj *, caller)) {
-    CHECK_ARG_COUNT(1)
-    CHECK_ARG_TYPE(STRING, 0)
-
-    int fd =
-        open(AS_STRING(argv[0])->chars, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
-
-    ObjInstance *_instance = new_instance(__fs_file_class);
-
-    table_set(&_instance->fields, AS_OBJ(new_string("fd", 2)), AS_OBJ(new_int(fd)));
-
-    return OK(_instance);
-}
-
 static BuiltinResult __fs_file_seek(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(INT, 0)
@@ -142,6 +150,7 @@ ObjModule *get_fs_module() {
 
         if (__fs_file_class == NULL) {
             ObjClass *klass = new_class(new_string("File", 4));
+            klass->is_builtin = true;
 
             table_set(
                 &klass->statics,
