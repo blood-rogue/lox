@@ -4,9 +4,9 @@
 
 #include "builtins.h"
 
-static ObjClass *__fs_file_class = NULL;
+static ObjClass *_fs_file_class = NULL;
 
-static BuiltinResult __fs_file_open(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _fs_file_open(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(STRING, 0)
     CHECK_ARG_TYPE(INT, 1)
@@ -15,16 +15,16 @@ static BuiltinResult __fs_file_open(int argc, Obj **argv, UNUSED(Obj *, caller))
     struct stat stats;
     fstat(fd, &stats);
 
-    ObjInstance *_instance = new_instance(__fs_file_class);
+    ObjInstance *instance = new_instance(_fs_file_class);
 
-    SET_FIELD(fd, new_int(fd));
-    SET_FIELD(last_access_time, new_int(stats.st_atime));
-    SET_FIELD(last_modify_time, new_int(stats.st_mtime));
+    SET_INT_FIELD("fd", fd);
+    SET_INT_FIELD("last_access_time", stats.st_atime);
+    SET_INT_FIELD("last_modify_time", stats.st_mtime);
 
-    return OK(_instance);
+    return OK(instance);
 }
 
-static BuiltinResult __fs_file_create(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _fs_file_create(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(STRING, 0)
 
@@ -33,23 +33,22 @@ static BuiltinResult __fs_file_create(int argc, Obj **argv, UNUSED(Obj *, caller
     struct stat stats;
     fstat(fd, &stats);
 
-    ObjInstance *_instance = new_instance(__fs_file_class);
+    ObjInstance *instance = new_instance(_fs_file_class);
 
-    SET_FIELD(fd, new_int(fd));
-    SET_FIELD(last_access_time, new_int(stats.st_atime));
-    SET_FIELD(last_modify_time, new_int(stats.st_mtime));
+    SET_INT_FIELD("fd", fd);
+    SET_INT_FIELD("last_access_time", stats.st_atime);
+    SET_INT_FIELD("last_modify_time", stats.st_mtime);
 
-    return OK(_instance);
+    return OK(instance);
 }
 
-static BuiltinResult __fs_file_read(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _fs_file_read(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *instance = AS_INSTANCE(caller);
 
     Obj *fd_obj;
-    if (!table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj))
-        return ERR("Invalid file instance.");
+    table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
 
     int64_t fd = AS_INT(fd_obj)->value;
     off_t fsize = lseek(fd, 0, SEEK_END);
@@ -65,15 +64,14 @@ static BuiltinResult __fs_file_read(int argc, UNUSED(Obj **, argv), Obj *caller)
     return ERR("Could not read file.");
 }
 
-static BuiltinResult __fs_file_write(int argc, Obj **argv, Obj *caller) {
+static BuiltinResult _fs_file_write(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(STRING, 0)
 
     ObjInstance *instance = AS_INSTANCE(caller);
 
     Obj *fd_obj;
-    if (!table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj))
-        return ERR("Invalid file instance.");
+    table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
 
     int64_t fd = AS_INT(fd_obj)->value;
     ObjString *str = AS_STRING(argv[0]);
@@ -84,14 +82,13 @@ static BuiltinResult __fs_file_write(int argc, Obj **argv, Obj *caller) {
     return ERR("Could not write file.");
 }
 
-static BuiltinResult __fs_file_close(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _fs_file_close(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *instance = AS_INSTANCE(caller);
 
     Obj *fd_obj;
-    if (!table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj))
-        return ERR("Invalid file instance.");
+    table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
 
     int64_t fd = AS_INT(fd_obj)->value;
 
@@ -100,7 +97,7 @@ static BuiltinResult __fs_file_close(int argc, UNUSED(Obj **, argv), Obj *caller
     return OK(new_nil());
 }
 
-static BuiltinResult __fs_file_seek(int argc, Obj **argv, Obj *caller) {
+static BuiltinResult _fs_file_seek(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(INT, 0)
     CHECK_ARG_TYPE(INT, 1)
@@ -108,8 +105,7 @@ static BuiltinResult __fs_file_seek(int argc, Obj **argv, Obj *caller) {
     ObjInstance *instance = AS_INSTANCE(caller);
 
     Obj *fd_obj;
-    if (!table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj))
-        return ERR("Invalid file instance.");
+    table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
 
     int64_t fd = AS_INT(fd_obj)->value;
     int64_t offset = AS_INT(argv[0])->value;
@@ -118,77 +114,59 @@ static BuiltinResult __fs_file_seek(int argc, Obj **argv, Obj *caller) {
     return OK(new_int(lseek(fd, offset, whence)));
 }
 
-static BuiltinResult __fs_file_tell(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _fs_file_tell(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *instance = AS_INSTANCE(caller);
 
     Obj *fd_obj;
-    if (!table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj))
-        return ERR("Invalid file instance.");
+    table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
 
     int64_t fd = AS_INT(fd_obj)->value;
 
     return OK(new_int(lseek(fd, 0, SEEK_CUR)));
 }
 
-static ObjModule *__fs_module = NULL;
+static ObjModule *_fs_module = NULL;
 
 ObjModule *get_fs_module() {
-    if (__fs_module == NULL) {
+    if (_fs_module == NULL) {
         ObjModule *module = new_module(new_string("fs", 2));
 
-        SET_INT_VAR(READONLY, O_RDONLY);
-        SET_INT_VAR(WRITEONLY, O_WRONLY);
-        SET_INT_VAR(CREATE, O_CREAT);
-        SET_INT_VAR(APPEND, O_APPEND);
-        SET_INT_VAR(READWRITE, O_RDWR);
+        SET_INT_MEMBER("CREATE", O_CREAT);
+        SET_INT_MEMBER("EXCLUSIVE", O_EXCL);
+        SET_INT_MEMBER("NO_C_TTY", O_NOCTTY);
+        SET_INT_MEMBER("TRUNCATE", O_TRUNC);
+        SET_INT_MEMBER("APPEND", O_APPEND);
+        SET_INT_MEMBER("ACCESS_MODE", O_ACCMODE);
+        SET_INT_MEMBER("READ_ONLY", O_RDONLY);
+        SET_INT_MEMBER("WRITE_ONLY", O_WRONLY);
+        SET_INT_MEMBER("READ_WRITE", O_RDWR);
 
-        SET_INT_VAR(SEEKEND, SEEK_END);
-        SET_INT_VAR(SEEKSET, SEEK_SET);
-        SET_INT_VAR(SEEKCUR, SEEK_CUR);
+        SET_INT_MEMBER("SEEK_END", SEEK_END);
+        SET_INT_MEMBER("SEEK_SET", SEEK_SET);
+        SET_INT_MEMBER("SEEK_CUR", SEEK_CUR);
 
-        if (__fs_file_class == NULL) {
+        if (_fs_file_class == NULL) {
             ObjClass *klass = new_class(new_string("File", 4));
             klass->is_builtin = true;
 
-            table_set(
-                &klass->statics,
-                AS_OBJ(new_string("open", 4)),
-                AS_OBJ(new_builtin_function(__fs_file_open, "open")));
-            table_set(
-                &klass->statics,
-                AS_OBJ(new_string("create", 6)),
-                AS_OBJ(new_builtin_function(__fs_file_create, "create")));
+            SET_BUILTIN_FN_STATIC("open", _fs_file_open);
+            SET_BUILTIN_FN_STATIC("create", _fs_file_create);
 
-            table_set(
-                &klass->methods,
-                AS_OBJ(new_string("read", 4)),
-                AS_OBJ(new_builtin_function(__fs_file_read, "read")));
-            table_set(
-                &klass->methods,
-                AS_OBJ(new_string("write", 5)),
-                AS_OBJ(new_builtin_function(__fs_file_write, "write")));
-            table_set(
-                &klass->methods,
-                AS_OBJ(new_string("close", 5)),
-                AS_OBJ(new_builtin_function(__fs_file_close, "close")));
-            table_set(
-                &klass->methods,
-                AS_OBJ(new_string("tell", 4)),
-                AS_OBJ(new_builtin_function(__fs_file_tell, "tell")));
-            table_set(
-                &klass->methods,
-                AS_OBJ(new_string("seek", 4)),
-                AS_OBJ(new_builtin_function(__fs_file_seek, "seek")));
+            SET_BUILTIN_FN_METHOD("read", _fs_file_read);
+            SET_BUILTIN_FN_METHOD("write", _fs_file_write);
+            SET_BUILTIN_FN_METHOD("close", _fs_file_close);
+            SET_BUILTIN_FN_METHOD("tell", _fs_file_tell);
+            SET_BUILTIN_FN_METHOD("seek", _fs_file_seek);
 
-            __fs_file_class = klass;
+            _fs_file_class = klass;
         }
 
-        table_set(&module->globals, AS_OBJ(new_string("File", 4)), AS_OBJ(__fs_file_class));
+        SET_MEMBER("File", _fs_file_class);
 
-        __fs_module = module;
+        _fs_module = module;
     }
 
-    return __fs_module;
+    return _fs_module;
 }

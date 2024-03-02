@@ -127,6 +127,7 @@ void init_vm() {
     SET_BLTIN_FN(parse_float);
     SET_BLTIN_FN(sleep);
     SET_BLTIN_FN(type);
+    SET_BLTIN_FN(repr);
 
 #undef SET_BLTIN_FN
 }
@@ -214,7 +215,7 @@ static bool call_value(Obj *callee, int argc, Obj *caller) {
                 vm.stack_top[-argc - 1] = AS_OBJ(instance);
 
                 Obj *initializer;
-                if (table_get(&klass->methods, (Obj *)vm.init_string, &initializer)) {
+                if (table_get(&klass->methods, AS_OBJ(vm.init_string), &initializer)) {
                     return call(AS_CLOSURE(initializer), argc);
                 } else if (argc != 0) {
                     runtime_error("Expected 0 arguments but got %d.", argc);
@@ -530,7 +531,7 @@ static InterpretResult run() {
                                 ObjString *index = AS_STRING(index_value);
                                 ObjMap *map = AS_MAP(value);
 
-                                if (!table_get(&map->table, (Obj *)index, &indexed)) {
+                                if (!table_get(&map->table, AS_OBJ(index), &indexed)) {
                                     runtime_error("Key not found.");
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
@@ -598,7 +599,7 @@ static InterpretResult run() {
                         ObjString *index = AS_STRING(index_value);
                         ObjMap *map = AS_MAP(value);
 
-                        table_set(&map->table, (Obj *)index, to_be_assigned);
+                        table_set(&map->table, AS_OBJ(index), to_be_assigned);
                     } else {
                         runtime_error("'%s' cannot be indexed.", OBJ_NAMES[value->type]);
                         return INTERPRET_RUNTIME_ERROR;
@@ -688,7 +689,7 @@ static InterpretResult run() {
                     }
 
                     if (table_set(globals, AS_OBJ(name), peek(0))) {
-                        table_delete(globals, (Obj *)name);
+                        table_delete(globals, AS_OBJ(name));
                         runtime_error("Undefined variable '%s'.", name->chars);
                         return INTERPRET_RUNTIME_ERROR;
                     }
@@ -787,7 +788,7 @@ static InterpretResult run() {
                             return INTERPRET_RUNTIME_ERROR;
                         }
 
-                        table_set(&instance->fields, (Obj *)READ_STRING(), peek(0));
+                        table_set(&instance->fields, AS_OBJ(READ_STRING()), peek(0));
 
                         Obj *value = pop();
                         pop();

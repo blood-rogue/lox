@@ -11,7 +11,7 @@ extern VM vm;
 #define ALLOCATE_OBJ(type, object_type) (type *)allocate_object(sizeof(type), object_type)
 
 static Obj *allocate_object(size_t size, ObjType type) {
-    Obj *object = (Obj *)reallocate(NULL, 0, size);
+    Obj *object = AS_OBJ(reallocate(NULL, 0, size));
     object->type = type;
     object->is_marked = false;
 
@@ -29,7 +29,7 @@ static ObjString *allocate_string(char *chars, int length, uint32_t hash) {
     string->hash = hash;
 
     push(AS_OBJ(string));
-    table_set(&vm.strings, (Obj *)string, AS_OBJ(new_nil()));
+    table_set(&vm.strings, AS_OBJ(string), AS_OBJ(new_nil()));
     pop();
 
     return string;
@@ -199,7 +199,7 @@ ObjList *argv_list(int argc, const char **argv) {
     init_array(&arr);
 
     for (int i = 0; i < argc; i++) {
-        write_array(&arr, (Obj *)new_string(argv[i], strlen(argv[i])));
+        write_array(&arr, AS_OBJ(new_string(argv[i], strlen(argv[i]))));
     }
 
     list->elems = arr;
@@ -254,7 +254,7 @@ static void print_map(ObjMap *map) {
 
         repr_object(AS_OBJ(entry->key));
         printf(": ");
-        table_get(&map->table, (Obj *)entry->key, &value);
+        table_get(&map->table, AS_OBJ(entry->key), &value);
         repr_object(value);
         printf(",");
 

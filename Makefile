@@ -20,6 +20,7 @@ STD_OBJS = $(patsubst $(STD_DIR)/%.c, $(BUILD_DIR)/%.o, $(STD_SRCS))           \
            $(patsubst $(MODULE_DIR)/%.c, $(BUILD_DIR)/%.o, $(MODULE_SRCS))
 
 TARGET = lox
+MAKEFLAGS += -j4
 
 all: release
 

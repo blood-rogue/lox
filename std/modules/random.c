@@ -1,7 +1,5 @@
 #include "builtins.h"
 
-#define SET_TABLE(name) SET_MODULE_TABLE(random, name)
-
 static BuiltinResult _random_seed(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(1)
 
@@ -23,19 +21,18 @@ static BuiltinResult _random_random(int argc, UNUSED(Obj **, argv), UNUSED(Obj *
     return OK(new_int(rand()));
 }
 
-static ObjModule *__random_module = NULL;
+static ObjModule *_random_module = NULL;
 
 ObjModule *get_random_module() {
-    if (__random_module == NULL) {
+    if (_random_module == NULL) {
         ObjModule *module = new_module(new_string("random", 6));
 
-        SET_TABLE(seed);
-        SET_TABLE(random);
+        SET_BUILTIN_FN_MEMBER("seed", _random_seed);
+        SET_BUILTIN_FN_MEMBER("random", _random_random);
+        SET_INT_MEMBER("MAX_RANDOM", RAND_MAX);
 
-        SET_INT_VAR(MAX_RANDOM, RAND_MAX);
-
-        __random_module = module;
+        _random_module = module;
     }
 
-    return __random_module;
+    return _random_module;
 }

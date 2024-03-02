@@ -30,6 +30,16 @@ BuiltinResult print_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)
     return OK(new_nil());
 }
 
+BuiltinResult repr_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
+    for (int i = 0; i < argc; i++) {
+        repr_object(argv[i]);
+        printf(" ");
+    }
+
+    printf("\n");
+    return OK(new_nil());
+}
+
 BuiltinResult input_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     if (argc > 0)
         print_object(argv[0]);

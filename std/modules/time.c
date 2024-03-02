@@ -2,49 +2,45 @@
 
 #include "builtins.h"
 
-#define SET_TABLE(name) SET_MODULE_TABLE(time, name)
+static ObjClass *_time_time_class = NULL;
 
-static ObjClass *__time_time_class = NULL;
-
-static BuiltinResult __time_time_local_now(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, caller)) {
+static BuiltinResult _time_time_local_now(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(0)
 
     int64_t now = time(NULL);
     struct tm *_tm = localtime(&now);
 
-    ObjInstance *_instance = new_instance(__time_time_class);
+    ObjInstance *instance = new_instance(_time_time_class);
 
-    SET_FIELD(raw, new_int(now));
-    SET_FIELD(year, new_int(_tm->tm_year));
-    SET_FIELD(month, new_int(_tm->tm_mon));
-    SET_FIELD(day, new_int(_tm->tm_mday));
-    SET_FIELD(hour, new_int(_tm->tm_hour));
-    SET_FIELD(minute, new_int(_tm->tm_min));
-    SET_FIELD(second, new_int(_tm->tm_sec));
+    SET_INT_FIELD("year", _tm->tm_year);
+    SET_INT_FIELD("month", _tm->tm_mon);
+    SET_INT_FIELD("day", _tm->tm_mday);
+    SET_INT_FIELD("hour", _tm->tm_hour);
+    SET_INT_FIELD("minute", _tm->tm_min);
+    SET_INT_FIELD("second", _tm->tm_sec);
 
-    return OK(_instance);
+    return OK(instance);
 }
 
-static BuiltinResult __time_time_utc_now(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, caller)) {
+static BuiltinResult _time_time_utc_now(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(0)
 
     int64_t now = time(NULL);
     struct tm *_tm = gmtime(&now);
 
-    ObjInstance *_instance = new_instance(__time_time_class);
+    ObjInstance *instance = new_instance(_time_time_class);
 
-    SET_FIELD(raw, new_int(now));
-    SET_FIELD(year, new_int(_tm->tm_year));
-    SET_FIELD(month, new_int(_tm->tm_mon));
-    SET_FIELD(day, new_int(_tm->tm_mday));
-    SET_FIELD(hour, new_int(_tm->tm_hour));
-    SET_FIELD(minute, new_int(_tm->tm_min));
-    SET_FIELD(second, new_int(_tm->tm_sec));
+    SET_INT_FIELD("year", _tm->tm_year);
+    SET_INT_FIELD("month", _tm->tm_mon);
+    SET_INT_FIELD("day", _tm->tm_mday);
+    SET_INT_FIELD("hour", _tm->tm_hour);
+    SET_INT_FIELD("minute", _tm->tm_min);
+    SET_INT_FIELD("second", _tm->tm_sec);
 
-    return OK(_instance);
+    return OK(instance);
 }
 
-static BuiltinResult __time_time_to_str(int argc, Obj **argv, Obj *caller) {
+static BuiltinResult _time_time_to_str(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(STRING, 0)
 
@@ -122,48 +118,35 @@ static BuiltinResult _time_to_local_str(int argc, Obj **argv, UNUSED(Obj *, call
     return OK(take_string(strf, strlen(strf)));
 }
 
-static ObjModule *__time_module = NULL;
+static ObjModule *_time_module = NULL;
 
 ObjModule *get_time_module() {
-    if (__time_module == NULL) {
+    if (_time_module == NULL) {
         ObjModule *module = new_module(new_string("time", 4));
 
-        SET_TABLE(now);
-        SET_TABLE(clock);
-        SET_TABLE(difftime);
-        SET_TABLE(to_utc_str);
-        SET_TABLE(to_local_str);
+        SET_BUILTIN_FN_MEMBER("now", _time_now);
+        SET_BUILTIN_FN_MEMBER("clock", _time_clock);
+        SET_BUILTIN_FN_MEMBER("difftime", _time_difftime);
+        SET_BUILTIN_FN_MEMBER("to_utc_str", _time_to_utc_str);
+        SET_BUILTIN_FN_MEMBER("to_local_str", _time_to_local_str);
+        SET_INT_MEMBER("CLOCKS_PER_SEC", CLOCKS_PER_SEC);
 
-        table_set(
-            &module->globals,
-            AS_OBJ(new_string("CLOCKS_PER_SEC", 14)),
-            AS_OBJ(new_int(CLOCKS_PER_SEC)));
-
-        if (__time_time_class == NULL) {
+        if (_time_time_class == NULL) {
             ObjClass *klass = new_class(new_string("Time", 4));
             klass->is_builtin = true;
 
-            table_set(
-                &klass->statics,
-                AS_OBJ(new_string("local_now", 9)),
-                AS_OBJ(new_builtin_function(__time_time_local_now, "local_now")));
-            table_set(
-                &klass->statics,
-                AS_OBJ(new_string("utc_now", 7)),
-                AS_OBJ(new_builtin_function(__time_time_utc_now, "utc_now")));
+            SET_BUILTIN_FN_STATIC("local_now", _time_time_local_now);
+            SET_BUILTIN_FN_STATIC("utc_now", _time_time_utc_now);
 
-            table_set(
-                &klass->methods,
-                AS_OBJ(new_string("to_str", 6)),
-                AS_OBJ(new_builtin_function(__time_time_to_str, "to_str")));
+            SET_BUILTIN_FN_METHOD("to_str", _time_time_to_str);
 
-            __time_time_class = klass;
+            _time_time_class = klass;
         }
 
-        table_set(&module->globals, AS_OBJ(new_string("Time", 4)), AS_OBJ(__time_time_class));
+        SET_MEMBER("Time", _time_time_class);
 
-        __time_module = module;
+        _time_module = module;
     }
 
-    return __time_module;
+    return _time_module;
 }
