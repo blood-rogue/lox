@@ -216,7 +216,29 @@ static bool call_value(Obj *callee, int argc, Obj *caller) {
 
                 Obj *initializer;
                 if (table_get(&klass->methods, AS_OBJ(vm.init_string), &initializer)) {
-                    return call(AS_CLOSURE(initializer), argc);
+                    switch (initializer->type) {
+                        case OBJ_CLOSURE:
+                            return call(AS_CLOSURE(initializer), argc);
+                        case OBJ_BUILTIN_FUNCTION:
+                            {
+                                ObjBuiltinFunction *builtin = AS_BUILTIN_FUNCTION(initializer);
+                                BuiltinResult result =
+                                    builtin->method(argc, vm.stack_top - argc, AS_OBJ(instance));
+
+                                if (result.error != NULL) {
+                                    runtime_error(result.error);
+                                    return false;
+                                }
+
+                                vm.stack_top -= argc;
+
+                                return true;
+                            }
+                        default:
+                            runtime_error("Invalid initializer.");
+                            return false;
+                    }
+
                 } else if (argc != 0) {
                     runtime_error("Expected 0 arguments but got %d.", argc);
                     return false;
