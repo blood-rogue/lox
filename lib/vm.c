@@ -354,7 +354,8 @@ static bool invoke(ObjString *name, int argc) {
             {
                 BuiltinFn method;
                 if (vm.builtin_methods[receiver->type] == NULL ||
-                    !method_table_get(vm.builtin_methods[receiver->type], name->hash, &method)) {
+                    !method_table_get(
+                        vm.builtin_methods[receiver->type], name->obj.hash, &method)) {
                     runtime_error(
                         "Could not invode method '%s' on '%s'.",
                         name->chars,
@@ -681,7 +682,7 @@ static InterpretResult run() {
                     if (table_get(globals, AS_OBJ(name), &value)) {
                         push(value);
                         break;
-                    } else if (method_table_get(&vm.builtin_functions, name->hash, &fn)) {
+                    } else if (method_table_get(&vm.builtin_functions, name->obj.hash, &fn)) {
                         push(AS_OBJ(new_builtin_function(fn, name->chars)));
                         break;
                     }
@@ -777,7 +778,7 @@ static InterpretResult run() {
                             if (vm.builtin_methods[obj->type] != NULL) {
                                 BuiltinFn method;
                                 if (method_table_get(
-                                        vm.builtin_methods[obj->type], name->hash, &method)) {
+                                        vm.builtin_methods[obj->type], name->obj.hash, &method)) {
                                     pop();
                                     push(
                                         AS_OBJ(new_builtin_bound_method(method, obj, name->chars)));

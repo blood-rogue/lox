@@ -1,5 +1,7 @@
 #include "builtins.h"
 
+static ObjModule *_random_module = NULL;
+
 static BuiltinResult _random_seed(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(1)
 
@@ -20,8 +22,6 @@ static BuiltinResult _random_random(int argc, UNUSED(Obj **, argv), UNUSED(Obj *
 
     return OK(new_int(rand()));
 }
-
-static ObjModule *_random_module = NULL;
 
 ObjModule *get_random_module() {
     if (_random_module == NULL) {

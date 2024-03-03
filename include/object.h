@@ -93,6 +93,7 @@ typedef enum {
 struct Obj {
     ObjType type;
     bool is_marked;
+    uint32_t hash;
     struct Obj *next;
 };
 
@@ -134,7 +135,6 @@ typedef struct {
     Obj obj;
     int length;
     char *chars;
-    uint32_t hash;
 } ObjString;
 
 typedef struct {
@@ -227,7 +227,6 @@ void print_object(Obj *);
 void repr_object(Obj *);
 
 uint32_t hash_string(const char *, int);
-uint32_t get_hash(Obj *);
 
 bool obj_equal(Obj *, Obj *);
 

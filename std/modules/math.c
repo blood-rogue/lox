@@ -4,8 +4,11 @@
 #include "builtins.h"
 #include "object.h"
 
+static ObjModule *_math_module = NULL;
+static ObjClass *_math_complex_class = NULL;
+
 #define MATH_BLTIN_FN(func)                                                                        \
-    BuiltinResult _math_##func(int argc, Obj **argv, UNUSED(Obj *, caller)) {                      \
+    static BuiltinResult _math_##func(int argc, Obj **argv, UNUSED(Obj *, caller)) {               \
         CHECK_ARG_COUNT(1)                                                                         \
         if (IS_FLOAT(argv[0]))                                                                     \
             return OK(new_float(func(AS_FLOAT(argv[0])->value)));                                  \
@@ -13,27 +16,19 @@
     }
 
 #define COMPLEX_METHOD(name, func)                                                                 \
-    BuiltinResult name(int argc, UNUSED(Obj **, argv), Obj *caller) {                              \
+    static BuiltinResult name(int argc, UNUSED(Obj **, argv), Obj *caller) {                       \
         CHECK_ARG_COUNT(0)                                                                         \
-                                                                                                   \
         ObjInstance *_instance = AS_INSTANCE(caller);                                              \
-                                                                                                   \
         double r, i;                                                                               \
         Obj *field;                                                                                \
-                                                                                                   \
         table_get(&_instance->fields, AS_OBJ(new_string("real", 4)), &field);                      \
         r = IS_INT(field) ? (double)(AS_INT(field)->value) : AS_FLOAT(field)->value;               \
-                                                                                                   \
         table_get(&_instance->fields, AS_OBJ(new_string("imag", 4)), &field);                      \
         i = IS_INT(field) ? (double)(AS_INT(field)->value) : AS_FLOAT(field)->value;               \
-                                                                                                   \
         double complex c = func(CMPLX(r, i));                                                      \
-                                                                                                   \
         ObjInstance *instance = new_instance(_math_complex_class);                                 \
-                                                                                                   \
         SET_FLOAT_FIELD("real", creal(c));                                                         \
         SET_FLOAT_FIELD("imag", cimag(c));                                                         \
-                                                                                                   \
         return OK(instance);                                                                       \
     }
 
@@ -64,7 +59,7 @@ MATH_BLTIN_FN(round)
 MATH_BLTIN_FN(nearbyint)
 MATH_BLTIN_FN(rint)
 
-BuiltinResult _math_pow(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _math_pow(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(2)
     if (IS_FLOAT(argv[0]) && IS_FLOAT(argv[1]))
         return OK(new_float(pow(AS_FLOAT(argv[0])->value, AS_FLOAT(argv[1])->value)));
@@ -72,15 +67,13 @@ BuiltinResult _math_pow(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     return ERR("Expected float argument.");
 }
 
-BuiltinResult _math_hypot(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _math_hypot(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(2)
     if (IS_FLOAT(argv[0]) && IS_FLOAT(argv[1]))
         return OK(new_float(hypot(AS_FLOAT(argv[0])->value, AS_FLOAT(argv[1])->value)));
 
     return ERR("Expected float argument.");
 }
-
-static ObjClass *_math_complex_class = NULL;
 
 COMPLEX_METHOD(_math_complex_conjugate, conj)
 COMPLEX_METHOD(_math_complex_projection, cproj)
@@ -100,7 +93,7 @@ COMPLEX_METHOD(_math_complex_asinh, casinh)
 COMPLEX_METHOD(_math_complex_acosh, cacosh)
 COMPLEX_METHOD(_math_complex_atanh, catanh)
 
-BuiltinResult _math_complex_init(int argc, Obj **argv, Obj *caller) {
+static BuiltinResult _math_complex_init(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(2)
 
     if (!IS_INT(argv[0]) && !IS_FLOAT(argv[0])) {
@@ -123,7 +116,7 @@ BuiltinResult _math_complex_init(int argc, Obj **argv, Obj *caller) {
     return OK(new_nil());
 }
 
-BuiltinResult _math_complex_abs(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _math_complex_abs(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *instance = AS_INSTANCE(caller);
@@ -140,7 +133,7 @@ BuiltinResult _math_complex_abs(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(new_float(cabs(CMPLX(r, i))));
 }
 
-BuiltinResult _math_complex_arg(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _math_complex_arg(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *instance = AS_INSTANCE(caller);
@@ -157,7 +150,7 @@ BuiltinResult _math_complex_arg(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(new_float(carg(CMPLX(r, i))));
 }
 
-BuiltinResult _math_complex_pow(int argc, Obj **argv, Obj *caller) {
+static BuiltinResult _math_complex_pow(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(INSTANCE, 0)
 
@@ -194,8 +187,6 @@ BuiltinResult _math_complex_pow(int argc, Obj **argv, Obj *caller) {
     return OK(instance);
 }
 
-static ObjModule *_math_module = NULL;
-
 ObjModule *get_math_module() {
     if (_math_module == NULL) {
         ObjModule *module = new_module(new_string("math", 4));
@@ -226,6 +217,7 @@ ObjModule *get_math_module() {
         SET_BUILTIN_FN_MEMBER("floor", _math_floor);
         SET_BUILTIN_FN_MEMBER("trunc", _math_trunc);
         SET_BUILTIN_FN_MEMBER("round", _math_round);
+        SET_BUILTIN_FN_MEMBER("nearbyint", _math_nearbyint);
         SET_BUILTIN_FN_MEMBER("rint", _math_rint);
 
         SET_FLOAT_MEMBER("NAN", __builtin_nan(""));

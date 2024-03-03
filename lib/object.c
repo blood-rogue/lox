@@ -14,6 +14,7 @@ static Obj *allocate_object(size_t size, ObjType type) {
     Obj *object = AS_OBJ(reallocate(NULL, 0, size));
     object->type = type;
     object->is_marked = false;
+    object->hash = 0;
 
     object->next = vm.objects;
     vm.objects = object;
@@ -26,7 +27,7 @@ static ObjString *allocate_string(char *chars, int length, uint32_t hash) {
 
     string->length = length;
     string->chars = chars;
-    string->hash = hash;
+    string->obj.hash = hash;
 
     push(AS_OBJ(string));
     table_set(&vm.strings, AS_OBJ(string), AS_OBJ(new_nil()));
@@ -337,15 +338,6 @@ void repr_object(Obj *obj) {
     }
 }
 
-uint32_t get_hash(Obj *obj) {
-    switch (obj->type) {
-        case OBJ_STRING:
-            return AS_STRING(obj)->hash;
-        default:
-            return 0;
-    }
-}
-
 uint32_t hash_string(const char *key, int length) {
     uint32_t hash = 2166136261u;
     for (int i = 0; i < length; i++) {
@@ -371,7 +363,7 @@ bool obj_equal(Obj *a, Obj *b) {
                 ObjString *str_a = AS_STRING(a);
                 ObjString *str_b = AS_STRING(b);
 
-                return str_a->hash == str_b->hash && str_a->length == str_b->length &&
+                return a->hash == b->hash && str_a->length == str_b->length &&
                        memcmp(str_a->chars, str_b->chars, str_a->length) == 0;
             }
         default:

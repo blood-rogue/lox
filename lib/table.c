@@ -17,7 +17,7 @@ void free_table(Table *table) {
 }
 
 static Entry *find_entry(Entry *entries, int capacity, Obj *key) {
-    uint32_t index = get_hash(key) & (capacity - 1);
+    uint32_t index = key->hash & (capacity - 1);
     Entry *tombstone = NULL;
 
     for (;;) {
@@ -123,7 +123,7 @@ Obj *table_find_string(Table *table, uint32_t hash) {
         if (entry->key == NULL) {
             if (IS_NIL(entry->value))
                 return NULL;
-        } else if (get_hash(entry->key) == hash) {
+        } else if (entry->key->hash == hash) {
             return entry->key;
         }
 

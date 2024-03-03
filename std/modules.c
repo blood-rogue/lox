@@ -11,6 +11,8 @@ ObjModule *get_module(char *name) {
         return get_random_module();
     else if (strcmp(name, "process") == 0)
         return get_process_module();
+    else if (strcmp(name, "sys") == 0)
+        return get_sys_module();
 
     return NULL;
 }
