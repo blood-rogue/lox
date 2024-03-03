@@ -26,6 +26,17 @@ static BuiltinResult _fs_chown(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     return ERR("Could not change ownership");
 }
 
+static BuiltinResult _fs_link(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+    CHECK_ARG_COUNT(2)
+    CHECK_ARG_TYPE(STRING, 0)
+    CHECK_ARG_TYPE(STRING, 1)
+
+    if (link(AS_STRING(argv[0])->chars, AS_STRING(argv[1])->chars) == 0)
+        return OK(new_nil());
+
+    return ERR("Could not create link.");
+}
+
 static BuiltinResult _fs_file_init(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(INT, 0)
@@ -208,6 +219,7 @@ ObjModule *get_fs_module() {
 
         SET_BUILTIN_FN_MEMBER("dup", _fs_dup);
         SET_BUILTIN_FN_MEMBER("chown", _fs_chown);
+        SET_BUILTIN_FN_MEMBER("link", _fs_link);
 
         if (_fs_file_class == NULL) {
             ObjClass *klass = new_class(new_string("File", 4));
