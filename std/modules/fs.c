@@ -14,6 +14,14 @@ static BuiltinResult _fs_dup(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     return OK(new_int(dup(AS_INT(argv[0])->value)));
 }
 
+static BuiltinResult _fs_dup2(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+    CHECK_ARG_COUNT(2)
+    CHECK_ARG_TYPE(INT, 0)
+    CHECK_ARG_TYPE(INT, 1)
+
+    return OK(new_int(dup2(AS_INT(argv[0])->value, AS_INT(argv[1])->value)));
+}
+
 static BuiltinResult _fs_chown(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(3)
     CHECK_ARG_TYPE(STRING, 0)
@@ -35,6 +43,37 @@ static BuiltinResult _fs_link(int argc, Obj **argv, UNUSED(Obj *, caller)) {
         return OK(new_nil());
 
     return ERR("Could not create link.");
+}
+
+static BuiltinResult _fs_unlink(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+    CHECK_ARG_COUNT(1)
+    CHECK_ARG_TYPE(STRING, 0)
+
+    if (unlink(AS_STRING(argv[0])->chars) == 0)
+        return OK(new_nil());
+
+    return ERR("Could not delete link.");
+}
+
+static BuiltinResult _fs_symlink(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+    CHECK_ARG_COUNT(2)
+    CHECK_ARG_TYPE(STRING, 0)
+    CHECK_ARG_TYPE(STRING, 1)
+
+    if (symlink(AS_STRING(argv[0])->chars, AS_STRING(argv[1])->chars) == 0)
+        return OK(new_nil());
+
+    return ERR("Could not create symlink.");
+}
+
+static BuiltinResult _fs_rmdir(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+    CHECK_ARG_COUNT(1)
+    CHECK_ARG_TYPE(STRING, 0)
+
+    if (rmdir(AS_STRING(argv[0])->chars) == 0)
+        return OK(new_nil());
+
+    return ERR("Could not remove directory.");
 }
 
 static BuiltinResult _fs_file_init(int argc, Obj **argv, Obj *caller) {
@@ -136,6 +175,18 @@ static BuiltinResult _fs_file_read(int argc, UNUSED(Obj **, argv), Obj *caller) 
     return ERR("Could not read file.");
 }
 
+static BuiltinResult _fs_file_is_a_tty(int argc, UNUSED(Obj **, argv), Obj *caller) {
+    CHECK_ARG_COUNT(0)
+
+    ObjInstance *instance = AS_INSTANCE(caller);
+
+    Obj *fd_obj;
+    table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
+
+    int64_t fd = AS_INT(fd_obj)->value;
+    return OK(new_bool(isatty(fd)));
+}
+
 static BuiltinResult _fs_file_write(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(STRING, 0)
@@ -218,8 +269,12 @@ ObjModule *get_fs_module() {
         SET_INT_MEMBER("SEEK_CUR", SEEK_CUR);
 
         SET_BUILTIN_FN_MEMBER("dup", _fs_dup);
+        SET_BUILTIN_FN_MEMBER("dup2", _fs_dup2);
         SET_BUILTIN_FN_MEMBER("chown", _fs_chown);
         SET_BUILTIN_FN_MEMBER("link", _fs_link);
+        SET_BUILTIN_FN_MEMBER("unlink", _fs_unlink);
+        SET_BUILTIN_FN_MEMBER("symlink", _fs_symlink);
+        SET_BUILTIN_FN_MEMBER("rmdir", _fs_rmdir);
 
         if (_fs_file_class == NULL) {
             ObjClass *klass = new_class(new_string("File", 4));
@@ -234,6 +289,7 @@ ObjModule *get_fs_module() {
             SET_BUILTIN_FN_METHOD("close", _fs_file_close);
             SET_BUILTIN_FN_METHOD("tell", _fs_file_tell);
             SET_BUILTIN_FN_METHOD("seek", _fs_file_seek);
+            SET_BUILTIN_FN_METHOD("is_a_tty", _fs_file_is_a_tty);
 
             _fs_file_class = klass;
         }
