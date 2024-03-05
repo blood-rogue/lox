@@ -27,6 +27,8 @@ typedef enum {
     OP_BINARY_OR,
     OP_BINARY_AND,
     OP_BINARY_XOR,
+    OP_SHIFT_RIGHT,
+    OP_SHIFT_LEFT,
     OP_EQUAL,
     OP_GREATER,
     OP_LESS,

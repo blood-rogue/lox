@@ -339,6 +339,12 @@ static void binary(bool) {
         case TOKEN_CARET:
             emit_byte(OP_BINARY_XOR);
             break;
+        case TOKEN_GREATER_GREATER:
+            emit_byte(OP_SHIFT_RIGHT);
+            break;
+        case TOKEN_LESS_LESS:
+            emit_byte(OP_SHIFT_LEFT);
+            break;
         default:
             return;
     }
@@ -646,6 +652,8 @@ ParseRule rules[] = {
     [TOKEN_AMPERSAND] = {NULL, binary, PREC_BINARY_AND},
     [TOKEN_PIPE] = {NULL, binary, PREC_BINARY_OR},
     [TOKEN_CARET] = {NULL, binary, PREC_BINARY_XOR},
+    [TOKEN_GREATER_GREATER] = {NULL, binary, PREC_SHIFT},
+    [TOKEN_LESS_LESS] = {NULL, binary, PREC_SHIFT},
     [TOKEN_COLON_COLON] = {NULL, scope, PREC_CALL},
     [TOKEN_BANG] = {unary, NULL, PREC_NONE},
     [TOKEN_BANG_EQUAL] = {NULL, binary, PREC_EQUALITY},

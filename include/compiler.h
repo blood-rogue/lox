@@ -64,6 +64,7 @@ typedef enum {
     PREC_BINARY_OR,
     PREC_BINARY_XOR,
     PREC_BINARY_AND,
+    PREC_SHIFT,
     PREC_TERM,
     PREC_FACTOR,
     PREC_UNARY,

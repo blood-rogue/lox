@@ -449,9 +449,13 @@ static InterpretResult run() {
 #define BINARY_OP(new_func_int, new_func_float, op)                                                \
     {                                                                                              \
         if (IS_INT(peek(0)) && IS_INT(peek(1))) {                                                  \
-            push(AS_OBJ(new_func_int(AS_INT(pop())->value op AS_INT(pop())->value)));              \
+            Obj *b = pop();                                                                        \
+            Obj *a = pop();                                                                        \
+            push(AS_OBJ(new_func_int(AS_INT(a)->value op AS_INT(b)->value)));                      \
         } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {                                       \
-            push(AS_OBJ(new_func_float(AS_FLOAT(pop())->value op AS_FLOAT(pop())->value)));        \
+            Obj *b = pop();                                                                        \
+            Obj *a = pop();                                                                        \
+            push(AS_OBJ(new_func_float(AS_FLOAT(a)->value op AS_FLOAT(b)->value)));                \
         } else {                                                                                   \
             runtime_error(                                                                         \
                 "Unsupported operand types for '%s': '%s' and '%s'.",                              \
@@ -464,7 +468,9 @@ static InterpretResult run() {
 #define BINARY_INT_OP(new_func, op)                                                                \
     {                                                                                              \
         if (IS_INT(peek(0)) && IS_INT(peek(1))) {                                                  \
-            push(AS_OBJ(new_func(AS_INT(pop())->value op AS_INT(pop())->value)));                  \
+            Obj *b = pop();                                                                        \
+            Obj *a = pop();                                                                        \
+            push(AS_OBJ(new_func(AS_INT(a)->value op AS_INT(b)->value)));                          \
         } else {                                                                                   \
             runtime_error(                                                                         \
                 "Unsupported operand types for '%s': '%s' and '%s'.",                              \
@@ -873,10 +879,10 @@ static InterpretResult run() {
                 push(AS_OBJ(new_bool(obj_equal(pop(), pop()))));
                 break;
             case OP_GREATER:
-                BINARY_OP(new_bool, new_bool, <);
+                BINARY_OP(new_bool, new_bool, >);
                 break;
             case OP_LESS:
-                BINARY_OP(new_bool, new_bool, >);
+                BINARY_OP(new_bool, new_bool, <);
                 break;
             case OP_ADD:
                 {
@@ -925,6 +931,16 @@ static InterpretResult run() {
             case OP_BINARY_XOR:
                 {
                     BINARY_INT_OP(new_int, ^);
+                    break;
+                }
+            case OP_SHIFT_RIGHT:
+                {
+                    BINARY_INT_OP(new_int, >>);
+                    break;
+                }
+            case OP_SHIFT_LEFT:
+                {
+                    BINARY_INT_OP(new_int, <<);
                     break;
                 }
             case OP_MULTIPLY:

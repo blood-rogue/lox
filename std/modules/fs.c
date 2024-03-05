@@ -232,19 +232,6 @@ ObjModule *get_fs_module() {
     if (_fs_module == NULL) {
         ObjModule *module = new_module(new_string("fs", 2));
 
-        ObjInstance *_stdin = new_instance(_fs_file_class);
-        set_file_instance(0, _stdin);
-
-        ObjInstance *_stdout = new_instance(_fs_file_class);
-        set_file_instance(1, _stdout);
-
-        ObjInstance *_stderr = new_instance(_fs_file_class);
-        set_file_instance(2, _stderr);
-
-        SET_MEMBER("STDIN", _stdin);
-        SET_MEMBER("STDOUT", _stdout);
-        SET_MEMBER("STDERR", _stderr);
-
         SET_INT_MEMBER("CREATE", O_CREAT);
         SET_INT_MEMBER("EXCLUSIVE", O_EXCL);
         SET_INT_MEMBER("NO_C_TTY", O_NOCTTY);
@@ -284,6 +271,19 @@ ObjModule *get_fs_module() {
 
             _fs_file_class = klass;
         }
+
+        ObjInstance *_stdin = new_instance(_fs_file_class);
+        set_file_instance(STDIN_FILENO, _stdin);
+
+        ObjInstance *_stdout = new_instance(_fs_file_class);
+        set_file_instance(STDOUT_FILENO, _stdout);
+
+        ObjInstance *_stderr = new_instance(_fs_file_class);
+        set_file_instance(STDERR_FILENO, _stderr);
+
+        SET_MEMBER("STDIN", _stdin);
+        SET_MEMBER("STDOUT", _stdout);
+        SET_MEMBER("STDERR", _stderr);
 
         SET_MEMBER("File", _fs_file_class);
 

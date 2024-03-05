@@ -288,9 +288,19 @@ Token scan_token() {
         case '=':
             return make_token(match('=') ? TOKEN_EQUAL_EQUAL : TOKEN_EQUAL);
         case '<':
-            return make_token(match('=') ? TOKEN_LESS_EQUAL : TOKEN_LESS);
+            if (match('='))
+                return make_token(TOKEN_LESS_EQUAL);
+            else if (match('<'))
+                return make_token(TOKEN_LESS_LESS);
+            else
+                return make_token(TOKEN_LESS);
         case '>':
-            return make_token(match('=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER);
+            if (match('='))
+                return make_token(TOKEN_GREATER_EQUAL);
+            else if (match('>'))
+                return make_token(TOKEN_GREATER_GREATER);
+            else
+                return make_token(TOKEN_GREATER);
         case '"':
             return string();
         case '\'':
