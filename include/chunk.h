@@ -52,9 +52,7 @@ typedef enum {
     OP_IMPORT,
     OP_GET_SCOPED,
     OP_SCOPE_INVOKE,
-    OP_END,
-    OP_BREAK,
-    OP_CONTINUE
+    OP_END
 } OpCode;
 
 typedef struct {

@@ -1159,18 +1159,6 @@ static InterpretResult run() {
                     }
                     break;
                 }
-            case OP_BREAK:
-                {
-                    uint16_t offset = READ_SHORT();
-                    frame->ip += offset;
-                    break;
-                }
-            case OP_CONTINUE:
-                {
-                    uint16_t offset = READ_SHORT();
-                    frame->ip -= offset;
-                    break;
-                }
         }
     }
 

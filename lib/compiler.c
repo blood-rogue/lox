@@ -1016,7 +1016,7 @@ static void break_statement() {
 
     consume(TOKEN_SEMICOLON, "Expect ';' after 'break'.");
 
-    write_offset_array(&current->breaks, emit_jump(OP_BREAK));
+    write_offset_array(&current->breaks, emit_jump(OP_JUMP));
 }
 
 static void continue_statement() {
@@ -1025,7 +1025,7 @@ static void continue_statement() {
 
     consume(TOKEN_SEMICOLON, "Expect ';' after 'continue'.");
 
-    write_offset_array(&current->continues, emit_jump(OP_CONTINUE));
+    write_offset_array(&current->continues, emit_jump(OP_LOOP));
 }
 
 static void import_statement() {
