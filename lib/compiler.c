@@ -205,9 +205,7 @@ static void declare_variable() {
 
 static void emit_constant(Obj *value) { emit_bytes(OP_CONSTANT, make_constant(value)); }
 
-static void patch_jump(int offset) {
-    int jump = current_chunk()->count - offset - 2;
-
+static inline void patch_jump_to(int offset, int jump) {
     if (jump > UINT16_MAX) {
         error("Too much code to jump over.");
     }
@@ -215,6 +213,8 @@ static void patch_jump(int offset) {
     current_chunk()->code[offset] = (jump >> 8) & 0xff;
     current_chunk()->code[offset + 1] = jump & 0xff;
 }
+
+static void patch_jump(int offset) { patch_jump_to(offset, current_chunk()->count - offset - 2); }
 
 static void init_compiler(Compiler *compiler, FunctionType type) {
     compiler->enclosing = current;
@@ -225,6 +225,11 @@ static void init_compiler(Compiler *compiler, FunctionType type) {
     compiler->scope_depth = 0;
 
     compiler->function = new_function();
+
+    compiler->in_loop = false;
+    init_offset_array(&compiler->breaks);
+    init_offset_array(&compiler->continues);
+
     current = compiler;
 
     if (type != TYPE_SCRIPT) {
@@ -257,6 +262,10 @@ static ObjFunction *end_compiler(bool ended) {
             current_chunk(), function->name != NULL ? function->name->chars : "<script>");
     }
 #endif
+
+    current->in_loop = false;
+    free_offset_array(&current->breaks);
+    free_offset_array(&current->continues);
 
     current = current->enclosing;
     return function;
@@ -437,20 +446,9 @@ static void index_(bool can_assign) {
         emit_byte(OP_GET_INDEX);
 }
 
-static void float_(bool) {
-    double value = strtod(parser.previous.start, NULL);
-    emit_constant(AS_OBJ(new_float(value)));
-}
-
-static void char_(bool) {
-    char value = parser.previous.start[1];
-    emit_constant(AS_OBJ(new_char(value)));
-}
-
-static void int_(bool) {
-    int64_t value = (int64_t)strtol(parser.previous.start, NULL, 10);
-    emit_constant(AS_OBJ(new_int(value)));
-}
+static void float_(bool) { emit_constant(AS_OBJ(new_float(strtod(parser.previous.start, NULL)))); }
+static void char_(bool) { emit_constant(AS_OBJ(new_char(parser.previous.start[1]))); }
+static void int_(bool) { emit_constant(AS_OBJ(new_int(strtol(parser.previous.start, NULL, 10)))); }
 
 static void or (bool) {
     int else_jump = emit_jump(OP_JUMP_IF_FALSE);
@@ -924,10 +922,20 @@ static void for_statement() {
         patch_jump(body_jump);
     }
 
+    current->in_loop = true;
+
     statement();
     emit_loop(loop_start);
 
     if (exit_jump != -1) {
+        for (int i = 0; i < current->breaks.count; i++) {
+            patch_jump(current->breaks.values[i]);
+        }
+
+        for (int i = 0; i < current->continues.count; i++) {
+            patch_jump_to(current->continues.values[i], loop_start);
+        }
+
         patch_jump(exit_jump);
         emit_byte(OP_POP);
     }
@@ -990,15 +998,34 @@ static void while_statement() {
     emit_loop(loop_start);
 
     patch_jump(exit_jump);
+
+    for (int i = 0; i < current->breaks.count; i++) {
+        patch_jump(current->breaks.values[i]);
+    }
+
+    for (int i = 0; i < current->continues.count; i++) {
+        patch_jump_to(current->continues.values[i], loop_start);
+    }
+
     emit_byte(OP_POP);
 }
 
 static void break_statement() {
-    if (!current->in_loop) {
+    if (!current->in_loop)
         error("Cannot use 'break' outside of loop.");
-    }
 
     consume(TOKEN_SEMICOLON, "Expect ';' after 'break'.");
+
+    write_offset_array(&current->breaks, emit_jump(OP_BREAK));
+}
+
+static void continue_statement() {
+    if (!current->in_loop)
+        error("Cannot use 'continue' outside of loop.");
+
+    consume(TOKEN_SEMICOLON, "Expect ';' after 'continue'.");
+
+    write_offset_array(&current->continues, emit_jump(OP_CONTINUE));
 }
 
 static void import_statement() {
@@ -1066,6 +1093,8 @@ static void statement() {
         import_statement();
     } else if (match(TOKEN_BREAK)) {
         break_statement();
+    } else if (match(TOKEN_CONTINUE)) {
+        continue_statement();
     } else if (match(TOKEN_LEFT_BRACE)) {
         begin_scope();
         block();

@@ -64,6 +64,16 @@ static BuiltinResult _sys_setgid(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     return ERR("Could not set gid.");
 }
 
+static BuiltinResult _sys_chdir(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+    CHECK_ARG_COUNT(1)
+    CHECK_ARG_TYPE(STRING, 0)
+
+    if (chdir(AS_STRING(argv[0])->chars) == 0)
+        return OK(new_nil());
+
+    return ERR("Could not change working directory of current process.");
+}
+
 static BuiltinResult _sys_user_by_name(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(STRING, 0)
@@ -159,6 +169,7 @@ ObjModule *get_sys_module() {
         SET_BUILTIN_FN_MEMBER("getgid", _sys_getgid);
         SET_BUILTIN_FN_MEMBER("setuid", _sys_setuid);
         SET_BUILTIN_FN_MEMBER("setgid", _sys_setgid);
+        SET_BUILTIN_FN_MEMBER("chdir", _sys_chdir);
 
         if (_sys_user_class == NULL) {
             ObjClass *klass = new_class(new_string("User", 4));

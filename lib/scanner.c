@@ -226,13 +226,16 @@ static Token string() {
 }
 
 static Token character() {
+    while (peek() != '\'' && !is_eof()) {
+        if (peek() == '\n')
+            return error_token("Invalid character literal.");
+        advance();
+    }
+
+    if (is_eof())
+        return error_token("Unterminated char literal.");
+
     advance();
-
-    if (peek() != '\'' || is_eof())
-        return error_token("Invalid char literal.");
-
-    advance();
-
     return make_token(TOKEN_CHAR);
 }
 

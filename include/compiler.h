@@ -2,6 +2,7 @@
 #define lox_compiler_h
 
 #include "object.h"
+#include "offset_array.h"
 #include "scanner.h"
 #include "vm.h"
 
@@ -44,7 +45,8 @@ typedef struct Compiler {
     int scope_depth;
 
     bool in_loop;
-    int loop_exit_offset;
+    OffsetArray breaks;
+    OffsetArray continues;
 } Compiler;
 
 typedef struct ClassCompiler {

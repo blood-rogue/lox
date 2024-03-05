@@ -873,10 +873,10 @@ static InterpretResult run() {
                 push(AS_OBJ(new_bool(obj_equal(pop(), pop()))));
                 break;
             case OP_GREATER:
-                BINARY_OP(new_bool, new_bool, >);
+                BINARY_OP(new_bool, new_bool, <);
                 break;
             case OP_LESS:
-                BINARY_OP(new_bool, new_bool, <);
+                BINARY_OP(new_bool, new_bool, >);
                 break;
             case OP_ADD:
                 {
@@ -1157,6 +1157,18 @@ static InterpretResult run() {
 
                         free(source);
                     }
+                    break;
+                }
+            case OP_BREAK:
+                {
+                    uint16_t offset = READ_SHORT();
+                    frame->ip += offset;
+                    break;
+                }
+            case OP_CONTINUE:
+                {
+                    uint16_t offset = READ_SHORT();
+                    frame->ip -= offset;
                     break;
                 }
         }

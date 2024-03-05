@@ -173,6 +173,10 @@ int disassemble_instruction(Chunk *chunk, int offset) {
             return byte_instruction("OP_MAP", chunk, offset);
         case OP_END:
             return simple_instruction("OP_END", offset);
+        case OP_BREAK:
+            return jump_instruction("OP_BREAK", 1, chunk, offset);
+        case OP_CONTINUE:
+            return jump_instruction("OP_CONTINUE", -1, chunk, offset);
     }
 
     return offset + 1;
