@@ -76,15 +76,9 @@ static BuiltinResult _fs_rmdir(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     return ERR("Could not remove directory.");
 }
 
-static BuiltinResult _fs_file_init(int argc, Obj **argv, Obj *caller) {
-    CHECK_ARG_COUNT(1)
-    CHECK_ARG_TYPE(INT, 0)
-
-    int fd = AS_INT(argv[0])->value;
+static void set_file_instance(int fd, ObjInstance *instance) {
     struct stat st;
     fstat(fd, &st);
-
-    ObjInstance *instance = AS_INSTANCE(caller);
 
     SET_INT_FIELD("fd", fd);
     SET_INT_FIELD("device", st.st_dev);
@@ -97,6 +91,16 @@ static BuiltinResult _fs_file_init(int argc, Obj **argv, Obj *caller) {
     SET_INT_FIELD("access_time", st.st_atime);
     SET_INT_FIELD("modification_time", st.st_mtime);
     SET_INT_FIELD("status_change_time", st.st_ctime);
+}
+
+static BuiltinResult _fs_file_init(int argc, Obj **argv, Obj *caller) {
+    CHECK_ARG_COUNT(1)
+    CHECK_ARG_TYPE(INT, 0)
+
+    int fd = AS_INT(argv[0])->value;
+    ObjInstance *instance = AS_INSTANCE(caller);
+
+    set_file_instance(fd, instance);
 
     return OK(new_nil());
 }
@@ -107,22 +111,9 @@ static BuiltinResult _fs_file_open(int argc, Obj **argv, UNUSED(Obj *, caller)) 
     CHECK_ARG_TYPE(INT, 1)
 
     int fd = open(AS_STRING(argv[0])->chars, AS_INT(argv[1])->value);
-    struct stat st;
-    fstat(fd, &st);
-
     ObjInstance *instance = new_instance(_fs_file_class);
 
-    SET_INT_FIELD("fd", fd);
-    SET_INT_FIELD("device", st.st_dev);
-    SET_INT_FIELD("inode", st.st_ino);
-    SET_INT_FIELD("mode", st.st_mode);
-    SET_INT_FIELD("num_links", st.st_nlink);
-    SET_INT_FIELD("uid", st.st_uid);
-    SET_INT_FIELD("gid", st.st_gid);
-    SET_INT_FIELD("size", st.st_size);
-    SET_INT_FIELD("access_time", st.st_atime);
-    SET_INT_FIELD("modification_time", st.st_mtime);
-    SET_INT_FIELD("status_change_time", st.st_ctime);
+    set_file_instance(fd, instance);
 
     return OK(instance);
 }
@@ -133,22 +124,9 @@ static BuiltinResult _fs_file_create(int argc, Obj **argv, UNUSED(Obj *, caller)
 
     int fd =
         open(AS_STRING(argv[0])->chars, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
-    struct stat st;
-    fstat(fd, &st);
-
     ObjInstance *instance = new_instance(_fs_file_class);
 
-    SET_INT_FIELD("fd", fd);
-    SET_INT_FIELD("device", st.st_dev);
-    SET_INT_FIELD("inode", st.st_ino);
-    SET_INT_FIELD("mode", st.st_mode);
-    SET_INT_FIELD("num_links", st.st_nlink);
-    SET_INT_FIELD("uid", st.st_uid);
-    SET_INT_FIELD("gid", st.st_gid);
-    SET_INT_FIELD("size", st.st_size);
-    SET_INT_FIELD("access_time", st.st_atime);
-    SET_INT_FIELD("modification_time", st.st_mtime);
-    SET_INT_FIELD("status_change_time", st.st_ctime);
+    set_file_instance(fd, instance);
 
     return OK(instance);
 }
@@ -253,6 +231,19 @@ static BuiltinResult _fs_file_tell(int argc, UNUSED(Obj **, argv), Obj *caller) 
 ObjModule *get_fs_module() {
     if (_fs_module == NULL) {
         ObjModule *module = new_module(new_string("fs", 2));
+
+        ObjInstance *_stdin = new_instance(_fs_file_class);
+        set_file_instance(0, _stdin);
+
+        ObjInstance *_stdout = new_instance(_fs_file_class);
+        set_file_instance(1, _stdout);
+
+        ObjInstance *_stderr = new_instance(_fs_file_class);
+        set_file_instance(2, _stderr);
+
+        SET_MEMBER("STDIN", _stdin);
+        SET_MEMBER("STDOUT", _stdout);
+        SET_MEMBER("STDERR", _stderr);
 
         SET_INT_MEMBER("CREATE", O_CREAT);
         SET_INT_MEMBER("EXCLUSIVE", O_EXCL);
