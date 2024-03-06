@@ -1,5 +1,7 @@
-#include "compiler.h"
+#include <ctype.h>
+
 #include "common.h"
+#include "compiler.h"
 #include "memory.h"
 
 #ifdef DEBUG
@@ -476,13 +478,34 @@ static void and (bool) {
     patch_jump(end_jump);
 }
 
+static int hex2int(char ch) {
+    if (ch >= '0' && ch <= '9')
+        return ch - '0';
+
+    if (ch >= 'A' && ch <= 'F')
+        return ch - 'A' + 10;
+
+    if (ch >= 'a' && ch <= 'f')
+        return ch - 'a' + 10;
+
+    return -1;
+}
+
+static int oct2int(char ch) {
+    if (ch >= '0' && ch <= '7')
+        return ch - '0';
+
+    return -1;
+}
+
 static void string(bool) {
     char *escaped_str = calloc(parser.previous.length - 1, 1);
     int escaped_pos = 0;
 
     for (int i = 1; i < parser.previous.length - 1; i++) {
         if (parser.previous.start[i] == '\\') {
-            switch (parser.previous.start[i + 1]) {
+            char c = parser.previous.start[i + 1];
+            switch (c) {
                 case '\\':
                     escaped_str[escaped_pos] = '\\';
                     break;
@@ -516,10 +539,40 @@ static void string(bool) {
                 case 'v':
                     escaped_str[escaped_pos] = '\v';
                     break;
+                case 'x':
+                    {
+                        char d1 = hex2int(parser.previous.start[i + 2]);
+                        char d2 = hex2int(parser.previous.start[i + 3]);
+
+                        if (d1 == -1 || d2 == -1) {
+                            free(escaped_str);
+                            error("Invalid escape sequence in string");
+                            return;
+                        }
+
+                        escaped_str[escaped_pos] = d1 * 16 + d2;
+                        i += 2;
+                    }
+                    break;
                 default:
-                    free(escaped_str);
-                    error("Invalid escape sequence in string");
-                    return;
+                    if (isdigit(c)) {
+                        char d1 = oct2int(c);
+                        char d2 = oct2int(parser.previous.start[i + 2]);
+                        char d3 = oct2int(parser.previous.start[i + 3]);
+
+                        if (d1 == -1 || d2 == -1 || d3 == -1) {
+                            free(escaped_str);
+                            error("Invalid escape sequence in string");
+                            return;
+                        }
+
+                        escaped_str[escaped_pos] = d1 * 64 + d2 * 8 + d3;
+                        i += 2;
+                    } else {
+                        free(escaped_str);
+                        error("Invalid escape sequence in string");
+                        return;
+                    }
             }
             i++;
         } else {
