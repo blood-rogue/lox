@@ -7,13 +7,6 @@
 static ObjModule *_fs_module = NULL;
 static ObjClass *_fs_file_class = NULL;
 
-static BuiltinResult _fs_dup(int argc, Obj **argv, UNUSED(Obj *, caller)) {
-    CHECK_ARG_COUNT(1)
-    CHECK_ARG_TYPE(INT, 0)
-
-    return OK(new_int(dup(AS_INT(argv[0])->value)));
-}
-
 static BuiltinResult _fs_dup2(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(INT, 0)
@@ -228,6 +221,19 @@ static BuiltinResult _fs_file_tell(int argc, UNUSED(Obj **, argv), Obj *caller) 
     return OK(new_int(lseek(fd, 0, SEEK_CUR)));
 }
 
+static BuiltinResult _fs_file_dup(int argc, UNUSED(Obj **, argv), Obj *caller) {
+    CHECK_ARG_COUNT(0)
+
+    ObjInstance *instance = AS_INSTANCE(caller);
+
+    Obj *fd_obj;
+    table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
+
+    int64_t fd = AS_INT(fd_obj)->value;
+
+    return OK(new_int(dup(fd)));
+}
+
 ObjModule *get_fs_module() {
     if (_fs_module == NULL) {
         ObjModule *module = new_module(new_string("fs", 2));
@@ -246,7 +252,6 @@ ObjModule *get_fs_module() {
         SET_INT_MEMBER("SEEK_SET", SEEK_SET);
         SET_INT_MEMBER("SEEK_CUR", SEEK_CUR);
 
-        SET_BUILTIN_FN_MEMBER("dup", _fs_dup);
         SET_BUILTIN_FN_MEMBER("dup2", _fs_dup2);
         SET_BUILTIN_FN_MEMBER("chown", _fs_chown);
         SET_BUILTIN_FN_MEMBER("link", _fs_link);
@@ -268,6 +273,7 @@ ObjModule *get_fs_module() {
             SET_BUILTIN_FN_METHOD("tell", _fs_file_tell);
             SET_BUILTIN_FN_METHOD("seek", _fs_file_seek);
             SET_BUILTIN_FN_METHOD("is_a_tty", _fs_file_is_a_tty);
+            SET_BUILTIN_FN_METHOD("dup", _fs_file_dup);
 
             _fs_file_class = klass;
         }
