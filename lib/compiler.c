@@ -1,4 +1,6 @@
 #include <ctype.h>
+#include <grapheme.h>
+#include <math.h>
 
 #include "common.h"
 #include "compiler.h"
@@ -478,26 +480,6 @@ static void and (bool) {
     patch_jump(end_jump);
 }
 
-static int hex2int(char ch) {
-    if (ch >= '0' && ch <= '9')
-        return ch - '0';
-
-    if (ch >= 'A' && ch <= 'F')
-        return ch - 'A' + 10;
-
-    if (ch >= 'a' && ch <= 'f')
-        return ch - 'a' + 10;
-
-    return -1;
-}
-
-static int oct2int(char ch) {
-    if (ch >= '0' && ch <= '7')
-        return ch - '0';
-
-    return -1;
-}
-
 static void string(bool) {
     char *escaped_str = calloc(parser.previous.length - 1, 1);
     int escaped_pos = 0;
@@ -541,38 +523,83 @@ static void string(bool) {
                     break;
                 case 'x':
                     {
-                        char d1 = hex2int(parser.previous.start[i + 2]);
-                        char d2 = hex2int(parser.previous.start[i + 3]);
+                        char d[2];
+                        memcpy(d, parser.previous.start + (i + 2), 2);
 
-                        if (d1 == -1 || d2 == -1) {
-                            free(escaped_str);
-                            error("Invalid escape sequence in string");
-                            return;
+                        for (int p = 0; p < 2; p++) {
+                            if (!isxdigit(d[p])) {
+                                free(escaped_str);
+                                error("Invalid escape sequence in string");
+                                return;
+                            }
                         }
 
-                        escaped_str[escaped_pos] = d1 * 16 + d2;
+                        escaped_str[escaped_pos] = strtol(d, NULL, 16);
                         i += 2;
+                        break;
                     }
-                    break;
+                case 'u':
+                    {
+                        char d[4];
+                        memcpy(d, parser.previous.start + (i + 2), 4);
+
+                        for (int p = 0; p < 4; p++) {
+                            if (!isxdigit(d[p])) {
+                                free(escaped_str);
+                                error("Invalid escape sequence in string");
+                                return;
+                            }
+                        }
+
+                        uint16_t cp = strtol(d, NULL, 16);
+                        size_t len = grapheme_encode_utf8(cp, escaped_str + escaped_pos, 2);
+
+                        escaped_pos += len - 1;
+                        i += 4;
+                        break;
+                    }
+                case 'U':
+                    {
+                        char d[8];
+                        memcpy(d, parser.previous.start + (i + 2), 8);
+
+                        for (int p = 0; p < 8; p++) {
+                            if (!isxdigit(d[p])) {
+                                free(escaped_str);
+                                error("Invalid escape sequence in string");
+                                return;
+                            }
+                        }
+
+                        uint32_t cp = strtol(d, NULL, 16);
+                        size_t len = grapheme_encode_utf8(cp, escaped_str + escaped_pos, 4);
+
+                        escaped_pos += len - 1;
+                        i += 8;
+                        break;
+                    }
                 default:
                     if (isdigit(c)) {
-                        char d1 = oct2int(c);
-                        char d2 = oct2int(parser.previous.start[i + 2]);
-                        char d3 = oct2int(parser.previous.start[i + 3]);
+                        char d[3];
+                        memcpy(d, parser.previous.start + (i + 1), 3);
 
-                        if (d1 == -1 || d2 == -1 || d3 == -1) {
-                            free(escaped_str);
-                            error("Invalid escape sequence in string");
-                            return;
+                        for (int p = 0; p < 3; p++) {
+                            if (!(d[p] >= '0' && d[p] <= '7')) {
+                                free(escaped_str);
+                                error("Invalid escape sequence in string");
+                                return;
+                            }
                         }
 
-                        escaped_str[escaped_pos] = d1 * 64 + d2 * 8 + d3;
+                        escaped_str[escaped_pos] = strtol(d, NULL, 8);
                         i += 2;
+                        break;
                     } else {
                         free(escaped_str);
                         error("Invalid escape sequence in string");
                         return;
                     }
+                    break;
             }
             i++;
         } else {
