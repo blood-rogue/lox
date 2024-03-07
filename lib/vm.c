@@ -1,3 +1,4 @@
+#include <grapheme.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -585,7 +586,19 @@ static InterpretResult run() {
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
 
-                                indexed = AS_OBJ(new_char(string->chars[index]));
+                                size_t ret;
+                                int cur = 0;
+                                for (size_t off = 0; string->chars[off] != '\0'; off += ret) {
+                                    ret = grapheme_next_character_break_utf8(
+                                        string->chars + off, SIZE_MAX);
+                                    if (index == cur) {
+                                        char *s = malloc(ret + 1);
+                                        snprintf(s, ret, "%.*s", (int)ret, s + off);
+                                        indexed = AS_OBJ(new_char(s, ret));
+                                        break;
+                                    }
+                                    cur++;
+                                }
                                 break;
                             }
                         default:

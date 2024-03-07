@@ -1,5 +1,7 @@
-#include "object.h"
+#include <grapheme.h>
+
 #include "memory.h"
+#include "object.h"
 #include "vm.h"
 
 ObjNil *_NIL = NULL;
@@ -57,10 +59,9 @@ ObjMap *new_map(Obj **elems, int pair_count) {
     return map;
 }
 
-ObjChar *new_char(uint8_t value) {
+ObjChar *new_char(char *chars, size_t len) {
     ObjChar *_char = ALLOCATE_OBJ(ObjChar, OBJ_CHAR);
-
-    _char->value = value;
+    grapheme_decode_utf8(chars, len, &_char->value);
 
     return _char;
 }
@@ -220,6 +221,13 @@ ObjString *take_string(char *chars, int length) {
     return allocate_string(chars, length, hash);
 }
 
+ObjChar *take_char(uint32_t value) {
+    ObjChar *_char = ALLOCATE_OBJ(ObjChar, OBJ_CHAR);
+    _char->value = value;
+
+    return _char;
+}
+
 static void print_function(ObjFunction *function) {
     if (function->name == NULL) {
         printf("<script>");
@@ -265,6 +273,17 @@ static void print_map(ObjMap *map) {
     printf("}");
 }
 
+static void print_char(uint32_t ch, bool repr) {
+    char s[5];
+    grapheme_encode_utf8(ch, s, 4);
+    s[4] = '\0';
+
+    if (repr)
+        printf("'%s'", s);
+    else
+        printf("%s", s);
+}
+
 void print_object(Obj *obj) {
     switch (obj->type) {
         case OBJ_NIL:
@@ -277,7 +296,7 @@ void print_object(Obj *obj) {
             printf("%ld", AS_INT(obj)->value);
             break;
         case OBJ_CHAR:
-            printf("%c", AS_CHAR(obj)->value);
+            print_char(AS_CHAR(obj)->value, false);
             break;
         case OBJ_BOOL:
             printf(AS_BOOL(obj)->value ? "true" : "false");
@@ -330,7 +349,7 @@ void repr_object(Obj *obj) {
             printf("\"%s\"", AS_STRING(obj)->chars);
             break;
         case OBJ_CHAR:
-            printf("'%c'", AS_CHAR(obj)->value);
+            print_char(AS_CHAR(obj)->value, true);
             break;
         default:
             print_object(obj);

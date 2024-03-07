@@ -457,7 +457,6 @@ static void index_(bool can_assign) {
 }
 
 static void float_(bool) { emit_constant(AS_OBJ(new_float(strtod(parser.previous.start, NULL)))); }
-static void char_(bool) { emit_constant(AS_OBJ(new_char(parser.previous.start[1]))); }
 static void int_(bool) { emit_constant(AS_OBJ(new_int(strtol(parser.previous.start, NULL, 10)))); }
 
 static void or (bool) {
@@ -480,8 +479,7 @@ static void and (bool) {
     patch_jump(end_jump);
 }
 
-static void string(bool) {
-    char *escaped_str = calloc(parser.previous.length - 1, 1);
+static void escape(char *escaped_str, int *pos) {
     int escaped_pos = 0;
 
     for (int i = 1; i < parser.previous.length - 1; i++) {
@@ -609,7 +607,46 @@ static void string(bool) {
         escaped_pos++;
     }
 
-    emit_constant(AS_OBJ(take_string(escaped_str, escaped_pos)));
+    *pos = escaped_pos;
+}
+
+static void string(bool) {
+    char *escaped_str = calloc(parser.previous.length - 1, 1);
+    int escaped_pos;
+
+    escape(escaped_str, &escaped_pos);
+    ObjString *str = take_string(escaped_str, escaped_pos);
+
+    size_t ret;
+    int length = 0;
+    for (size_t off = 0; str->chars[off] != '\0'; off += ret) {
+        ret = grapheme_next_character_break_utf8(str->chars + off, SIZE_MAX);
+        length++;
+    }
+
+    str->length = length;
+    emit_constant(AS_OBJ(str));
+}
+
+static void char_(bool) {
+    char *str = calloc(parser.previous.length - 1, 1);
+    int escaped_pos;
+
+    escape(str, &escaped_pos);
+
+    size_t ret;
+    int length = 0;
+    for (size_t off = 0; str[off] != '\0'; off += ret) {
+        ret = grapheme_next_character_break_utf8(str + off, SIZE_MAX);
+        length++;
+    }
+
+    if (length > 1) {
+        error("Invalid char sequence");
+        return;
+    }
+
+    emit_constant(AS_OBJ(new_char(str, escaped_pos)));
 }
 
 static void unary(bool) {

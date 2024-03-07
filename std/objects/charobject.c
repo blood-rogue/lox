@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <grapheme.h>
 
 #include "builtins.h"
 
@@ -64,12 +65,16 @@ BuiltinResult _char_is_alnum(int argc, UNUSED(Obj **, argv), Obj *caller) {
 
 BuiltinResult _char_to_lower(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    return OK(new_char((uint8_t)tolower(AS_CHAR(caller)->value)));
+    uint32_t dest;
+    grapheme_to_lowercase(&AS_CHAR(caller)->value, 1, &dest, 1);
+    return OK(take_char(dest));
 }
 
 BuiltinResult _char_to_upper(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    return OK(new_char((uint8_t)toupper(AS_CHAR(caller)->value)));
+    uint32_t dest;
+    grapheme_to_uppercase(&AS_CHAR(caller)->value, 1, &dest, 1);
+    return OK(take_char(dest));
 }
 
 BuiltinTable *char_methods() {
