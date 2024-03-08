@@ -377,8 +377,8 @@ bool obj_equal(Obj *a, Obj *b) {
                 ObjString *str_a = AS_STRING(a);
                 ObjString *str_b = AS_STRING(b);
 
-                return a->hash == b->hash && str_a->length == str_b->length &&
-                       memcmp(str_a->chars, str_b->chars, str_a->length) == 0;
+                return a->hash == b->hash && str_a->raw_length == str_b->raw_length &&
+                       memcmp(str_a->chars, str_b->chars, str_a->raw_length) == 0;
             }
         default:
             return a == b;

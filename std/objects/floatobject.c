@@ -36,11 +36,11 @@ BuiltinTable *float_methods() {
     BuiltinTable *table = malloc(sizeof(BuiltinTable));
     init_method_table(table, 8);
 
-    SET_BLTIN_METHOD(float, to_str);
-    SET_BLTIN_METHOD(float, is_nan);
-    SET_BLTIN_METHOD(float, is_finite);
-    SET_BLTIN_METHOD(float, is_infinite);
-    SET_BLTIN_METHOD(float, is_normal);
+    SET_BLTIN_METHOD("to_str", _float_to_str);
+    SET_BLTIN_METHOD("is_nan", _float_is_nan);
+    SET_BLTIN_METHOD("is_finite", _float_is_finite);
+    SET_BLTIN_METHOD("is_infinite", _float_is_infinite);
+    SET_BLTIN_METHOD("is_normal", _float_is_normal);
 
     INFINITY;
 

@@ -40,9 +40,9 @@ BuiltinTable *int_methods() {
     BuiltinTable *table = malloc(sizeof(BuiltinTable));
     init_method_table(table, 4);
 
-    SET_BLTIN_METHOD(int, to_str);
-    SET_BLTIN_METHOD(int, to_hex);
-    SET_BLTIN_METHOD(int, to_oct);
+    SET_BLTIN_METHOD("to_str", _int_to_str);
+    SET_BLTIN_METHOD("to_hex", _int_to_hex);
+    SET_BLTIN_METHOD("to_oct", _int_to_oct);
 
     return table;
 }

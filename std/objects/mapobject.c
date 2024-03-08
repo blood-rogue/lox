@@ -39,9 +39,9 @@ BuiltinTable *map_methods() {
     BuiltinTable *table = malloc(sizeof(BuiltinTable));
     init_method_table(table, 8);
 
-    SET_BLTIN_METHOD(map, len);
-    SET_BLTIN_METHOD(map, keys);
-    SET_BLTIN_METHOD(map, values);
+    SET_BLTIN_METHOD("len", _map_len);
+    SET_BLTIN_METHOD("keys", _map_keys);
+    SET_BLTIN_METHOD("values", _map_values);
 
     return table;
 }

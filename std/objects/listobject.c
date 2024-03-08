@@ -18,8 +18,8 @@ BuiltinTable *list_methods() {
     BuiltinTable *table = malloc(sizeof(BuiltinTable));
     init_method_table(table, 8);
 
-    SET_BLTIN_METHOD(list, append);
-    SET_BLTIN_METHOD(list, len);
+    SET_BLTIN_METHOD("append", _list_append);
+    SET_BLTIN_METHOD("len", _list_len);
 
     return table;
 }

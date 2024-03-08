@@ -113,23 +113,19 @@ void init_vm() {
 
     init_method_table(&vm.builtin_functions, 16);
 
-#define SET_BLTIN_FN(name)                                                                         \
-    method_table_set(                                                                              \
-        &vm.builtin_functions,                                                                     \
-        #name,                                                                                     \
-        hash_string(#name, (int)strlen(#name)),                                                    \
-        name##_builtin_function)
+#define SET_BLTIN_FN(name, fn)                                                                     \
+    method_table_set(&vm.builtin_functions, name, hash_string(name, (int)strlen(name)), fn)
 
-    SET_BLTIN_FN(exit);
-    SET_BLTIN_FN(print);
-    SET_BLTIN_FN(input);
-    SET_BLTIN_FN(argv);
-    SET_BLTIN_FN(run_gc);
-    SET_BLTIN_FN(parse_int);
-    SET_BLTIN_FN(parse_float);
-    SET_BLTIN_FN(sleep);
-    SET_BLTIN_FN(type);
-    SET_BLTIN_FN(repr);
+    SET_BLTIN_FN("exit", exit_builtin_function);
+    SET_BLTIN_FN("print", print_builtin_function);
+    SET_BLTIN_FN("input", input_builtin_function);
+    SET_BLTIN_FN("argv", argv_builtin_function);
+    SET_BLTIN_FN("run_gc", run_gc_builtin_function);
+    SET_BLTIN_FN("parse_int", parse_int_builtin_function);
+    SET_BLTIN_FN("parse_float", parse_float_builtin_function);
+    SET_BLTIN_FN("sleep", sleep_builtin_function);
+    SET_BLTIN_FN("type", type_builtin_function);
+    SET_BLTIN_FN("repr", repr_builtin_function);
 
 #undef SET_BLTIN_FN
 }
@@ -178,7 +174,7 @@ static Table *get_current_global() {
 }
 
 static bool is_std_import(ObjString *path) {
-    return path->length > 6 && memcmp(path->chars, "@std/", 5) == 0;
+    return path->raw_length > 6 && memcmp(path->chars, "@std/", 5) == 0;
 }
 
 static bool call(ObjClosure *closure, int argc) {
@@ -901,10 +897,10 @@ static InterpretResult run() {
                         ObjString *b = AS_STRING(peek(0));
                         ObjString *a = AS_STRING(peek(1));
 
-                        int length = a->length + b->length;
+                        int length = a->raw_length + b->raw_length;
                         char *chars = ALLOCATE(char, length + 1);
-                        memcpy(chars, a->chars, a->length);
-                        memcpy(chars + a->length, b->chars, b->length);
+                        memcpy(chars, a->chars, a->raw_length);
+                        memcpy(chars + a->raw_length, b->chars, b->raw_length);
                         chars[length] = '\0';
 
                         ObjString *result = take_string(chars, length);
@@ -1144,7 +1140,7 @@ static InterpretResult run() {
                     }
 
                     if (is_std_import(import_path)) {
-                        char *temp = malloc(import_path->length + 1);
+                        char *temp = malloc(import_path->raw_length + 1);
                         strcpy(temp, import_path->chars);
 
                         strtok(temp, "/");

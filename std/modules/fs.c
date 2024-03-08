@@ -170,7 +170,7 @@ static BuiltinResult _fs_file_write(int argc, Obj **argv, Obj *caller) {
     int64_t fd = AS_INT(fd_obj)->value;
     ObjString *str = AS_STRING(argv[0]);
 
-    if (write(fd, str->chars, str->length) == str->length)
+    if (write(fd, str->chars, str->raw_length) == str->raw_length)
         return OK(new_nil());
 
     return ERR("Could not write file.");

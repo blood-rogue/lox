@@ -1,7 +1,7 @@
 #include "object.h"
 
-#define SET_BLTIN_METHOD(obj, name)                                                                \
-    method_table_set(table, #name, hash_string(#name, (int)strlen(#name)), _##obj##_##name)
+#define SET_BLTIN_METHOD(name, fn)                                                                 \
+    method_table_set(table, name, hash_string(name, (int)strlen(name)), fn)
 
 BuiltinTable **get_builtin_methods();
 
