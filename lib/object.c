@@ -1,4 +1,5 @@
-#include <grapheme.h>
+#include <unistr.h>
+#include <unitypes.h>
 
 #include "memory.h"
 #include "object.h"
@@ -61,7 +62,7 @@ ObjMap *new_map(Obj **elems, int pair_count) {
 
 ObjChar *new_char(char *chars, size_t len) {
     ObjChar *_char = ALLOCATE_OBJ(ObjChar, OBJ_CHAR);
-    grapheme_decode_utf8(chars, len, &_char->value);
+    u8_mbtouc(&_char->value, (uint8_t *)chars, len);
 
     return _char;
 }
@@ -274,8 +275,8 @@ static void print_map(ObjMap *map) {
 }
 
 static void print_char(uint32_t ch, bool repr) {
-    char s[5];
-    grapheme_encode_utf8(ch, s, 4);
+    uint8_t s[5];
+    u8_uctomb(s, ch, 4);
     s[4] = '\0';
 
     if (repr)

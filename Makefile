@@ -31,7 +31,7 @@ release: CFLAGS += -Ofast -flto=auto -ffunction-sections -fdata-sections
 release: $(TARGET)
 
 $(TARGET): $(MAIN_OBJ) $(LIB_OBJS) $(STD_OBJS)
-	$(CC) $(LDFLAGS) -o $@ build/*.o -lm -lgrapheme
+	$(CC) $(LDFLAGS) -o $@ build/*.o -lm -lunistring
 
 $(BUILD_DIR)/main.o: main.c
 	@mkdir -p $(BUILD_DIR)

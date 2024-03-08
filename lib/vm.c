@@ -1,7 +1,8 @@
-#include <grapheme.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistr.h>
+#include <unitypes.h>
 
 #include "builtins.h"
 #include "common.h"
@@ -586,18 +587,15 @@ static InterpretResult run() {
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
 
-                                size_t ret;
                                 int cur = 0;
-                                for (size_t off = 0; string->chars[off] != '\0'; off += ret) {
-                                    ret = grapheme_next_character_break_utf8(
-                                        string->chars + off, SIZE_MAX);
+                                ucs4_t at_index;
+                                for (uint8_t *s = (uint8_t *)string->chars;
+                                     (s = (uint8_t *)u8_next(&at_index, s)) != NULL;
+                                     cur++) {
                                     if (index == cur) {
-                                        char *s = malloc(ret + 1);
-                                        snprintf(s, ret, "%.*s", (int)ret, s + off);
-                                        indexed = AS_OBJ(new_char(s, ret));
+                                        indexed = AS_OBJ(take_char(at_index));
                                         break;
                                     }
-                                    cur++;
                                 }
                                 break;
                             }

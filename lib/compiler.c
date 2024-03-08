@@ -1,6 +1,7 @@
 #include <ctype.h>
-#include <grapheme.h>
 #include <math.h>
+#include <unistr.h>
+#include <unitypes.h>
 
 #include "common.h"
 #include "compiler.h"
@@ -549,8 +550,8 @@ static void escape(char *escaped_str, int *pos) {
                             }
                         }
 
-                        uint16_t cp = strtol(d, NULL, 16);
-                        size_t len = grapheme_encode_utf8(cp, escaped_str + escaped_pos, 2);
+                        ucs4_t cp = strtol(d, NULL, 16);
+                        size_t len = u8_uctomb((uint8_t *)escaped_str + escaped_pos, cp, 2);
 
                         escaped_pos += len - 1;
                         i += 4;
@@ -569,8 +570,8 @@ static void escape(char *escaped_str, int *pos) {
                             }
                         }
 
-                        uint32_t cp = strtol(d, NULL, 16);
-                        size_t len = grapheme_encode_utf8(cp, escaped_str + escaped_pos, 4);
+                        ucs4_t cp = strtol(d, NULL, 16);
+                        size_t len = u8_uctomb((uint8_t *)escaped_str + escaped_pos, cp, 4);
 
                         escaped_pos += len - 1;
                         i += 8;
@@ -617,14 +618,7 @@ static void string(bool) {
     escape(escaped_str, &escaped_pos);
     ObjString *str = take_string(escaped_str, escaped_pos);
 
-    size_t ret;
-    int length = 0;
-    for (size_t off = 0; str->chars[off] != '\0'; off += ret) {
-        ret = grapheme_next_character_break_utf8(str->chars + off, SIZE_MAX);
-        length++;
-    }
-
-    str->length = length;
+    str->length = u8_strlen((uint8_t *)str->chars);
     emit_constant(AS_OBJ(str));
 }
 
@@ -634,14 +628,7 @@ static void char_(bool) {
 
     escape(str, &escaped_pos);
 
-    size_t ret;
-    int length = 0;
-    for (size_t off = 0; str[off] != '\0'; off += ret) {
-        ret = grapheme_next_character_break_utf8(str + off, SIZE_MAX);
-        length++;
-    }
-
-    if (length > 1) {
+    if (u8_strlen((uint8_t *)str) > 1) {
         error("Invalid char sequence");
         return;
     }

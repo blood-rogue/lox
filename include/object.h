@@ -113,7 +113,7 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    uint32_t value;
+    ucs4_t value;
 } ObjChar;
 
 typedef struct {

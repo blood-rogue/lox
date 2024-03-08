@@ -1,100 +1,39 @@
-#include <ctype.h>
-#include <grapheme.h>
+#include <unicase.h>
+#include <unictype.h>
 
 #include "builtins.h"
 
-BuiltinResult _char_is_upper(int argc, UNUSED(Obj **, argv), Obj *caller) {
-    CHECK_ARG_COUNT(0)
-    return OK(new_bool(isupper(AS_CHAR(caller)->value)));
-}
+#define IS_PROPERTY_FN(name)                                                                       \
+    BuiltinResult _char_is_##name(int argc, UNUSED(Obj **, argv), Obj *caller) {                   \
+        CHECK_ARG_COUNT(0)                                                                         \
+        return OK(new_bool(uc_is_property_##name(AS_CHAR(caller)->value)));                        \
+    }
 
-BuiltinResult _char_is_lower(int argc, UNUSED(Obj **, argv), Obj *caller) {
-    CHECK_ARG_COUNT(0)
-    return OK(new_bool(islower(AS_CHAR(caller)->value)));
-}
+IS_PROPERTY_FN(alphabetic)
 
-BuiltinResult _char_is_alpha(int argc, UNUSED(Obj **, argv), Obj *caller) {
+BuiltinResult _char_to_upper(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    return OK(new_bool(isalpha(AS_CHAR(caller)->value)));
-}
-
-BuiltinResult _char_is_digit(int argc, UNUSED(Obj **, argv), Obj *caller) {
-    CHECK_ARG_COUNT(0)
-    return OK(new_bool(isdigit(AS_CHAR(caller)->value)));
-}
-
-BuiltinResult _char_is_hex_digit(int argc, UNUSED(Obj **, argv), Obj *caller) {
-    CHECK_ARG_COUNT(0)
-    return OK(new_bool(isxdigit(AS_CHAR(caller)->value)));
-}
-
-BuiltinResult _char_is_space(int argc, UNUSED(Obj **, argv), Obj *caller) {
-    CHECK_ARG_COUNT(0)
-    return OK(new_bool(isspace(AS_CHAR(caller)->value)));
-}
-
-BuiltinResult _char_is_printable(int argc, UNUSED(Obj **, argv), Obj *caller) {
-    CHECK_ARG_COUNT(0)
-    return OK(new_bool(isprint(AS_CHAR(caller)->value)));
-}
-
-BuiltinResult _char_is_graphical(int argc, UNUSED(Obj **, argv), Obj *caller) {
-    CHECK_ARG_COUNT(0)
-    return OK(new_bool(isgraph(AS_CHAR(caller)->value)));
-}
-
-BuiltinResult _char_is_blank(int argc, UNUSED(Obj **, argv), Obj *caller) {
-    CHECK_ARG_COUNT(0)
-    return OK(new_bool(isblank(AS_CHAR(caller)->value)));
-}
-
-BuiltinResult _char_is_control(int argc, UNUSED(Obj **, argv), Obj *caller) {
-    CHECK_ARG_COUNT(0)
-    return OK(new_bool(iscntrl(AS_CHAR(caller)->value)));
-}
-
-BuiltinResult _char_is_punctuation(int argc, UNUSED(Obj **, argv), Obj *caller) {
-    CHECK_ARG_COUNT(0)
-    return OK(new_bool(ispunct(AS_CHAR(caller)->value)));
-}
-
-BuiltinResult _char_is_alnum(int argc, UNUSED(Obj **, argv), Obj *caller) {
-    CHECK_ARG_COUNT(0)
-    return OK(new_bool(isalnum(AS_CHAR(caller)->value)));
+    return OK(take_char(uc_toupper(AS_CHAR(caller)->value)));
 }
 
 BuiltinResult _char_to_lower(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    uint32_t dest;
-    grapheme_to_lowercase(&AS_CHAR(caller)->value, 1, &dest, 1);
-    return OK(take_char(dest));
+    return OK(take_char(uc_tolower(AS_CHAR(caller)->value)));
 }
 
-BuiltinResult _char_to_upper(int argc, UNUSED(Obj **, argv), Obj *caller) {
+BuiltinResult _char_to_title(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    uint32_t dest;
-    grapheme_to_uppercase(&AS_CHAR(caller)->value, 1, &dest, 1);
-    return OK(take_char(dest));
+    return OK(take_char(uc_totitle(AS_CHAR(caller)->value)));
 }
 
 BuiltinTable *char_methods() {
     BuiltinTable *table = malloc(sizeof(BuiltinTable));
     init_method_table(table, 16);
 
-    SET_BLTIN_METHOD(char, is_upper);
-    SET_BLTIN_METHOD(char, is_lower);
-    SET_BLTIN_METHOD(char, is_alpha);
-    SET_BLTIN_METHOD(char, is_digit);
-    SET_BLTIN_METHOD(char, is_hex_digit);
-    SET_BLTIN_METHOD(char, is_space);
-    SET_BLTIN_METHOD(char, is_printable);
-    SET_BLTIN_METHOD(char, is_graphical);
-    SET_BLTIN_METHOD(char, is_blank);
-    SET_BLTIN_METHOD(char, is_control);
-    SET_BLTIN_METHOD(char, is_punctuation);
-    SET_BLTIN_METHOD(char, is_alnum);
-    SET_BLTIN_METHOD(char, to_lower);
+    SET_BLTIN_METHOD(char, is_alphabetic);
     SET_BLTIN_METHOD(char, to_upper);
+    SET_BLTIN_METHOD(char, to_lower);
+    SET_BLTIN_METHOD(char, to_title);
 
     return table;
 }
