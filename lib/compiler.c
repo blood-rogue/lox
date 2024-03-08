@@ -618,7 +618,6 @@ static void string(bool) {
     escape(escaped_str, &escaped_pos);
     ObjString *str = take_string(escaped_str, escaped_pos);
 
-    str->length = u8_strlen((uint8_t *)str->chars);
     emit_constant(AS_OBJ(str));
 }
 
@@ -628,12 +627,16 @@ static void char_(bool) {
 
     escape(str, &escaped_pos);
 
-    if (u8_strlen((uint8_t *)str) > 1) {
+    if (u8_strlen((uint8_t *)str) > 1 || u8_check((uint8_t *)str, escaped_pos) != NULL) {
         error("Invalid char sequence");
         return;
     }
 
-    emit_constant(AS_OBJ(new_char(str, escaped_pos)));
+    ucs4_t value;
+    u8_mbtouc(&value, (uint8_t *)str, escaped_pos);
+
+    free(str);
+    emit_constant(AS_OBJ(take_char(value)));
 }
 
 static void unary(bool) {

@@ -1,6 +1,8 @@
 #ifndef lox_object_h
 #define lox_object_h
 
+#include <unitypes.h>
+
 #include "array.h"
 #include "chunk.h"
 #include "common.h"
@@ -133,6 +135,7 @@ typedef struct {
 
 typedef struct {
     Obj obj;
+    int raw_length;
     int length;
     char *chars;
 } ObjString;
@@ -202,7 +205,6 @@ typedef struct {
 ObjNil *new_nil();
 ObjInt *new_int(int64_t);
 ObjMap *new_map(Obj **, int);
-ObjChar *new_char(char *, size_t);
 ObjList *new_list(Obj **, int);
 ObjBool *new_bool(bool);
 ObjFloat *new_float(double);

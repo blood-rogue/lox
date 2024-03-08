@@ -28,7 +28,8 @@ static Obj *allocate_object(size_t size, ObjType type) {
 static ObjString *allocate_string(char *chars, int length, uint32_t hash) {
     ObjString *string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
 
-    string->length = length;
+    string->raw_length = length;
+    string->length = u8_strlen((uint8_t *)chars);
     string->chars = chars;
     string->obj.hash = hash;
 
@@ -58,13 +59,6 @@ ObjMap *new_map(Obj **elems, int pair_count) {
     }
 
     return map;
-}
-
-ObjChar *new_char(char *chars, size_t len) {
-    ObjChar *_char = ALLOCATE_OBJ(ObjChar, OBJ_CHAR);
-    u8_mbtouc(&_char->value, (uint8_t *)chars, len);
-
-    return _char;
 }
 
 ObjList *new_list(Obj **elems, int elem_count) {
@@ -275,7 +269,7 @@ static void print_map(ObjMap *map) {
 }
 
 static void print_char(uint32_t ch, bool repr) {
-    uint8_t s[5];
+    uint8_t s[5] = {0};
     u8_uctomb(s, ch, 4);
     s[4] = '\0';
 
