@@ -336,13 +336,13 @@ static void binary(bool) {
             emit_byte(OP_DIVIDE);
             break;
         case TOKEN_AMPERSAND:
-            emit_byte(OP_BINARY_AND);
+            emit_byte(OP_BITWISE_AND);
             break;
         case TOKEN_PIPE:
-            emit_byte(OP_BINARY_OR);
+            emit_byte(OP_BITWISE_OR);
             break;
         case TOKEN_CARET:
-            emit_byte(OP_BINARY_XOR);
+            emit_byte(OP_BITWISE_XOR);
             break;
         case TOKEN_GREATER_GREATER:
             emit_byte(OP_SHIFT_RIGHT);
@@ -651,6 +651,9 @@ static void unary(bool) {
         case TOKEN_MINUS:
             emit_byte(OP_NEGATE);
             break;
+        case TOKEN_TILDE:
+            emit_byte(OP_BITWISE_NOT);
+            break;
         default:
             return;
     }
@@ -756,9 +759,10 @@ ParseRule rules[] = {
     [TOKEN_SEMICOLON] = {NULL, NULL, PREC_NONE},
     [TOKEN_SLASH] = {NULL, binary, PREC_FACTOR},
     [TOKEN_STAR] = {NULL, binary, PREC_FACTOR},
-    [TOKEN_AMPERSAND] = {NULL, binary, PREC_BINARY_AND},
-    [TOKEN_PIPE] = {NULL, binary, PREC_BINARY_OR},
-    [TOKEN_CARET] = {NULL, binary, PREC_BINARY_XOR},
+    [TOKEN_AMPERSAND] = {NULL, binary, PREC_BITWISE_AND},
+    [TOKEN_PIPE] = {NULL, binary, PREC_BITWISE_OR},
+    [TOKEN_CARET] = {NULL, binary, PREC_BITWISE_XOR},
+    [TOKEN_TILDE] = {unary, NULL, PREC_NONE},
     [TOKEN_GREATER_GREATER] = {NULL, binary, PREC_SHIFT},
     [TOKEN_LESS_LESS] = {NULL, binary, PREC_SHIFT},
     [TOKEN_COLON_COLON] = {NULL, scope, PREC_CALL},

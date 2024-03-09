@@ -13,6 +13,8 @@ ObjModule *get_module(char *name) {
         return get_process_module();
     else if (strcmp(name, "sys") == 0)
         return get_sys_module();
+    else if (strcmp(name, "regex") == 0)
+        return get_regex_module();
 
     return NULL;
 }

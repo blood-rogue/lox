@@ -22,6 +22,7 @@ typedef enum {
     TOKEN_CARET,           // ^
     TOKEN_GREATER_GREATER, // >>
     TOKEN_LESS_LESS,       // <<
+    TOKEN_TILDE,           // ~
 
     TOKEN_BANG,          // !
     TOKEN_BANG_EQUAL,    // !=

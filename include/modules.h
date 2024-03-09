@@ -32,3 +32,4 @@ ObjModule *get_time_module();
 ObjModule *get_random_module();
 ObjModule *get_process_module();
 ObjModule *get_sys_module();
+ObjModule *get_regex_module();

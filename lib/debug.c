@@ -98,12 +98,14 @@ int disassemble_instruction(Chunk *chunk, int offset) {
             return simple_instruction("OP_LESS", offset);
         case OP_ADD:
             return simple_instruction("OP_ADD", offset);
-        case OP_BINARY_OR:
-            return simple_instruction("OP_BINARY_OR", offset);
-        case OP_BINARY_XOR:
-            return simple_instruction("OP_BINARY_XOR", offset);
-        case OP_BINARY_AND:
-            return simple_instruction("OP_BINARY_AND", offset);
+        case OP_BITWISE_OR:
+            return simple_instruction("OP_BITWISE_OR", offset);
+        case OP_BITWISE_XOR:
+            return simple_instruction("OP_BITWISE_XOR", offset);
+        case OP_BITWISE_AND:
+            return simple_instruction("OP_BITWISE_AND", offset);
+        case OP_BITWISE_NOT:
+            return simple_instruction("OP_BITWISE_NOT", offset);
         case OP_SHIFT_RIGHT:
             return simple_instruction("OP_SHIFT_RIGHT", offset);
         case OP_SHIFT_LEFT:

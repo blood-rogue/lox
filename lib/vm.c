@@ -925,19 +925,31 @@ static InterpretResult run() {
                     BINARY_OP(new_int, new_float, -);
                     break;
                 }
-            case OP_BINARY_AND:
+            case OP_BITWISE_AND:
                 {
                     BINARY_INT_OP(new_int, &);
                     break;
                 }
-            case OP_BINARY_OR:
+            case OP_BITWISE_OR:
                 {
                     BINARY_INT_OP(new_int, |);
                     break;
                 }
-            case OP_BINARY_XOR:
+            case OP_BITWISE_XOR:
                 {
                     BINARY_INT_OP(new_int, ^);
+                    break;
+                }
+            case OP_BITWISE_NOT:
+                {
+                    if (!IS_INT(peek(0))) {
+                        runtime_error(
+                            "Bitwise operations can only be done INTEGERS. got %s.",
+                            OBJ_NAMES[peek(0)->type]);
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
+
+                    vm.stack_top[-1] = AS_OBJ(new_int(~(AS_INT(peek(0))->value)));
                     break;
                 }
             case OP_SHIFT_RIGHT:

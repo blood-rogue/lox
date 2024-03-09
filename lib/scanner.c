@@ -301,6 +301,14 @@ Token scan_token() {
                 return make_token(TOKEN_GREATER_GREATER);
             else
                 return make_token(TOKEN_GREATER);
+        case '|':
+            return make_token(TOKEN_PIPE);
+        case '&':
+            return make_token(TOKEN_AMPERSAND);
+        case '^':
+            return make_token(TOKEN_CARET);
+        case '~':
+            return make_token(TOKEN_TILDE);
         case '"':
             return string();
         case '\'':
