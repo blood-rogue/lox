@@ -2,7 +2,7 @@
 
 #include "builtins.h"
 
-BuiltinResult _string_to_upper(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _string_to_upper(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     ObjString *_caller = AS_STRING(caller);
 
@@ -15,7 +15,7 @@ BuiltinResult _string_to_upper(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(str);
 }
 
-BuiltinResult _string_to_lower(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _string_to_lower(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     ObjString *_caller = AS_STRING(caller);
 
@@ -28,7 +28,7 @@ BuiltinResult _string_to_lower(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(str);
 }
 
-BuiltinResult _string_to_title(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _string_to_title(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     ObjString *_caller = AS_STRING(caller);
 
@@ -41,7 +41,7 @@ BuiltinResult _string_to_title(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(str);
 }
 
-BuiltinResult _string_len(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _string_len(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     return OK(new_int(AS_STRING(caller)->length));
 }

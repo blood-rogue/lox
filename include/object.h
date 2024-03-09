@@ -205,6 +205,7 @@ typedef struct {
 ObjNil *new_nil();
 ObjInt *new_int(int64_t);
 ObjMap *new_map(Obj **, int);
+ObjChar *new_char(ucs4_t);
 ObjList *new_list(Obj **, int);
 ObjBool *new_bool(bool);
 ObjFloat *new_float(double);
@@ -224,7 +225,6 @@ ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinFn, Obj *, char *);
 
 ObjList *argv_list(int, const char **);
 ObjString *take_string(char *, int);
-ObjChar *take_char(uint32_t);
 
 void print_object(Obj *);
 void repr_object(Obj *);

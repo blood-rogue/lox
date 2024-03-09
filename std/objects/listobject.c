@@ -1,6 +1,6 @@
 #include "builtins.h"
 
-BuiltinResult _list_append(int argc, Obj **argv, Obj *caller) {
+static BuiltinResult _list_append(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     ObjList *list = AS_LIST(caller);
 
@@ -9,7 +9,7 @@ BuiltinResult _list_append(int argc, Obj **argv, Obj *caller) {
     return OK(new_nil());
 }
 
-BuiltinResult _list_len(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _list_len(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     return OK(new_int(AS_LIST(caller)->elems.count));
 }

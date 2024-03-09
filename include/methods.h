@@ -7,7 +7,6 @@ BuiltinTable **get_builtin_methods();
 
 BuiltinTable *float_methods();
 BuiltinTable *int_methods();
-BuiltinTable *bool_methods();
 BuiltinTable *char_methods();
 BuiltinTable *string_methods();
 BuiltinTable *list_methods();

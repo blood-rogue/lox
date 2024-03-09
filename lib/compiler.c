@@ -636,7 +636,7 @@ static void char_(bool) {
     u8_mbtouc(&value, (uint8_t *)str, escaped_pos);
 
     free(str);
-    emit_constant(AS_OBJ(take_char(value)));
+    emit_constant(AS_OBJ(new_char(value)));
 }
 
 static void unary(bool) {

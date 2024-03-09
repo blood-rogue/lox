@@ -589,7 +589,7 @@ static InterpretResult run() {
                                      (s = (uint8_t *)u8_next(&at_index, s)) != NULL;
                                      cur++) {
                                     if (index == cur) {
-                                        indexed = AS_OBJ(take_char(at_index));
+                                        indexed = AS_OBJ(new_char(at_index));
                                         break;
                                     }
                                 }

@@ -1,5 +1,4 @@
 #include <unistr.h>
-#include <unitypes.h>
 
 #include "memory.h"
 #include "object.h"
@@ -59,6 +58,13 @@ ObjMap *new_map(Obj **elems, int pair_count) {
     }
 
     return map;
+}
+
+ObjChar *new_char(ucs4_t value) {
+    ObjChar *_char = ALLOCATE_OBJ(ObjChar, OBJ_CHAR);
+    _char->value = value;
+
+    return _char;
 }
 
 ObjList *new_list(Obj **elems, int elem_count) {
@@ -216,13 +222,6 @@ ObjString *take_string(char *chars, int length) {
     return allocate_string(chars, length, hash);
 }
 
-ObjChar *take_char(uint32_t value) {
-    ObjChar *_char = ALLOCATE_OBJ(ObjChar, OBJ_CHAR);
-    _char->value = value;
-
-    return _char;
-}
-
 static void print_function(ObjFunction *function) {
     if (function->name == NULL) {
         printf("<script>");
@@ -268,7 +267,7 @@ static void print_map(ObjMap *map) {
     printf("}");
 }
 
-static void print_char(uint32_t ch, bool repr) {
+static void print_char(ucs4_t ch, bool repr) {
     uint8_t s[5] = {0};
     u8_uctomb(s, ch, 4);
     s[4] = '\0';
