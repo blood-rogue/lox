@@ -1,3 +1,5 @@
+#include <readline/history.h>
+#include <readline/readline.h>
 #include <unistd.h>
 
 #include "builtins.h"
@@ -41,28 +43,15 @@ BuiltinResult repr_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee))
 }
 
 BuiltinResult input_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
-    if (argc > 0)
-        print_object(argv[0]);
+    CHECK_ARG_COUNT(1)
+    CHECK_ARG_TYPE(STRING, 0)
 
-    int capacity = 8;
-    char *s = malloc(capacity);
-    int len = 0;
+    char *s = readline(AS_STRING(argv[0])->chars);
 
-    char c;
+    if (s && *s)
+        add_history(s);
 
-    for (;;) {
-        if (++len == capacity)
-            s = (char *)realloc(s, (capacity *= 2));
-
-        c = (char)getchar();
-        if (c == '\n' || c == EOF) {
-            s[--len] = '\0';
-            break;
-        } else
-            s[len - 1] = c;
-    }
-
-    return OK(take_string(s, len));
+    return OK(take_string(s, strlen(s)));
 }
 
 BuiltinResult argv_builtin_function(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, callee)) {

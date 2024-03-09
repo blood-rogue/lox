@@ -29,8 +29,7 @@
         return ERR(buf);                                                                           \
     }
 
-#define UNUSED(typ, name) typ name##_UNUSED __attribute__((unused))
-#define BLTIN_FN(name)    BuiltinResult name##_builtin_function(int, Obj **, Obj *)
+#define BLTIN_FN(name) BuiltinResult name##_builtin_function(int, Obj **, Obj *)
 
 BLTIN_FN(exit);
 BLTIN_FN(print);

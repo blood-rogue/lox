@@ -8,7 +8,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define UINT8_COUNT (UINT8_MAX + 1)
+#define UINT8_COUNT       (UINT8_MAX + 1)
+#define UNUSED(typ, name) typ name##_UNUSED __attribute__((unused))
 
 typedef struct Obj Obj;
 

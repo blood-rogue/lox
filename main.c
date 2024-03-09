@@ -1,5 +1,9 @@
+#include <readline/history.h>
+#include <readline/readline.h>
+
 #include "chunk.h"
 #include "common.h"
+#include "completion.h"
 #include "vm.h"
 
 int _argc;
@@ -7,17 +11,11 @@ const char **_argv;
 char *_source;
 
 static void repl() {
-    _source = NULL;
-    char line[1024];
-    for (;;) {
-        printf(">> ");
+    while ((_source = readline(">> ")) != NULL) {
+        if (*_source)
+            add_history(_source);
 
-        if (!fgets(line, sizeof(line), stdin)) {
-            printf("\n");
-            break;
-        }
-
-        interpret(line);
+        interpret(_source);
     }
 
     free_vm();
@@ -71,9 +69,10 @@ int main(int argc, const char **argv) {
     _argc = argc - 1;
     _argv = argv + 1;
 
-    if (argc == 1)
+    if (argc == 1) {
+        rl_attempted_completion_function = completer;
         repl();
-    else
+    } else
         run_file(argv[1]);
 
     return 0;
