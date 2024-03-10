@@ -36,3 +36,4 @@ ObjModule *get_time_module(int, char **);
 ObjModule *get_random_module(int, char **);
 ObjModule *get_sys_module(int, char **);
 ObjModule *get_regex_module(int, char **);
+ObjModule *get_compress_module(int, char **);

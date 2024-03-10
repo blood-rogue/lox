@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Werror -Wextra -pedantic -Iinclude
 LDFLAGS = -Wl,--gc-sections
-DYLIBS = -lm -lunistring -lpcre2-8 -lreadline
+DYLIBS = -lm -lunistring -lpcre2-8 -lreadline -lz
 
 LIB_DIR = lib
 STD_DIR = std

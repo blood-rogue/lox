@@ -88,6 +88,13 @@ static void free_object(Obj *object) {
                 FREE(ObjString, object);
                 break;
             }
+        case OBJ_BYTES:
+            {
+                ObjBytes *bytes = AS_BYTES(object);
+                FREE_ARRAY(uint8_t, bytes->bytes, bytes->length);
+                FREE(ObjBytes, object);
+                break;
+            }
         case OBJ_FUNCTION:
             {
                 ObjFunction *function = AS_FUNCTION(object);
@@ -227,6 +234,7 @@ static void blacken_object(Obj *object) {
         case OBJ_BUILTIN_BOUND_METHOD:
         case OBJ_BUILTIN_FUNCTION:
         case OBJ_STRING:
+        case OBJ_BYTES:
         case OBJ_BOOL:
         case OBJ_INT:
         case OBJ_NIL:

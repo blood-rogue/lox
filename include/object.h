@@ -19,6 +19,7 @@
 #define IS_CHAR(obj)                 (obj->type == OBJ_CHAR)
 #define IS_LIST(obj)                 (obj->type == OBJ_LIST)
 #define IS_BOOL(obj)                 (obj->type == OBJ_BOOL)
+#define IS_BYTES(obj)                (obj->type == OBJ_BYTES)
 #define IS_FLOAT(obj)                (obj->type == OBJ_FLOAT)
 #define IS_STRING(obj)               (obj->type == OBJ_STRING)
 #define IS_CLOSURE(obj)              (obj->type == OBJ_CLOSURE)
@@ -37,6 +38,7 @@
 #define AS_CHAR(obj)                 ((ObjChar *)(obj))
 #define AS_LIST(obj)                 ((ObjList *)(obj))
 #define AS_BOOL(obj)                 ((ObjBool *)(obj))
+#define AS_BYTES(obj)                ((ObjBytes *)(obj))
 #define AS_FLOAT(obj)                ((ObjFloat *)(obj))
 #define AS_STRING(obj)               ((ObjString *)(obj))
 #define AS_CLOSURE(obj)              ((ObjClosure *)(obj))
@@ -56,6 +58,7 @@ static char *const OBJ_NAMES[] = {
     "CHAR",
     "LIST",
     "BOOL",
+    "BYTES",
     "FLOAT",
     "STRING",
     "CLOSURE",
@@ -75,6 +78,7 @@ typedef enum {
     OBJ_CHAR,
     OBJ_LIST,
     OBJ_BOOL,
+    OBJ_BYTES,
     OBJ_FLOAT,
     OBJ_STRING,
 
@@ -127,6 +131,12 @@ typedef struct {
     Obj obj;
     bool value;
 } ObjBool;
+
+typedef struct {
+    Obj obj;
+    int length;
+    uint8_t *bytes;
+} ObjBytes;
 
 typedef struct {
     Obj obj;
@@ -208,6 +218,7 @@ ObjMap *new_map(Obj **, int);
 ObjChar *new_char(ucs4_t);
 ObjList *new_list(Obj **, int);
 ObjBool *new_bool(bool);
+ObjBytes *new_bytes(const uint8_t *, int);
 ObjFloat *new_float(double);
 ObjString *new_string(const char *, int);
 
@@ -224,6 +235,7 @@ ObjBuiltinFunction *new_builtin_function(BuiltinFn, char *);
 ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinFn, Obj *, char *);
 
 ObjList *argv_list(int, const char **);
+ObjBytes *take_bytes(uint8_t *, int);
 ObjString *take_string(char *, int);
 
 void print_object(Obj *);

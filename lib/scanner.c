@@ -222,7 +222,11 @@ static Token string() {
         return error_token("Unterminated string.");
 
     advance();
-    return make_token(TOKEN_STRING);
+    if (peek() == 'b') {
+        advance();
+        return make_token(TOKEN_BYTES);
+    } else
+        return make_token(TOKEN_STRING);
 }
 
 static Token character() {

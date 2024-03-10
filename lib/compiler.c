@@ -480,10 +480,10 @@ static void and (bool) {
     patch_jump(end_jump);
 }
 
-static void escape(char *escaped_str, int *pos) {
+static void escape(char *escaped_str, int *pos, int off) {
     int escaped_pos = 0;
 
-    for (int i = 1; i < parser.previous.length - 1; i++) {
+    for (int i = 1; i < parser.previous.length - off; i++) {
         if (parser.previous.start[i] == '\\') {
             char c = parser.previous.start[i + 1];
             switch (c) {
@@ -615,8 +615,18 @@ static void string(bool) {
     char *escaped_str = calloc(parser.previous.length - 1, 1);
     int escaped_pos;
 
-    escape(escaped_str, &escaped_pos);
+    escape(escaped_str, &escaped_pos, 1);
     ObjString *str = take_string(escaped_str, escaped_pos);
+
+    emit_constant(AS_OBJ(str));
+}
+
+static void bytes(bool) {
+    char *escaped_str = calloc(parser.previous.length - 1, 1);
+    int escaped_pos;
+
+    escape(escaped_str, &escaped_pos, 2);
+    ObjBytes *str = take_bytes((uint8_t *)escaped_str, escaped_pos);
 
     emit_constant(AS_OBJ(str));
 }
@@ -625,7 +635,7 @@ static void char_(bool) {
     char *str = calloc(parser.previous.length - 1, 1);
     int escaped_pos;
 
-    escape(str, &escaped_pos);
+    escape(str, &escaped_pos, 1);
 
     if (u8_strlen((uint8_t *)str) > 1 || u8_check((uint8_t *)str, escaped_pos) != NULL) {
         error("Invalid char sequence");
@@ -776,6 +786,7 @@ ParseRule rules[] = {
     [TOKEN_LESS_EQUAL] = {NULL, binary, PREC_COMPARISON},
     [TOKEN_IDENTIFIER] = {variable, NULL, PREC_NONE},
     [TOKEN_STRING] = {string, NULL, PREC_NONE},
+    [TOKEN_BYTES] = {bytes, NULL, PREC_NONE},
     [TOKEN_INT] = {int_, NULL, PREC_NONE},
     [TOKEN_FLOAT] = {float_, NULL, PREC_NONE},
     [TOKEN_CHAR] = {char_, NULL, PREC_NONE},

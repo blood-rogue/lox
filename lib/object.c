@@ -84,6 +84,18 @@ ObjList *new_list(Obj **elems, int elem_count) {
 
 ObjBool *new_bool(bool value) { return value ? _TRUE : _FALSE; }
 
+ObjBytes *new_bytes(const uint8_t *inp, int length) {
+    ObjBytes *bytes = ALLOCATE_OBJ(ObjBytes, OBJ_BYTES);
+
+    uint8_t *_bytes = malloc(length);
+    memcpy(_bytes, inp, length);
+
+    bytes->length = length;
+    bytes->bytes = _bytes;
+
+    return bytes;
+}
+
 ObjFloat *new_float(double value) {
     ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
     float_->value = value;
@@ -210,6 +222,15 @@ ObjList *argv_list(int argc, const char **argv) {
     return list;
 }
 
+ObjBytes *take_bytes(uint8_t *inp, int length) {
+    ObjBytes *bytes = ALLOCATE_OBJ(ObjBytes, OBJ_BYTES);
+
+    bytes->length = length;
+    bytes->bytes = inp;
+
+    return bytes;
+}
+
 ObjString *take_string(char *chars, int length) {
     uint32_t hash = hash_string(chars, length);
 
@@ -278,6 +299,14 @@ static void print_char(ucs4_t ch, bool repr) {
         printf("%s", s);
 }
 
+static void print_bytes(ObjBytes *bytes) {
+    printf("[");
+    for (int i = 0; i < bytes->length; i++) {
+        printf("%d, ", bytes->bytes[i]);
+    }
+    printf("]");
+}
+
 void print_object(Obj *obj) {
     switch (obj->type) {
         case OBJ_NIL:
@@ -312,6 +341,9 @@ void print_object(Obj *obj) {
             break;
         case OBJ_STRING:
             printf("%s", AS_STRING(obj)->chars);
+            break;
+        case OBJ_BYTES:
+            print_bytes(AS_BYTES(obj));
             break;
         case OBJ_INSTANCE:
             printf("<'%s' instance>", AS_INSTANCE(obj)->klass->name->chars);
