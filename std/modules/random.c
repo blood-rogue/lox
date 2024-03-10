@@ -34,7 +34,9 @@ static BuiltinResult _random_randint(int argc, Obj **argv, UNUSED(Obj *, caller)
     return OK(new_int(rand() % (max + 1 - min) + min));
 }
 
-ObjModule *get_random_module() {
+ObjModule *get_random_module(int count, UNUSED(char **, parts)) {
+    CHECK_PART_COUNT(0)
+
     if (_random_module == NULL) {
         ObjModule *module = new_module(new_string("random", 6));
 

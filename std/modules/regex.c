@@ -6,7 +6,9 @@
 
 static ObjModule *_regex_module = NULL;
 
-ObjModule *get_regex_module() {
+ObjModule *get_regex_module(int count, UNUSED(char **, parts)) {
+    CHECK_PART_COUNT(0)
+
     if (_regex_module == NULL) {
         ObjModule *module = new_module(new_string("regex", 5));
 

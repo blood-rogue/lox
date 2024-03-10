@@ -1,3 +1,4 @@
+#include <readline/history.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -128,6 +129,8 @@ void init_vm() {
     SET_BLTIN_FN("repr", repr_builtin_function);
 
 #undef SET_BLTIN_FN
+
+    read_history(NULL);
 }
 
 void free_vm() {
@@ -159,6 +162,8 @@ void free_vm() {
 
     if (_source != NULL)
         free(_source);
+
+    write_history(NULL);
 }
 
 static Table *get_current_global() {
@@ -1152,13 +1157,24 @@ static InterpretResult run() {
                     }
 
                     if (is_std_import(import_path)) {
-                        char *temp = malloc(import_path->raw_length + 1);
-                        strcpy(temp, import_path->chars);
+                        int part_count = 0;
+                        for (int i = 0; i < import_path->raw_length; i++)
+                            if (import_path->chars[i] == '/')
+                                part_count++;
 
+                        char **parts = malloc(part_count * sizeof(char *));
+                        char *temp = malloc(import_path->raw_length + 1);
+
+                        strcpy(temp, import_path->chars);
                         strtok(temp, "/");
 
-                        ObjModule *std_module = get_module(strtok(NULL, "/"));
+                        for (int i = 0; i < part_count; i++) {
+                            parts[i] = strtok(NULL, "/");
+                        }
 
+                        ObjModule *std_module = get_module(part_count, parts);
+
+                        free(parts);
                         free(temp);
 
                         if (std_module == NULL) {

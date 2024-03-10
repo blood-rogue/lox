@@ -4,12 +4,11 @@
 #include "common.h"
 
 char *completions[] = {
-    "and",          "class",    "else",       "false",     "for",     "fun",       "if",
-    "nil",          "or",       "return",     "super",     "this",    "true",      "var",
-    "while",        "map",      "static",     "import",    "as",      "break",     "continue",
-    "exit",         "print",    "input",      "argv",      "run_gc",  "parse_int", "parse_float",
-    "sleep",        "type",     "repr",       "@std/math", "@std/fs", "@std/time", "@std/random",
-    "@std/process", "@std/sys", "@std/regex", NULL};
+    "and",    "class",    "else",       "false",       "for",      "fun",       "if",    "nil",
+    "or",     "return",   "super",      "this",        "true",     "var",       "while", "map",
+    "static", "import",   "as",         "break",       "continue", "exit",      "print", "input",
+    "argv",   "run_gc",   "parse_int",  "parse_float", "sleep",    "type",      "repr",  "std/math",
+    "std/fs", "std/time", "std/random", "std/process", "std/sys",  "std/regex", NULL};
 
 static char *dupstr(char *s) {
     char *r = malloc(strlen(s) + 1);
@@ -37,6 +36,7 @@ static char *completer_callback(const char *text, int state) {
 
 static char **completer(const char *text, UNUSED(int, start), UNUSED(int, end)) {
     char **matches = NULL;
+    rl_completion_append_character = '\0';
     matches = rl_completion_matches(text, completer_callback);
 
     if (matches == NULL) {

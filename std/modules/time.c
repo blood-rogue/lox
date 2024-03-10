@@ -120,7 +120,9 @@ static BuiltinResult _time_to_local_str(int argc, Obj **argv, UNUSED(Obj *, call
 
 static ObjModule *_time_module = NULL;
 
-ObjModule *get_time_module() {
+ObjModule *get_time_module(int count, UNUSED(char **, parts)) {
+    CHECK_PART_COUNT(0)
+
     if (_time_module == NULL) {
         ObjModule *module = new_module(new_string("time", 4));
 

@@ -24,12 +24,15 @@
 
 #define SET_BUILTIN_FN_METHOD(name, value) SET_METHOD(name, new_builtin_function(value, name))
 
-ObjModule *get_module(char *);
+#define CHECK_PART_COUNT(value)                                                                    \
+    if (count != value)                                                                            \
+        return NULL;
 
-ObjModule *get_math_module();
-ObjModule *get_fs_module();
-ObjModule *get_time_module();
-ObjModule *get_random_module();
-ObjModule *get_process_module();
-ObjModule *get_sys_module();
-ObjModule *get_regex_module();
+ObjModule *get_module(int, char **);
+
+ObjModule *get_math_module(int, char **);
+ObjModule *get_fs_module(int, char **);
+ObjModule *get_time_module(int, char **);
+ObjModule *get_random_module(int, char **);
+ObjModule *get_sys_module(int, char **);
+ObjModule *get_regex_module(int, char **);

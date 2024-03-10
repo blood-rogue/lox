@@ -158,7 +158,9 @@ static BuiltinResult _sys_group_by_id(int argc, Obj **argv, UNUSED(Obj *, caller
     return OK(instance);
 }
 
-ObjModule *get_sys_module() {
+ObjModule *get_sys_module(int count, UNUSED(char **, parts)) {
+    CHECK_PART_COUNT(0)
+
     if (_sys_module == NULL) {
         ObjModule *module = new_module(new_string("sys", 3));
 

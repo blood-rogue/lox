@@ -234,7 +234,9 @@ static BuiltinResult _fs_file_dup(int argc, UNUSED(Obj **, argv), Obj *caller) {
     return OK(new_int(dup(fd)));
 }
 
-ObjModule *get_fs_module() {
+ObjModule *get_fs_module(int count, UNUSED(char **, parts)) {
+    CHECK_PART_COUNT(0)
+
     if (_fs_module == NULL) {
         ObjModule *module = new_module(new_string("fs", 2));
 

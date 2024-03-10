@@ -187,7 +187,9 @@ static BuiltinResult _math_complex_pow(int argc, Obj **argv, Obj *caller) {
     return OK(instance);
 }
 
-ObjModule *get_math_module() {
+ObjModule *get_math_module(int count, UNUSED(char **, parts)) {
+    CHECK_PART_COUNT(0)
+
     if (_math_module == NULL) {
         ObjModule *module = new_module(new_string("math", 4));
 
