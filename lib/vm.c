@@ -282,7 +282,7 @@ static bool call_value(Obj *callee, int argc, Obj *caller) {
                 return true;
             }
         default:
-            runtime_error("Cannot call %s", OBJ_NAMES[callee->type]);
+            runtime_error("Cannot call %s", get_obj_kind(callee));
             return false;
     }
 }
@@ -362,7 +362,7 @@ static bool invoke(ObjString *name, int argc) {
                     runtime_error(
                         "Could not invode method '%s' on '%s'.",
                         name->chars,
-                        OBJ_NAMES[receiver->type]);
+                        get_obj_kind(receiver));
                     return false;
                 }
 
@@ -463,8 +463,8 @@ static InterpretResult run() {
             runtime_error(                                                                         \
                 "Unsupported operand types for '%s': '%s' and '%s'.",                              \
                 #op,                                                                               \
-                OBJ_NAMES[peek(0)->type],                                                          \
-                OBJ_NAMES[peek(1)->type]);                                                         \
+                get_obj_kind(peek(0)),                                                             \
+                get_obj_kind(peek(1)));                                                            \
             return INTERPRET_RUNTIME_ERROR;                                                        \
         }                                                                                          \
     }
@@ -478,8 +478,8 @@ static InterpretResult run() {
             runtime_error(                                                                         \
                 "Unsupported operand types for '%s': '%s' and '%s'.",                              \
                 #op,                                                                               \
-                OBJ_NAMES[peek(0)->type],                                                          \
-                OBJ_NAMES[peek(1)->type]);                                                         \
+                get_obj_kind(peek(0)),                                                             \
+                get_obj_kind(peek(1)));                                                            \
             return INTERPRET_RUNTIME_ERROR;                                                        \
         }                                                                                          \
     }
@@ -517,6 +517,16 @@ static InterpretResult run() {
             case OP_MAP:
                 {
                     int pair_count = READ_BYTE();
+
+                    for (int i = 0; i < pair_count; i++) {
+                        Obj *key = (vm.stack_top - pair_count * 2)[i * 2];
+                        if (!is_hashable(key)) {
+                            runtime_error(
+                                "Invalid key of type '%s' in MAP literal.", get_obj_kind(key));
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
+                    }
+
                     ObjMap *map = new_map(vm.stack_top - pair_count * 2, pair_count);
                     vm.stack_top -= pair_count * 2;
                     push(AS_OBJ(map));
@@ -554,9 +564,10 @@ static InterpretResult run() {
                             }
                         case OBJ_MAP:
                             {
-                                if (!IS_STRING(index_value)) {
-                                    runtime_error("Maps can only be indexed "
-                                                  "using strings.");
+                                if (!is_hashable(index_value)) {
+                                    runtime_error(
+                                        "Maps cannot be indexed by '%s'.",
+                                        get_obj_kind(index_value));
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
 
@@ -602,7 +613,7 @@ static InterpretResult run() {
                             }
                         default:
                             {
-                                runtime_error("'%s' cannot be indexed.", OBJ_NAMES[value->type]);
+                                runtime_error("'%s' cannot be indexed.", get_obj_kind(value));
                                 return INTERPRET_RUNTIME_ERROR;
                             }
                     }
@@ -632,8 +643,9 @@ static InterpretResult run() {
 
                         list->elems.values[index] = to_be_assigned;
                     } else if (IS_MAP(value)) {
-                        if (!IS_STRING(index_value)) {
-                            runtime_error("Maps can only be indexed using strings.");
+                        if (!is_hashable(index_value)) {
+                            runtime_error(
+                                "Maps cannot be indexed by '%s'.", get_obj_kind(index_value));
                             return INTERPRET_RUNTIME_ERROR;
                         }
 
@@ -642,7 +654,7 @@ static InterpretResult run() {
 
                         table_set(&map->table, AS_OBJ(index), to_be_assigned);
                     } else {
-                        runtime_error("'%s' cannot be indexed.", OBJ_NAMES[value->type]);
+                        runtime_error("'%s' cannot be indexed.", get_obj_kind(value));
                         return INTERPRET_RUNTIME_ERROR;
                     }
 
@@ -804,14 +816,14 @@ static InterpretResult run() {
                                     runtime_error(
                                         "No method named '%s' on '%s'",
                                         name->chars,
-                                        OBJ_NAMES[obj->type]);
+                                        get_obj_kind(obj));
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
                             } else {
                                 runtime_error(
                                     "Properties and methods do not exist for "
                                     "'%s'.",
-                                    OBJ_NAMES[obj->type]);
+                                    get_obj_kind(obj));
                                 return INTERPRET_RUNTIME_ERROR;
                             }
                     }
@@ -867,7 +879,7 @@ static InterpretResult run() {
             case OP_GET_SCOPED:
                 {
                     if (!IS_MODULE(peek(0))) {
-                        runtime_error("Cannot scope %s.", OBJ_NAMES[peek(0)->type]);
+                        runtime_error("Cannot scope %s.", get_obj_kind(peek(0)));
                         return INTERPRET_RUNTIME_ERROR;
                     }
 
@@ -919,8 +931,8 @@ static InterpretResult run() {
                     } else {
                         runtime_error(
                             "Unsupported operand types for '+', '%s' and '%s'.",
-                            OBJ_NAMES[peek(0)->type],
-                            OBJ_NAMES[peek(1)->type]);
+                            get_obj_kind(peek(0)),
+                            get_obj_kind(peek(1)));
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     break;
@@ -950,7 +962,7 @@ static InterpretResult run() {
                     if (!IS_INT(peek(0))) {
                         runtime_error(
                             "Bitwise operations can only be done INTEGERS. got %s.",
-                            OBJ_NAMES[peek(0)->type]);
+                            get_obj_kind(peek(0)));
                         return INTERPRET_RUNTIME_ERROR;
                     }
 
@@ -991,7 +1003,7 @@ static InterpretResult run() {
                         vm.stack_top[-1] = AS_OBJ(new_float(-(AS_FLOAT(peek(0))->value)));
                         break;
                     }
-                    runtime_error("Cannot negate '%s'.", OBJ_NAMES[peek(0)->type]);
+                    runtime_error("Cannot negate '%s'.", get_obj_kind(peek(0)));
                     return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_JUMP:

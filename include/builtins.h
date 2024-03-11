@@ -24,8 +24,7 @@
 #define CHECK_ARG_TYPE(typ, pos)                                                                   \
     if (!IS_##typ(argv[pos])) {                                                                    \
         char buf[100];                                                                             \
-        snprintf(                                                                                  \
-            buf, 99, "Expected %s at pos %d but got %s", #typ, pos, OBJ_NAMES[argv[pos]->type]);   \
+        snprintf(buf, 99, "Expected %s at pos %d but got %s", #typ, pos, get_obj_kind(argv[pos])); \
         return ERR(buf);                                                                           \
     }
 

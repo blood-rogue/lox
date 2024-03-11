@@ -30,7 +30,7 @@ static Entry *find_entry(Entry *entries, int capacity, Obj *key) {
                 if (tombstone == NULL)
                     tombstone = entry;
             }
-        } else if (entry->key == key) {
+        } else if (obj_equal(entry->key, key)) {
             return entry;
         }
 

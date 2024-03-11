@@ -9,7 +9,7 @@
 #include "method_table.h"
 #include "table.h"
 
-#define NUM_OBJS                     17
+#define NUM_OBJS                     18
 
 #define AS_OBJ(obj)                  ((Obj *)(obj))
 
@@ -51,55 +51,35 @@
 #define AS_BUILTIN_FUNCTION(obj)     ((ObjBuiltinFunction *)(obj))
 #define AS_BUILTIN_BOUND_METHOD(obj) ((ObjBuiltinBoundMethod *)(obj))
 
-static char *const OBJ_NAMES[] = {
-    "NIL",
-    "INT",
-    "MAP",
-    "CHAR",
-    "LIST",
-    "BOOL",
-    "BYTES",
-    "FLOAT",
-    "STRING",
-    "CLOSURE",
-    "FUNCTION",
-    "UPVALUE",
-    "CLASS",
-    "INSTANCE",
-    "BOUND_METHOD",
-    "MODULE",
-    "BUILTIN_METHOD",
-    "BUILTIN_BOUND_METHOD"};
-
 typedef enum {
-    OBJ_NIL,
-    OBJ_INT,
-    OBJ_MAP,
-    OBJ_CHAR,
-    OBJ_LIST,
-    OBJ_BOOL,
-    OBJ_BYTES,
-    OBJ_FLOAT,
-    OBJ_STRING,
+    OBJ_NIL = 1 << 0,
+    OBJ_INT = 1 << 1,
+    OBJ_MAP = 1 << 2,
+    OBJ_CHAR = 1 << 3,
+    OBJ_LIST = 1 << 4,
+    OBJ_BOOL = 1 << 5,
+    OBJ_BYTES = 1 << 6,
+    OBJ_FLOAT = 1 << 7,
+    OBJ_STRING = 1 << 8,
 
-    OBJ_CLOSURE,
-    OBJ_FUNCTION,
-    OBJ_UPVALUE,
+    OBJ_CLOSURE = 1 << 9,
+    OBJ_FUNCTION = 1 << 10,
+    OBJ_UPVALUE = 1 << 11,
 
-    OBJ_CLASS,
-    OBJ_INSTANCE,
-    OBJ_BOUND_METHOD,
+    OBJ_CLASS = 1 << 12,
+    OBJ_INSTANCE = 1 << 13,
+    OBJ_BOUND_METHOD = 1 << 14,
 
-    OBJ_MODULE,
+    OBJ_MODULE = 1 << 15,
 
-    OBJ_BUILTIN_FUNCTION,
-    OBJ_BUILTIN_BOUND_METHOD,
+    OBJ_BUILTIN_FUNCTION = 1 << 16,
+    OBJ_BUILTIN_BOUND_METHOD = 1 << 17,
 } ObjType;
 
 struct Obj {
     ObjType type;
     bool is_marked;
-    uint32_t hash;
+    uint64_t hash;
     struct Obj *next;
 };
 
@@ -244,6 +224,8 @@ void repr_object(Obj *);
 uint32_t hash_string(const char *, int);
 
 bool obj_equal(Obj *, Obj *);
+bool is_hashable(Obj *);
+char *get_obj_kind(Obj *);
 
 void init_literals();
 void free_literals();

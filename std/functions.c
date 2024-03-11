@@ -109,5 +109,5 @@ BuiltinResult sleep_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)
 BuiltinResult type_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
 
-    return OK(new_string(OBJ_NAMES[argv[0]->type], (int)strlen(OBJ_NAMES[argv[0]->type])));
+    return OK(new_string(get_obj_kind(argv[0]), (int)strlen(get_obj_kind(argv[0]))));
 }

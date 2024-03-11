@@ -30,7 +30,7 @@ static ObjString *allocate_string(char *chars, int length, uint32_t hash) {
     string->raw_length = length;
     string->length = u8_strlen((uint8_t *)chars);
     string->chars = chars;
-    string->obj.hash = hash;
+    string->obj.hash = (uint64_t)hash;
 
     push(AS_OBJ(string));
     table_set(&vm.strings, AS_OBJ(string), AS_OBJ(new_nil()));
@@ -44,6 +44,7 @@ ObjNil *new_nil() { return _NIL; }
 ObjInt *new_int(int64_t value) {
     ObjInt *integer = ALLOCATE_OBJ(ObjInt, OBJ_INT);
     integer->value = value;
+    integer->obj.hash = (uint64_t)value;
 
     return integer;
 }
@@ -63,6 +64,7 @@ ObjMap *new_map(Obj **elems, int pair_count) {
 ObjChar *new_char(ucs4_t value) {
     ObjChar *_char = ALLOCATE_OBJ(ObjChar, OBJ_CHAR);
     _char->value = value;
+    _char->obj.hash = (uint64_t)value;
 
     return _char;
 }
@@ -99,6 +101,7 @@ ObjBytes *new_bytes(const uint8_t *inp, int length) {
 ObjFloat *new_float(double value) {
     ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
     float_->value = value;
+    float_->obj.hash = (uint64_t)value;
 
     return float_;
 }
@@ -360,7 +363,7 @@ void print_object(Obj *obj) {
         case OBJ_BUILTIN_BOUND_METHOD:
             printf(
                 "<bound method ''%s.%s'>",
-                OBJ_NAMES[AS_BUILTIN_BOUND_METHOD(obj)->caller->type],
+                get_obj_kind(AS_BUILTIN_BOUND_METHOD(obj)->caller),
                 AS_BUILTIN_BOUND_METHOD(obj)->name);
             break;
         case OBJ_MODULE:
@@ -424,6 +427,10 @@ bool obj_equal(Obj *a, Obj *b) {
     }
 }
 
+#define HASHABLE 427 // 000000000110101011
+
+inline bool is_hashable(Obj *obj) { return (HASHABLE & obj->type) == obj->type; }
+
 void init_literals() {
     _NIL = malloc(sizeof(ObjNil));
     _TRUE = malloc(sizeof(ObjBool));
@@ -434,6 +441,8 @@ void init_literals() {
 
     _TRUE->obj.type = OBJ_BOOL;
     _TRUE->obj.is_marked = false;
+    _TRUE->obj.hash = 1;
+
     _TRUE->value = true;
 
     _FALSE->obj.type = OBJ_BOOL;
@@ -446,3 +455,25 @@ void free_literals() {
     free(_TRUE);
     free(_FALSE);
 }
+
+static char *const OBJ_NAMES[] = {
+    "NIL",
+    "INT",
+    "MAP",
+    "CHAR",
+    "LIST",
+    "BOOL",
+    "BYTES",
+    "FLOAT",
+    "STRING",
+    "CLOSURE",
+    "FUNCTION",
+    "UPVALUE",
+    "CLASS",
+    "INSTANCE",
+    "BOUND_METHOD",
+    "MODULE",
+    "BUILTIN_METHOD",
+    "BUILTIN_BOUND_METHOD"};
+
+char *get_obj_kind(Obj *obj) { return OBJ_NAMES[__builtin_ctz(obj->type)]; }

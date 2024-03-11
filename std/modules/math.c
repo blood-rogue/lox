@@ -98,13 +98,13 @@ static BuiltinResult _math_complex_init(int argc, Obj **argv, Obj *caller) {
 
     if (!IS_INT(argv[0]) && !IS_FLOAT(argv[0])) {
         char buf[100];
-        snprintf(buf, 99, "Expected INT or FLOAT at pos 0 but got %s", OBJ_NAMES[argv[0]->type]);
+        snprintf(buf, 99, "Expected INT or FLOAT at pos 0 but got %s", get_obj_kind(argv[0]));
         return ERR(buf);
     }
 
     if (!IS_INT(argv[1]) && !IS_FLOAT(argv[1])) {
         char buf[100];
-        snprintf(buf, 99, "Expected INT or FLOAT at pos 1 but got %s", OBJ_NAMES[argv[1]->type]);
+        snprintf(buf, 99, "Expected INT or FLOAT at pos 1 but got %s", get_obj_kind(argv[1]));
         return ERR(buf);
     }
 
