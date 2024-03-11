@@ -411,6 +411,14 @@ bool obj_equal(Obj *a, Obj *b) {
                 return a->hash == b->hash && str_a->raw_length == str_b->raw_length &&
                        memcmp(str_a->chars, str_b->chars, str_a->raw_length) == 0;
             }
+        case OBJ_BYTES:
+            {
+                ObjBytes *bytes_a = AS_BYTES(a);
+                ObjBytes *bytes_b = AS_BYTES(b);
+
+                return bytes_a->length == bytes_b->length &&
+                       memcmp(bytes_a->bytes, bytes_b->bytes, bytes_a->length) == 0;
+            }
         default:
             return a == b;
     }

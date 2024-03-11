@@ -11,3 +11,4 @@ BuiltinTable *char_methods();
 BuiltinTable *string_methods();
 BuiltinTable *list_methods();
 BuiltinTable *map_methods();
+BuiltinTable *bytes_methods();

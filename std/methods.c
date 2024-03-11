@@ -9,6 +9,7 @@ BuiltinTable **get_builtin_methods() {
     statics[OBJ_STRING] = string_methods();
     statics[OBJ_LIST] = list_methods();
     statics[OBJ_MAP] = map_methods();
+    statics[OBJ_BYTES] = bytes_methods();
 
     return statics;
 }

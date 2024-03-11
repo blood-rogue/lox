@@ -77,11 +77,19 @@ ObjModule *get_compress_module(int count, char **parts) {
     if (_compress_module == NULL) {
         ObjModule *module = new_module(new_string("compress", 8));
 
+        SET_INT_MEMBER("NO_COMPRESSION", Z_NO_COMPRESSION);
+        SET_INT_MEMBER("BEST_SPEED", Z_BEST_SPEED);
+        SET_INT_MEMBER("BEST_COMPRESSION", Z_BEST_COMPRESSION);
+        SET_INT_MEMBER("DEFAULT_COMPRESSION", Z_DEFAULT_COMPRESSION);
+        SET_INT_MEMBER("HUFFMAN_ONLY", Z_HUFFMAN_ONLY);
+
         if (_compress_zlib_module == NULL) {
             ObjModule *module = new_module(new_string("zlib", 4));
 
             SET_BUILTIN_FN_MEMBER("compress", _compress_zlib_compress);
             SET_BUILTIN_FN_MEMBER("decompress", _compress_zlib_decompress);
+
+            _compress_zlib_module = module;
         }
 
         SET_MEMBER("zlib", _compress_zlib_module);
