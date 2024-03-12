@@ -456,7 +456,7 @@ void free_literals() {
     free(_FALSE);
 }
 
-static char *const OBJ_NAMES[] = {
+static char *OBJ_NAMES[] = {
     "NIL",
     "INT",
     "MAP",
