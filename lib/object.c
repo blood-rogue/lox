@@ -71,15 +71,11 @@ ObjChar *new_char(ucs4_t value) {
 
 ObjList *new_list(Obj **elems, int elem_count) {
     ObjList *list = ALLOCATE_OBJ(ObjList, OBJ_LIST);
-
-    Array arr;
-    init_array(&arr);
+    init_array(&list->elems);
 
     for (int i = 0; i < elem_count; i++) {
-        write_array(&arr, elems[i]);
+        write_array(&list->elems, elems[i]);
     }
-
-    list->elems = arr;
 
     return list;
 }
@@ -279,9 +275,9 @@ static void print_map(ObjMap *map) {
         if (entry->key == NULL)
             continue;
 
-        repr_object(AS_OBJ(entry->key));
+        repr_object(entry->key);
         printf(": ");
-        table_get(&map->table, AS_OBJ(entry->key), &value);
+        table_get(&map->table, entry->key, &value);
         repr_object(value);
         printf(",");
 

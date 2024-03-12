@@ -17,6 +17,8 @@ ObjModule *get_module(int part_count, char **parts) {
         return get_regex_module(part_count - 1, parts + 1);
     else if (strcmp(name, "compress") == 0)
         return get_compress_module(part_count - 1, parts + 1);
+    else if (strcmp(name, "serde") == 0)
+        return get_serde_module(part_count - 1, parts + 1);
 
     return NULL;
 }

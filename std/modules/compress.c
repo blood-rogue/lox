@@ -175,6 +175,21 @@ static BuiltinResult _compress_zstd_decompress(int argc, Obj **argv, UNUSED(Obj 
     }
 }
 
+static BuiltinResult _compress_lz4_compress(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+    CHECK_ARG_COUNT(1)
+    CHECK_ARG_TYPE(BYTES, 0)
+
+    ObjBytes *bytes = AS_BYTES(argv[0]);
+
+    size_t dest_len = LZ4_compressBound(bytes->length);
+    char *dest = malloc(dest_len);
+
+    if (LZ4_compress_default((char *)bytes->bytes, dest, bytes->length, dest_len) == 0)
+        return ERR("Could not compress data.");
+
+    return OK(take_bytes((uint8_t *)dest, dest_len));
+}
+
 ObjModule *get_compress_module(int count, char **parts) {
     if (_compress_zlib_module == NULL) {
         ObjModule *module = new_module(new_string("zlib", 4));
@@ -197,6 +212,8 @@ ObjModule *get_compress_module(int count, char **parts) {
     if (_compress_lz4_module == NULL) {
         ObjModule *module = new_module(new_string("lz4", 3));
 
+        SET_BUILTIN_FN_MEMBER("compress", _compress_lz4_compress);
+
         _compress_lz4_module = module;
     }
     if (_compress_lzma_module == NULL) {
@@ -206,6 +223,9 @@ ObjModule *get_compress_module(int count, char **parts) {
     }
     if (_compress_zstd_module == NULL) {
         ObjModule *module = new_module(new_string("zstd", 4));
+
+        SET_BUILTIN_FN_MEMBER("compress", _compress_zstd_compress);
+        SET_BUILTIN_FN_MEMBER("decompress", _compress_zstd_decompress);
 
         _compress_zstd_module = module;
     }
