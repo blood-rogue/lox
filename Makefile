@@ -1,7 +1,10 @@
 CC = gcc
 CFLAGS = -Wall -Werror -Wextra -pedantic -Iinclude
 LDFLAGS = -Wl,--gc-sections
-DYLIBS = -lm -lunistring -lpcre2-8 -lreadline -lz -lbrotlienc -lbrotlidec -llzf -llz4 -llzma -lzstd -ljson-c
+EXT_LIBS = \
+        -lm -lunistring -lpcre2-8 -lreadline    \
+        -lz -lbrotlienc -lbrotlidec -llzf -llz4 \
+        -lzstd -ljson-c -lyaml
 
 LIB_DIR = lib
 STD_DIR = std
@@ -32,7 +35,7 @@ release: CFLAGS += -Ofast -flto=auto -ffunction-sections -fdata-sections
 release: $(TARGET)
 
 $(TARGET): $(MAIN_OBJ) $(LIB_OBJS) $(STD_OBJS)
-	$(CC) $(LDFLAGS) -o $@ build/*.o $(DYLIBS)
+	$(CC) $(LDFLAGS) -o $@ build/*.o $(EXT_LIBS)
 
 $(BUILD_DIR)/main.o: main.c
 	@mkdir -p $(BUILD_DIR)
