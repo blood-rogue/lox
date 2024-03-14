@@ -356,11 +356,14 @@ static bool invoke(ObjString *name, int argc) {
         default:
             {
                 BuiltinFn method;
-                if (vm.builtin_methods[receiver->type] == NULL ||
+
+                if (vm.builtin_methods[__builtin_ctz(receiver->type)] == NULL ||
                     !method_table_get(
-                        vm.builtin_methods[receiver->type], name->obj.hash, &method)) {
+                        vm.builtin_methods[__builtin_ctz(receiver->type)],
+                        name->obj.hash,
+                        &method)) {
                     runtime_error(
-                        "Could not invode method '%s' on '%s'.",
+                        "Could not invoke method '%s' on '%s'.",
                         name->chars,
                         get_obj_kind(receiver));
                     return false;
@@ -805,10 +808,12 @@ static InterpretResult run() {
                                 break;
                             }
                         default:
-                            if (vm.builtin_methods[obj->type] != NULL) {
+                            if (vm.builtin_methods[__builtin_ctz(obj->type)] != NULL) {
                                 BuiltinFn method;
                                 if (method_table_get(
-                                        vm.builtin_methods[obj->type], name->obj.hash, &method)) {
+                                        vm.builtin_methods[__builtin_ctz(obj->type)],
+                                        name->obj.hash,
+                                        &method)) {
                                     pop();
                                     push(
                                         AS_OBJ(new_builtin_bound_method(method, obj, name->chars)));

@@ -31,7 +31,9 @@
 ObjModule *get_module(int, char **);
 
 ObjModule *get_random_module(int, char **);
+
 ObjModule *get_regex_module(int, char **);
+ObjClass *get_regex_match_class();
 
 ObjModule *get_sys_module(int, char **);
 ObjClass *get_sys_user_class();
@@ -48,7 +50,6 @@ ObjClass *get_math_complex_class();
 
 ObjModule *get_compress_module(int, char **);
 ObjModule *get_compress_zlib_module();
-ObjModule *get_compress_brotli_module();
 ObjModule *get_compress_zstd_module();
 ObjModule *get_compress_lzf_module();
 ObjModule *get_compress_lz4_module();

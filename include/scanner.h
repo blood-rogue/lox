@@ -58,6 +58,7 @@ typedef enum {
     TOKEN_IDENTIFIER, // [_a-zA-Z][\w\d_]*
     TOKEN_STRING,     // ".*"
     TOKEN_BYTES,      // ".*"b
+    TOKEN_RAW,        // ".*"r
     TOKEN_INT,        // \d+
     TOKEN_FLOAT,      // \d+\.\d+
     TOKEN_CHAR,       // '.*'

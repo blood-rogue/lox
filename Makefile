@@ -3,8 +3,7 @@ CFLAGS = -Wall -Werror -Wextra -pedantic -Iinclude
 LDFLAGS = -Wl,--gc-sections
 EXT_LIBS = \
         -lm -lunistring -lpcre2-8 -lreadline       \
-        -lz -lbrotlicommon -lbrotlienc -lbrotlidec \
-        -llzf -llz4 -lzstd -ljson-c -lyaml
+        -lz -llzf -llz4 -lzstd -ljson-c -lyaml
 
 LIB_DIR = lib
 STD_DIR = std
@@ -58,7 +57,8 @@ $(BUILD_DIR)/%.o: $(MODULE_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -rf $(BUILD_DIR) $(TARGET)
+	@rm -rf $(BUILD_DIR) $(TARGET)
+	@echo "Cleaned build directory."
 
 fmt:
 	clang-format -i main.c lib/*.c std/*.c include/*.h

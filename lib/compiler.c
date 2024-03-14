@@ -621,6 +621,10 @@ static void string(bool) {
     emit_constant(AS_OBJ(str));
 }
 
+static void raw_string(bool) {
+    emit_constant(AS_OBJ(new_string(parser.previous.start + 1, parser.previous.length - 3)));
+}
+
 static void bytes(bool) {
     char *escaped_str = calloc(parser.previous.length - 1, 1);
     int escaped_pos;
@@ -787,6 +791,7 @@ ParseRule rules[] = {
     [TOKEN_IDENTIFIER] = {variable, NULL, PREC_NONE},
     [TOKEN_STRING] = {string, NULL, PREC_NONE},
     [TOKEN_BYTES] = {bytes, NULL, PREC_NONE},
+    [TOKEN_RAW] = {raw_string, NULL, PREC_NONE},
     [TOKEN_INT] = {int_, NULL, PREC_NONE},
     [TOKEN_FLOAT] = {float_, NULL, PREC_NONE},
     [TOKEN_CHAR] = {char_, NULL, PREC_NONE},

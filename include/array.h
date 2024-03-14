@@ -10,7 +10,11 @@ typedef struct {
 } Array;
 
 void init_array(Array *);
-void write_array(Array *, Obj *);
 void free_array(Array *);
+
+void write_array(Array *, Obj *);
+
+Obj *remove_at_array(Array *, size_t);
+void insert_at_array(Array *, size_t, Obj *);
 
 #endif // lox_array_h

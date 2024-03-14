@@ -12,7 +12,7 @@ static BuiltinResult _bytes_decode(int argc, UNUSED(Obj **, argv), Obj *caller) 
 
     ObjBytes *bytes = AS_BYTES(caller);
 
-    return OK(take_string((char *)bytes->bytes, bytes->length));
+    return OK(new_string((char *)bytes->bytes, bytes->length));
 }
 
 BuiltinTable *bytes_methods() {
