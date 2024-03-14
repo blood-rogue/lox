@@ -6,15 +6,13 @@ static ObjModule *_compress_zstd_module = NULL;
 
 static BuiltinResult _compress_zstd_compress(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(2)
-    CHECK_ARG_TYPE(BYTES, 0)
-    CHECK_ARG_TYPE(INT, 1)
+    CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
+    CHECK_ARG_TYPE(ObjInt, INT, 1)
 
-    ObjBytes *bytes = AS_BYTES(argv[0]);
-
-    size_t dest_len = ZSTD_compressBound(bytes->length);
+    size_t dest_len = ZSTD_compressBound(argv_0->length);
     uint8_t *dest = malloc(dest_len);
 
-    dest_len = ZSTD_compress(dest, dest_len, bytes->bytes, bytes->length, AS_INT(argv[1])->value);
+    dest_len = ZSTD_compress(dest, dest_len, argv_0->bytes, argv_0->length, argv_1->value);
     if (ZSTD_isError(dest_len))
         return ERR("Could not compress data.");
 
@@ -63,9 +61,9 @@ static void write_bytes(writer_ctx_t *ctx, uint8_t *src, size_t count) {
 
 static BuiltinResult _compress_zstd_decompress(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(1)
-    CHECK_ARG_TYPE(BYTES, 0)
+    CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 
-    ObjBytes *bytes = AS_BYTES(argv[0]);
+    ObjBytes *bytes = argv_0;
 
     uint64_t dest_len = ZSTD_getFrameContentSize(bytes->bytes, bytes->length);
 

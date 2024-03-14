@@ -6,9 +6,9 @@ static ObjModule *_compress_lzf_module = NULL;
 
 static BuiltinResult _compress_lzf_compress(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(1)
-    CHECK_ARG_TYPE(BYTES, 0)
+    CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 
-    ObjBytes *bytes = AS_BYTES(argv[0]);
+    ObjBytes *bytes = argv_0;
 
     size_t dest_len = bytes->length * 2;
     char *dest = malloc(dest_len);
@@ -23,9 +23,9 @@ static BuiltinResult _compress_lzf_compress(int argc, Obj **argv, UNUSED(Obj *, 
 
 static BuiltinResult _compress_lzf_decompress(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(1)
-    CHECK_ARG_TYPE(BYTES, 0)
+    CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 
-    ObjBytes *bytes = AS_BYTES(argv[0]);
+    ObjBytes *bytes = argv_0;
 
     size_t dest_len = bytes->length * 2;
     char *dest = malloc(dest_len);

@@ -4,17 +4,13 @@ static ObjModule *_random_module = NULL;
 
 static BuiltinResult _random_seed(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(1)
+    CHECK_ARG_TYPE(ObjInt, INT, 0)
 
-    if (IS_INT(argv[0])) {
-        ObjInt *arg = AS_INT(argv[0]);
-        if (arg->value < 0)
-            return ERR("Cannot seed using negative number.");
+    if (argv_0->value < 0)
+        return ERR("Cannot seed using negative number.");
 
-        srand(arg->value);
-        return OK(new_nil());
-    }
-
-    return ERR("Seeding requires INT.");
+    srand(argv_0->value);
+    return OK(new_nil());
 }
 
 static BuiltinResult _random_random(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, caller)) {
@@ -25,13 +21,10 @@ static BuiltinResult _random_random(int argc, UNUSED(Obj **, argv), UNUSED(Obj *
 
 static BuiltinResult _random_randint(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(2)
-    CHECK_ARG_TYPE(INT, 0)
-    CHECK_ARG_TYPE(INT, 1)
+    CHECK_ARG_TYPE(ObjInt, INT, 0)
+    CHECK_ARG_TYPE(ObjInt, INT, 1)
 
-    uint64_t min = AS_INT(argv[0])->value;
-    uint64_t max = AS_INT(argv[1])->value;
-
-    return OK(new_int(rand() % (max + 1 - min) + min));
+    return OK(new_int(rand() % (argv_1->value + 1 - argv_0->value) + argv_0->value));
 }
 
 ObjModule *get_random_module(int count, UNUSED(char **, parts)) {

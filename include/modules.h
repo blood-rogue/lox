@@ -30,12 +30,21 @@
 
 ObjModule *get_module(int, char **);
 
-ObjModule *get_math_module(int, char **);
-ObjModule *get_fs_module(int, char **);
-ObjModule *get_time_module(int, char **);
 ObjModule *get_random_module(int, char **);
-ObjModule *get_sys_module(int, char **);
 ObjModule *get_regex_module(int, char **);
+
+ObjModule *get_sys_module(int, char **);
+ObjClass *get_sys_user_class();
+ObjClass *get_sys_group_class();
+
+ObjModule *get_fs_module(int, char **);
+ObjClass *get_fs_file_class();
+
+ObjModule *get_time_module(int, char **);
+ObjClass *get_time_time_class();
+
+ObjModule *get_math_module(int, char **);
+ObjClass *get_math_complex_class();
 
 ObjModule *get_compress_module(int, char **);
 ObjModule *get_compress_zlib_module();
@@ -47,3 +56,4 @@ ObjModule *get_compress_lz4_module();
 ObjModule *get_serde_module(int, char **);
 ObjModule *get_serde_json_module();
 ObjModule *get_serde_yaml_module();
+ObjModule *get_serde_toml_module();

@@ -28,9 +28,9 @@ ObjModule *get_compress_module(int count, char **parts) {
             return get_compress_zlib_module();
         else if (strcmp(parts[0], "brotli") == 0)
             return get_compress_brotli_module();
-        else if (strcmp(parts[0], "zlib") == 0)
-            return get_compress_lzf_module();
         else if (strcmp(parts[0], "lzf") == 0)
+            return get_compress_lzf_module();
+        else if (strcmp(parts[0], "lz4") == 0)
             return get_compress_lz4_module();
         else if (strcmp(parts[0], "zstd") == 0)
             return get_compress_zstd_module();

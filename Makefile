@@ -2,9 +2,9 @@ CC = gcc
 CFLAGS = -Wall -Werror -Wextra -pedantic -Iinclude
 LDFLAGS = -Wl,--gc-sections
 EXT_LIBS = \
-        -lm -lunistring -lpcre2-8 -lreadline    \
-        -lz -lbrotlienc -lbrotlidec -llzf -llz4 \
-        -lzstd -ljson-c -lyaml
+        -lm -lunistring -lpcre2-8 -lreadline       \
+        -lz -lbrotlicommon -lbrotlienc -lbrotlidec \
+        -llzf -llz4 -lzstd -ljson-c -lyaml
 
 LIB_DIR = lib
 STD_DIR = std

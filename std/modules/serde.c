@@ -8,7 +8,8 @@ ObjModule *get_serde_module(int count, char **parts) {
         ObjModule *module = new_module(new_string("serde", 5));
 
         SET_MEMBER("json", get_serde_json_module());
-        SET_MEMBER("serde", get_serde_yaml_module());
+        SET_MEMBER("yaml", get_serde_yaml_module());
+        SET_MEMBER("toml", get_serde_toml_module());
 
         _serde_module = module;
     }
@@ -20,6 +21,8 @@ ObjModule *get_serde_module(int count, char **parts) {
             return get_serde_json_module();
         else if (strcmp(parts[0], "yaml") == 0)
             return get_serde_yaml_module();
+        else if (strcmp(parts[0], "toml") == 0)
+            return get_serde_toml_module();
 
         return NULL;
     }

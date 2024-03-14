@@ -80,7 +80,7 @@ static json_object *obj_to_json(Obj *obj, char **err) {
 
 static BuiltinResult _serde_json_serialize(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(2)
-    CHECK_ARG_TYPE(INT, 1)
+    CHECK_ARG_TYPE(ObjInt, INT, 1)
 
     char *err = NULL;
     json_object *json_obj = obj_to_json(argv[0], &err);
@@ -89,7 +89,7 @@ static BuiltinResult _serde_json_serialize(int argc, Obj **argv, UNUSED(Obj *, c
         return ERR(err);
     }
 
-    const char *json = json_object_to_json_string_ext(json_obj, AS_INT(argv[1])->value);
+    const char *json = json_object_to_json_string_ext(json_obj, argv_1->value);
     ObjString *str = new_string(json, strlen(json));
 
     json_object_put(json_obj);
@@ -141,9 +141,9 @@ static Obj *json_to_obj(json_object *json) {
 
 static BuiltinResult _serde_json_deserialize(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(1)
-    CHECK_ARG_TYPE(STRING, 0)
+    CHECK_ARG_TYPE(ObjString, STRING, 0)
 
-    json_object *json = json_tokener_parse(AS_STRING(argv[0])->chars);
+    json_object *json = json_tokener_parse(argv_0->chars);
 
     Obj *obj = json_to_obj(json);
     json_object_put(json);

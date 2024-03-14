@@ -6,15 +6,16 @@ static ObjModule *_compress_zlib_module = NULL;
 
 static BuiltinResult _compress_zlib_compress(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(2)
-    CHECK_ARG_TYPE(BYTES, 0)
-    CHECK_ARG_TYPE(INT, 1)
 
-    ObjBytes *bytes = AS_BYTES(argv[0]);
+    CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
+    CHECK_ARG_TYPE(ObjInt, INT, 1)
+
+    ObjBytes *bytes = argv_0;
 
     uLong dest_len = compressBound(bytes->length);
     Bytef *dest = malloc(dest_len);
 
-    if (compress2(dest, &dest_len, bytes->bytes, bytes->length, AS_INT(argv[1])->value) != Z_OK)
+    if (compress2(dest, &dest_len, bytes->bytes, bytes->length, argv_1->value) != Z_OK)
         return ERR("Could not compress data.");
 
     dest = realloc(dest, dest_len);
@@ -24,9 +25,9 @@ static BuiltinResult _compress_zlib_compress(int argc, Obj **argv, UNUSED(Obj *,
 
 static BuiltinResult _compress_zlib_decompress(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(1)
-    CHECK_ARG_TYPE(BYTES, 0)
+    CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 
-    ObjBytes *bytes = AS_BYTES(argv[0]);
+    ObjBytes *bytes = argv_0;
     uLong dest_len = 2 * bytes->length;
     Bytef *dest = malloc(2 * bytes->length);
 

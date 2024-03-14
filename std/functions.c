@@ -9,15 +9,12 @@ extern void free_vm();
 
 BuiltinResult exit_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
+    CHECK_ARG_TYPE(ObjInt, INT, 0)
 
-    if (IS_INT(argv[0])) {
-        int exit_code = AS_INT(argv[0])->value;
-        free_vm();
+    int exit_code = argv_0->value;
+    free_vm();
 
-        exit(exit_code);
-    } else {
-        return ERR("Cannot exit with non integer exit code");
-    }
+    exit(exit_code);
 
     return OK(new_nil());
 }
@@ -44,9 +41,9 @@ BuiltinResult repr_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee))
 
 BuiltinResult input_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
-    CHECK_ARG_TYPE(STRING, 0)
+    CHECK_ARG_TYPE(ObjString, STRING, 0)
 
-    char *s = readline(AS_STRING(argv[0])->chars);
+    char *s = readline(argv_0->chars);
 
     if (s && *s)
         add_history(s);
@@ -101,7 +98,9 @@ BuiltinResult parse_float_builtin_function(int argc, Obj **argv, UNUSED(Obj *, c
 
 BuiltinResult sleep_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
-    sleep(AS_INT(argv[0])->value);
+    CHECK_ARG_TYPE(ObjInt, INT, 0)
+
+    sleep(argv_0->value);
 
     return OK(new_nil());
 }

@@ -10,7 +10,7 @@
 #include "object.h"
 
 #define ERR(err)                                                                                   \
-    (BuiltinResult) { .error = err, .value = AS_OBJ(new_nil()) }
+    (BuiltinResult) { .value = AS_OBJ(new_nil()), .error = err }
 #define OK(ok)                                                                                     \
     (BuiltinResult) { .value = AS_OBJ(ok), .error = NULL }
 
@@ -21,12 +21,14 @@
         return ERR(buf);                                                                           \
     }
 
-#define CHECK_ARG_TYPE(typ, pos)                                                                   \
-    if (!IS_##typ(argv[pos])) {                                                                    \
+#define CHECK_ARG_TYPE(typ, kind, pos)                                                             \
+    if (!IS_##kind(argv[pos])) {                                                                   \
         char buf[100];                                                                             \
-        snprintf(buf, 99, "Expected %s at pos %d but got %s", #typ, pos, get_obj_kind(argv[pos])); \
+        snprintf(                                                                                  \
+            buf, 99, "Expected %s at pos %d but got %s", #kind, pos, get_obj_kind(argv[pos]));     \
         return ERR(buf);                                                                           \
-    }
+    }                                                                                              \
+    typ *argv_##pos = AS_##kind(argv[pos]);
 
 #define BLTIN_FN(name) BuiltinResult name##_builtin_function(int, Obj **, Obj *)
 
