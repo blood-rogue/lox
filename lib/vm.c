@@ -127,6 +127,7 @@ void init_vm() {
     SET_BLTIN_FN("sleep", sleep_builtin_function);
     SET_BLTIN_FN("type", type_builtin_function);
     SET_BLTIN_FN("repr", repr_builtin_function);
+    SET_BLTIN_FN("assert", assert_builtin_function);
 
 #undef SET_BLTIN_FN
 

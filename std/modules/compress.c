@@ -7,7 +7,6 @@ ObjModule *get_compress_module(int count, char **parts) {
         ObjModule *module = new_module(new_string("compress", 8));
 
         SET_MEMBER("zlib", get_compress_zlib_module());
-        SET_MEMBER("lzf", get_compress_lzf_module());
         SET_MEMBER("lz4", get_compress_lz4_module());
         SET_MEMBER("zstd", get_compress_zstd_module());
 
@@ -25,8 +24,6 @@ ObjModule *get_compress_module(int count, char **parts) {
     else if (count == 1) {
         if (strcmp(parts[0], "zlib") == 0)
             return get_compress_zlib_module();
-        else if (strcmp(parts[0], "lzf") == 0)
-            return get_compress_lzf_module();
         else if (strcmp(parts[0], "lz4") == 0)
             return get_compress_lz4_module();
         else if (strcmp(parts[0], "zstd") == 0)

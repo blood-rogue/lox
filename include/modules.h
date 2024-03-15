@@ -51,7 +51,6 @@ ObjClass *get_math_complex_class();
 ObjModule *get_compress_module(int, char **);
 ObjModule *get_compress_zlib_module();
 ObjModule *get_compress_zstd_module();
-ObjModule *get_compress_lzf_module();
 ObjModule *get_compress_lz4_module();
 
 ObjModule *get_serde_module(int, char **);

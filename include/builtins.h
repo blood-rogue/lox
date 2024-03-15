@@ -42,5 +42,6 @@ BLTIN_FN(parse_float);
 BLTIN_FN(sleep);
 BLTIN_FN(type);
 BLTIN_FN(repr);
+BLTIN_FN(assert);
 
 #endif // lox_builtin_h

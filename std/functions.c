@@ -110,3 +110,13 @@ BuiltinResult type_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee))
 
     return OK(new_string(get_obj_kind(argv[0]), (int)strlen(get_obj_kind(argv[0]))));
 }
+
+BuiltinResult assert_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
+    CHECK_ARG_COUNT(1)
+    CHECK_ARG_TYPE(ObjBool, BOOL, 0)
+
+    if (argv_0->value)
+        return OK(new_nil());
+    else
+        return ERR("Assertion error");
+}
