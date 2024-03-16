@@ -218,6 +218,8 @@ ObjList *argv_list(int, const char **);
 ObjBytes *take_bytes(uint8_t *, int);
 ObjString *take_string(char *, int);
 
+int utf_strlen(char *);
+
 void print_object(Obj *);
 void repr_object(Obj *);
 

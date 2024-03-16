@@ -55,7 +55,7 @@ static BuiltinResult _math_hypot(int argc, Obj **argv, UNUSED(Obj *, caller)) {
 }
 
 ObjModule *get_math_module(int count, UNUSED(char **, parts)) {
-    CHECK_PART_COUNT(0)
+    CHECK_PART_COUNT
 
     if (_math_module == NULL) {
         ObjModule *module = new_module(new_string("math", 4));

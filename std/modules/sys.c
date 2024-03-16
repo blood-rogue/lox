@@ -77,7 +77,7 @@ static BuiltinResult _sys_getpid(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, c
 }
 
 ObjModule *get_sys_module(int count, UNUSED(char **, parts)) {
-    CHECK_PART_COUNT(0)
+    CHECK_PART_COUNT
 
     if (_sys_module == NULL) {
         ObjModule *module = new_module(new_string("sys", 3));

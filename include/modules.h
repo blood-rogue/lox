@@ -24,8 +24,8 @@
 
 #define SET_BUILTIN_FN_METHOD(name, value) SET_METHOD(name, new_builtin_function(value, name))
 
-#define CHECK_PART_COUNT(value)                                                                    \
-    if (count != value)                                                                            \
+#define CHECK_PART_COUNT                                                                           \
+    if (count != 0)                                                                                \
         return NULL;
 
 ObjModule *get_module(int, char **);
@@ -57,3 +57,6 @@ ObjModule *get_serde_module(int, char **);
 ObjModule *get_serde_json_module();
 ObjModule *get_serde_yaml_module();
 ObjModule *get_serde_toml_module();
+
+ObjModule *get_archive_module();
+ObjModule *get_archive_tar_module();

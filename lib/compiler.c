@@ -641,8 +641,8 @@ static void char_(bool) {
 
     escape(str, &escaped_pos, 1);
 
-    if (u8_strlen((uint8_t *)str) > 1 || u8_check((uint8_t *)str, escaped_pos) != NULL) {
-        error("Invalid char sequence");
+    if (utf_strlen(str) > 1 || u8_check((uint8_t *)str, escaped_pos) != NULL) {
+        error("Invalid char sequence.");
         return;
     }
 

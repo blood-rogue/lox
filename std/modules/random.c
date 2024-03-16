@@ -28,7 +28,7 @@ static BuiltinResult _random_randint(int argc, Obj **argv, UNUSED(Obj *, caller)
 }
 
 ObjModule *get_random_module(int count, UNUSED(char **, parts)) {
-    CHECK_PART_COUNT(0)
+    CHECK_PART_COUNT
 
     if (_random_module == NULL) {
         ObjModule *module = new_module(new_string("random", 6));

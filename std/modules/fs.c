@@ -86,7 +86,7 @@ static void set_file_instance(int fd, ObjInstance *instance) {
 }
 
 ObjModule *get_fs_module(int count, UNUSED(char **, parts)) {
-    CHECK_PART_COUNT(0)
+    CHECK_PART_COUNT
 
     if (_fs_module == NULL) {
         ObjModule *module = new_module(new_string("fs", 2));

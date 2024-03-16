@@ -24,11 +24,20 @@ static Obj *allocate_object(size_t size, ObjType type) {
     return object;
 }
 
+int utf_strlen(char *chars) {
+    ucs4_t puc;
+    int len = 0;
+    for (uint8_t *tmp = (uint8_t *)chars; tmp != NULL; tmp = (uint8_t *)u8_next(&puc, tmp))
+        len++;
+
+    return len - !puc;
+}
+
 static ObjString *allocate_string(char *chars, int length, uint32_t hash) {
     ObjString *string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
 
     string->raw_length = length;
-    string->length = u8_strlen((uint8_t *)chars);
+    string->length = utf_strlen(chars);
     string->chars = chars;
     string->obj.hash = (uint64_t)hash;
 
