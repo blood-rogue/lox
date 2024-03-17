@@ -4,7 +4,7 @@
 
 static BuiltinResult _bytes_len(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    return OK(new_int(AS_BYTES(caller)->length));
+    OK(new_int(AS_BYTES(caller)->length));
 }
 
 static BuiltinResult _bytes_decode(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -12,7 +12,7 @@ static BuiltinResult _bytes_decode(int argc, UNUSED(Obj **, argv), Obj *caller) 
 
     ObjBytes *bytes = AS_BYTES(caller);
 
-    return OK(new_string((char *)bytes->bytes, bytes->length));
+    OK(new_string((char *)bytes->bytes, bytes->length));
 }
 
 BuiltinTable *bytes_methods() {

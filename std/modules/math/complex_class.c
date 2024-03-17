@@ -16,7 +16,7 @@
         ObjInstance *instance = new_instance(_math_complex_class);                                 \
         SET_FLOAT_FIELD("real", creal(c));                                                         \
         SET_FLOAT_FIELD("imag", cimag(c));                                                         \
-        return OK(instance);                                                                       \
+        OK(instance);                                                                              \
     }
 
 static ObjClass *_math_complex_class = NULL;
@@ -43,15 +43,11 @@ static BuiltinResult _math_complex_init(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(2)
 
     if (!IS_INT(argv[0]) && !IS_FLOAT(argv[0])) {
-        char buf[100];
-        snprintf(buf, 99, "Expected INT or FLOAT at pos 0 but got %s", get_obj_kind(argv[0]));
-        return ERR(buf);
+        ERR("Expected INT or FLOAT at pos 0 but got %s", get_obj_kind(argv[0]))
     }
 
     if (!IS_INT(argv[1]) && !IS_FLOAT(argv[1])) {
-        char buf[100];
-        snprintf(buf, 99, "Expected INT or FLOAT at pos 1 but got %s", get_obj_kind(argv[1]));
-        return ERR(buf);
+        ERR("Expected INT or FLOAT at pos 1 but got %s", get_obj_kind(argv[1]))
     }
 
     ObjInstance *instance = AS_INSTANCE(caller);
@@ -59,7 +55,7 @@ static BuiltinResult _math_complex_init(int argc, Obj **argv, Obj *caller) {
     SET_FIELD("real", argv[0]);
     SET_FIELD("imag", argv[1]);
 
-    return OK(new_nil());
+    OK(new_nil());
 }
 
 static BuiltinResult _math_complex_abs(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -76,7 +72,7 @@ static BuiltinResult _math_complex_abs(int argc, UNUSED(Obj **, argv), Obj *call
     table_get(&instance->fields, AS_OBJ(new_string("imag", 4)), &field);
     i = IS_INT(field) ? (double)(AS_INT(field)->value) : AS_FLOAT(field)->value;
 
-    return OK(new_float(cabs(CMPLX(r, i))));
+    OK(new_float(cabs(CMPLX(r, i))));
 }
 
 static BuiltinResult _math_complex_arg(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -93,16 +89,15 @@ static BuiltinResult _math_complex_arg(int argc, UNUSED(Obj **, argv), Obj *call
     table_get(&instance->fields, AS_OBJ(new_string("imag", 4)), &field);
     i = IS_INT(field) ? (double)(AS_INT(field)->value) : AS_FLOAT(field)->value;
 
-    return OK(new_float(carg(CMPLX(r, i))));
+    OK(new_float(carg(CMPLX(r, i))));
 }
 
 static BuiltinResult _math_complex_pow(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInstance, INSTANCE, 0)
 
-    if (!obj_equal(AS_OBJ(new_string("Complex", 7)), AS_OBJ(argv_0->klass->name))) {
-        return ERR("Instance of 'Complex' required.");
-    }
+    if (!obj_equal(AS_OBJ(new_string("Complex", 7)), AS_OBJ(argv_0->klass->name)))
+        ERR("Instance of 'Complex' required.")
 
     ObjInstance *_instance = AS_INSTANCE(caller);
 
@@ -128,7 +123,7 @@ static BuiltinResult _math_complex_pow(int argc, Obj **argv, Obj *caller) {
     SET_FLOAT_FIELD("real", creal(c));
     SET_FLOAT_FIELD("imag", cimag(c));
 
-    return OK(instance);
+    OK(instance);
 }
 
 ObjClass *get_math_complex_class() {

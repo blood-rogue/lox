@@ -219,11 +219,10 @@ ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinFn fn, Obj *caller, char 
     return bound_method;
 }
 
-ObjNativeStruct *new_native_struct(void *ptr, size_t size) {
+ObjNativeStruct *new_native_struct(void *ptr) {
     ObjNativeStruct *native = ALLOCATE_OBJ(ObjNativeStruct, OBJ_NATIVE_STRUCT);
 
     native->ptr = ptr;
-    native->size = size;
 
     return native;
 }
@@ -388,14 +387,8 @@ void print_object(Obj *obj) {
             printf("<module '%s'>", AS_MODULE(obj)->name->chars);
             break;
         case OBJ_NATIVE_STRUCT:
-            {
-                ObjNativeStruct *native = AS_NATIVE_STRUCT(obj);
-                if (native->size > 0)
-                    printf("<C struct at %p of size %ld>", native->ptr, native->size);
-                else
-                    printf("<C struct at %p of unknown size>", native->ptr);
-                break;
-            }
+            printf("<C struct at %p>", AS_NATIVE_STRUCT(obj)->ptr);
+            break;
     }
 }
 

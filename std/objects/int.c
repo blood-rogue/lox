@@ -9,7 +9,7 @@ static BuiltinResult _int_to_str(int argc, UNUSED(Obj **, argv), Obj *caller) {
     char *buf = malloc(size);
     snprintf(buf, size, "%ld", _int->value);
 
-    return OK(AS_OBJ(take_string(buf, (int)strlen(buf))));
+    OK(AS_OBJ(take_string(buf, (int)strlen(buf))));
 }
 
 static BuiltinResult _int_to_hex(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -21,7 +21,7 @@ static BuiltinResult _int_to_hex(int argc, UNUSED(Obj **, argv), Obj *caller) {
     char *buf = malloc(size);
     snprintf(buf, size, "0x%lx", _int->value);
 
-    return OK(AS_OBJ(take_string(buf, (int)strlen(buf))));
+    OK(AS_OBJ(take_string(buf, (int)strlen(buf))));
 }
 
 static BuiltinResult _int_to_oct(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -33,43 +33,43 @@ static BuiltinResult _int_to_oct(int argc, UNUSED(Obj **, argv), Obj *caller) {
     char *buf = malloc(size);
     snprintf(buf, size, "0o%lo", _int->value);
 
-    return OK(AS_OBJ(take_string(buf, (int)strlen(buf))));
+    OK(AS_OBJ(take_string(buf, (int)strlen(buf))));
 }
 
 static BuiltinResult _int_abs(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    return OK(new_int(labs(AS_INT(caller)->value)));
+    OK(new_int(labs(AS_INT(caller)->value)));
 }
 
 static BuiltinResult _int_num_zeroes(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    return OK(new_int(__builtin_popcountl(~AS_INT(caller)->value)));
+    OK(new_int(__builtin_popcountl(~AS_INT(caller)->value)));
 }
 
 static BuiltinResult _int_num_ones(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    return OK(new_int(__builtin_popcountl(AS_INT(caller)->value)));
+    OK(new_int(__builtin_popcountl(AS_INT(caller)->value)));
 }
 
 static BuiltinResult _int_parity(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    return OK(new_int(__builtin_parityl(AS_INT(caller)->value)));
+    OK(new_int(__builtin_parityl(AS_INT(caller)->value)));
 }
 
 static BuiltinResult _int_leading_zeroes(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    return OK(new_int(__builtin_clzl(AS_INT(caller)->value)));
+    OK(new_int(__builtin_clzl(AS_INT(caller)->value)));
 }
 
 static BuiltinResult _int_trailing_zeroes(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    return OK(new_int(__builtin_ctzl(AS_INT(caller)->value)));
+    OK(new_int(__builtin_ctzl(AS_INT(caller)->value)));
 }
 
 BuiltinTable *int_methods() {

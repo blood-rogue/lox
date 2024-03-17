@@ -7,16 +7,16 @@ static BuiltinResult _random_seed(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
     if (argv_0->value < 0)
-        return ERR("Cannot seed using negative number.");
+        ERR("Cannot seed using negative number %ld.", argv_0->value)
 
     srand(argv_0->value);
-    return OK(new_nil());
+    OK(new_nil());
 }
 
 static BuiltinResult _random_random(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(0)
 
-    return OK(new_int(rand()));
+    OK(new_int(rand()));
 }
 
 static BuiltinResult _random_randint(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -24,7 +24,7 @@ static BuiltinResult _random_randint(int argc, Obj **argv, UNUSED(Obj *, caller)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
     CHECK_ARG_TYPE(ObjInt, INT, 1)
 
-    return OK(new_int(rand() % (argv_1->value + 1 - argv_0->value) + argv_0->value));
+    OK(new_int(rand() % (argv_1->value + 1 - argv_0->value) + argv_0->value));
 }
 
 ObjModule *get_random_module(int count, UNUSED(char **, parts)) {

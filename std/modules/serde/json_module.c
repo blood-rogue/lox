@@ -85,16 +85,15 @@ static BuiltinResult _serde_json_serialize(int argc, Obj **argv, UNUSED(Obj *, c
     char *err = NULL;
     json_object *json_obj = obj_to_json(argv[0], &err);
 
-    if (json_obj == NULL) {
-        return ERR(err);
-    }
+    if (json_obj == NULL)
+        ERR("JSON error: %s", err)
 
     const char *json = json_object_to_json_string_ext(json_obj, argv_1->value);
     ObjString *str = new_string(json, strlen(json));
 
     json_object_put(json_obj);
 
-    return OK(str);
+    OK(str);
 }
 
 static Obj *json_to_obj(json_object *json) {
@@ -148,7 +147,7 @@ static BuiltinResult _serde_json_deserialize(int argc, Obj **argv, UNUSED(Obj *,
     Obj *obj = json_to_obj(json);
     json_object_put(json);
 
-    return OK(obj);
+    OK(obj);
 }
 
 ObjModule *get_serde_json_module() {

@@ -13,9 +13,9 @@ static BuiltinResult _sys_getenv(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     char *env = getenv(argv_0->chars);
 
     if (env != NULL)
-        return OK(new_string(env, strlen(env)));
+        OK(new_string(env, strlen(env)));
 
-    return ERR("No environment variable found with the specified name.");
+    ERR("No environment variable found with the name '%s'.", argv_0->chars)
 }
 
 static BuiltinResult _sys_getcwd(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, caller)) {
@@ -23,21 +23,21 @@ static BuiltinResult _sys_getcwd(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, c
 
     char *cwd = getcwd(NULL, 0);
     if (cwd != NULL)
-        return OK(take_string(cwd, strlen(cwd)));
+        OK(take_string(cwd, strlen(cwd)));
 
-    return ERR("Could not read current working dir.");
+    ERR("Could not read current working dir.")
 }
 
 static BuiltinResult _sys_getuid(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(0)
 
-    return OK(new_int(getuid()));
+    OK(new_int(getuid()));
 }
 
 static BuiltinResult _sys_getgid(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(0)
 
-    return OK(new_int(getgid()));
+    OK(new_int(getgid()));
 }
 
 static BuiltinResult _sys_setuid(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -45,9 +45,9 @@ static BuiltinResult _sys_setuid(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
     if (setuid(argv_0->value) == 0)
-        return OK(new_nil());
+        OK(new_nil());
 
-    return ERR("Could not set uid.");
+    ERR("Could not set uid.")
 }
 
 static BuiltinResult _sys_setgid(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -55,9 +55,9 @@ static BuiltinResult _sys_setgid(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
     if (setgid(argv_0->value) == 0)
-        return OK(new_nil());
+        OK(new_nil());
 
-    return ERR("Could not set gid.");
+    ERR("Could not set gid.")
 }
 
 static BuiltinResult _sys_chdir(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -65,15 +65,15 @@ static BuiltinResult _sys_chdir(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
     if (chdir(argv_0->chars) == 0)
-        return OK(new_nil());
+        OK(new_nil());
 
-    return ERR("Could not change working directory of current process.");
+    ERR("Could not change working directory of current process to '%s'.", argv_0->chars)
 }
 
 static BuiltinResult _sys_getpid(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(0)
 
-    return OK(new_int(getpid()));
+    OK(new_int(getpid()));
 }
 
 ObjModule *get_sys_module(int count, UNUSED(char **, parts)) {

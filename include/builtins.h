@@ -9,25 +9,23 @@
 #include "modules.h"
 #include "object.h"
 
-#define ERR(err)                                                                                   \
-    (BuiltinResult) { .value = AS_OBJ(new_nil()), .error = err }
+#define ERR(...)                                                                                   \
+    {                                                                                              \
+        int size = snprintf(NULL, 0, __VA_ARGS__);                                                 \
+        char *buf = malloc(size + 1);                                                              \
+        snprintf(buf, size + 1, __VA_ARGS__);                                                      \
+        return (BuiltinResult){.value = AS_OBJ(new_nil()), .error = buf};                          \
+    }
 #define OK(ok)                                                                                     \
-    (BuiltinResult) { .value = AS_OBJ(ok), .error = NULL }
+    return (BuiltinResult) { .value = AS_OBJ(ok), .error = NULL }
 
 #define CHECK_ARG_COUNT(expected)                                                                  \
-    if (argc != expected) {                                                                        \
-        char buf[100];                                                                             \
-        snprintf(buf, 99, "Expected %d arguments but got %d", expected, argc);                     \
-        return ERR(buf);                                                                           \
-    }
+    if (argc != expected)                                                                          \
+    ERR("Expected %d arguments but got %d", expected, argc)
 
 #define CHECK_ARG_TYPE(typ, kind, pos)                                                             \
-    if (!IS_##kind(argv[pos])) {                                                                   \
-        char buf[100];                                                                             \
-        snprintf(                                                                                  \
-            buf, 99, "Expected %s at pos %d but got %s", #kind, pos, get_obj_kind(argv[pos]));     \
-        return ERR(buf);                                                                           \
-    }                                                                                              \
+    if (!IS_##kind(argv[pos]))                                                                     \
+        ERR("Expected %s at pos %d but got %s", #kind, pos, get_obj_kind(argv[pos]))               \
     typ *argv_##pos = AS_##kind(argv[pos]);
 
 #define BLTIN_FN(name) BuiltinResult name##_builtin_function(int, Obj **, Obj *)

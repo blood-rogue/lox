@@ -18,16 +18,16 @@ static BuiltinResult _archive_tar_open(int argc, Obj **argv, UNUSED(Obj *, calle
     archive_read_support_format_tar(a);
     archive_read_support_format_gnutar(a);
 
-    ObjNativeStruct *archive_obj = new_native_struct(a, 0);
+    ObjNativeStruct *archive_obj = new_native_struct(a);
 
     if (archive_read_open_filename(a, argv_0->chars, 10240) != ARCHIVE_OK)
-        return ERR("Could not open archive.");
+        ERR("Could not open archive.")
 
     ObjInstance *instance = new_instance(get_archive_tar_file_class());
 
-    SET_FIELD("_internal", archive_obj);
+    SET_FIELD("$$internal", archive_obj);
 
-    return OK(instance);
+    OK(instance);
 }
 
 ObjModule *get_archive_tar_module() {

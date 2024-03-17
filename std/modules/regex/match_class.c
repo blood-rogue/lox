@@ -17,13 +17,12 @@ static BuiltinResult _regex_match_group(int argc, Obj **argv, Obj *caller) {
     if (index < 0)
         index = groups->elems.count + index;
 
-    if (index >= groups->elems.count) {
-        return ERR("Index out of bounds.");
-    }
+    if (index >= groups->elems.count)
+        ERR("Index out of bounds.")
 
     Obj *indexed = groups->elems.values[index];
 
-    return OK(indexed);
+    OK(indexed);
 }
 
 ObjClass *get_regex_match_class() {

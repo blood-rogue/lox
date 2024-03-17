@@ -6,7 +6,7 @@
 #define IS_PROPERTY_FN(name)                                                                       \
     static BuiltinResult _char_is_##name(int argc, UNUSED(Obj **, argv), Obj *caller) {            \
         CHECK_ARG_COUNT(0)                                                                         \
-        return OK(new_bool(uc_is_property_##name(AS_CHAR(caller)->value)));                        \
+        OK(new_bool(uc_is_property_##name(AS_CHAR(caller)->value)));                               \
     }
 
 IS_PROPERTY_FN(alphabetic)
@@ -105,17 +105,17 @@ IS_PROPERTY_FN(zero_width)
 
 static BuiltinResult _char_to_upper(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    return OK(new_char(uc_toupper(AS_CHAR(caller)->value)));
+    OK(new_char(uc_toupper(AS_CHAR(caller)->value)));
 }
 
 static BuiltinResult _char_to_lower(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    return OK(new_char(uc_tolower(AS_CHAR(caller)->value)));
+    OK(new_char(uc_tolower(AS_CHAR(caller)->value)));
 }
 
 static BuiltinResult _char_to_title(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    return OK(new_char(uc_totitle(AS_CHAR(caller)->value)));
+    OK(new_char(uc_totitle(AS_CHAR(caller)->value)));
 }
 
 static BuiltinResult _char_to_decimal_digit(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -123,9 +123,9 @@ static BuiltinResult _char_to_decimal_digit(int argc, UNUSED(Obj **, argv), Obj 
 
     int digit = uc_decimal_value(AS_CHAR(caller)->value);
     if (digit == -1) {
-        return ERR("Could not convert to digit.");
+        ERR("Could not convert to digit.")
     } else {
-        return OK(new_int(digit));
+        OK(new_int(digit));
     }
 }
 

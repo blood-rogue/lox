@@ -13,7 +13,7 @@ static BuiltinResult _string_to_upper(int argc, UNUSED(Obj **, argv), Obj *calle
 
     ObjString *str = take_string((char *)chars, length);
 
-    return OK(str);
+    OK(str);
 }
 
 static BuiltinResult _string_to_lower(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -26,7 +26,7 @@ static BuiltinResult _string_to_lower(int argc, UNUSED(Obj **, argv), Obj *calle
 
     ObjString *str = take_string((char *)chars, length);
 
-    return OK(str);
+    OK(str);
 }
 
 static BuiltinResult _string_to_title(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -39,12 +39,12 @@ static BuiltinResult _string_to_title(int argc, UNUSED(Obj **, argv), Obj *calle
 
     ObjString *str = take_string((char *)chars, length);
 
-    return OK(str);
+    OK(str);
 }
 
 static BuiltinResult _string_len(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    return OK(new_int(AS_STRING(caller)->length));
+    OK(new_int(AS_STRING(caller)->length));
 }
 
 static BuiltinResult _string_find(int argc, Obj **argv, Obj *caller) {
@@ -57,7 +57,7 @@ static BuiltinResult _string_find(int argc, Obj **argv, Obj *caller) {
          tmp = (uint8_t *)u8_next(&puc, tmp))
         idx++;
 
-    return OK(puc == argv_0->value ? AS_OBJ(new_int(idx)) : AS_OBJ(new_nil()));
+    OK(puc == argv_0->value ? AS_OBJ(new_int(idx)) : AS_OBJ(new_nil()));
 }
 
 BuiltinTable *string_methods() {

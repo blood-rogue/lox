@@ -14,11 +14,11 @@ static BuiltinResult _compress_lz4_compress(int argc, Obj **argv, UNUSED(Obj *, 
     char *dest = malloc(dest_len);
 
     if ((dest_len = LZ4_compress_default((char *)bytes->bytes, dest, bytes->length, dest_len)) == 0)
-        return ERR("Could not compress data.");
+        ERR("Could not compress data.")
 
     dest = realloc(dest, dest_len);
 
-    return OK(take_bytes((uint8_t *)dest, dest_len));
+    OK(take_bytes((uint8_t *)dest, dest_len));
 }
 
 static BuiltinResult _compress_lz4_decompress(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -31,11 +31,11 @@ static BuiltinResult _compress_lz4_decompress(int argc, Obj **argv, UNUSED(Obj *
     char *dest = malloc(dest_len);
 
     if ((dest_len = LZ4_decompress_safe((char *)bytes->bytes, dest, bytes->length, dest_len)) < 0)
-        return ERR("Could not compress data.");
+        ERR("Could not compress data.")
 
     dest = realloc(dest, dest_len);
 
-    return OK(take_bytes((uint8_t *)dest, dest_len));
+    OK(take_bytes((uint8_t *)dest, dest_len));
 }
 
 ObjModule *get_compress_lz4_module() {

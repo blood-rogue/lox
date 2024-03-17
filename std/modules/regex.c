@@ -18,7 +18,7 @@ static BuiltinResult regex(char *pattern, size_t pattern_size, char *subject, si
 
     if (re == NULL) {
         pcre2_get_error_message(errcode, buffer, 120);
-        return ERR((char *)buffer);
+        ERR("PCRE2 error: %s", (char *)buffer)
     }
 
     pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(re, NULL);
@@ -27,9 +27,9 @@ static BuiltinResult regex(char *pattern, size_t pattern_size, char *subject, si
     if (rc < 0) {
         switch (rc) {
             case PCRE2_ERROR_NOMATCH:
-                return OK(new_nil());
+                OK(new_nil());
             default:
-                return ERR("Matching error.");
+                ERR("Matching error.")
         }
     }
 
@@ -48,7 +48,7 @@ static BuiltinResult regex(char *pattern, size_t pattern_size, char *subject, si
     pcre2_match_data_free(match_data);
     pcre2_code_free(re);
 
-    return OK(instance);
+    OK(instance);
 }
 
 static BuiltinResult _regex_search(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -103,7 +103,7 @@ static BuiltinResult _regex_findall(int argc, Obj **argv, UNUSED(Obj *, caller))
 
     if (re == NULL) {
         pcre2_get_error_message(errcode, buffer, 120);
-        return ERR((char *)buffer);
+        ERR("PCRE2 error: %s", (char *)buffer)
     }
 
     pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(re, NULL);
@@ -112,9 +112,9 @@ static BuiltinResult _regex_findall(int argc, Obj **argv, UNUSED(Obj *, caller))
     if (rc < 0) {
         switch (rc) {
             case PCRE2_ERROR_NOMATCH:
-                return OK(new_nil());
+                OK(new_nil());
             default:
-                return ERR("Matching error.");
+                ERR("Matching error.")
         }
     }
 
@@ -147,7 +147,7 @@ static BuiltinResult _regex_findall(int argc, Obj **argv, UNUSED(Obj *, caller))
                     cont = false;
                     break;
                 default:
-                    return ERR("Matching error.");
+                    ERR("Matching error.")
             }
         } else {
             ObjList *groups = new_list(NULL, 0);
@@ -169,7 +169,7 @@ static BuiltinResult _regex_findall(int argc, Obj **argv, UNUSED(Obj *, caller))
     pcre2_match_data_free(match_data);
     pcre2_code_free(re);
 
-    return OK(matches);
+    OK(matches);
 }
 
 ObjModule *get_regex_module(int count, UNUSED(char **, parts)) {

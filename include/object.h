@@ -198,7 +198,6 @@ typedef struct {
 typedef struct {
     Obj obj;
     void *ptr;
-    size_t size;
 } ObjNativeStruct;
 
 ObjNil *new_nil();
@@ -222,7 +221,7 @@ ObjModule *new_module(ObjString *);
 
 ObjBuiltinFunction *new_builtin_function(BuiltinFn, char *);
 ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinFn, Obj *, char *);
-ObjNativeStruct *new_native_struct(void *, size_t);
+ObjNativeStruct *new_native_struct(void *);
 
 ObjList *argv_list(int, const char **);
 ObjBytes *take_bytes(uint8_t *, int);

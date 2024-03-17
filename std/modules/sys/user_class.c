@@ -21,7 +21,7 @@ static BuiltinResult _sys_user_by_name(int argc, Obj **argv, UNUSED(Obj *, calle
     SET_STRING_FIELD("home_dir", user->pw_dir);
     SET_STRING_FIELD("shell", user->pw_shell);
 
-    return OK(instance);
+    OK(instance);
 }
 
 static BuiltinResult _sys_user_by_id(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -39,7 +39,7 @@ static BuiltinResult _sys_user_by_id(int argc, Obj **argv, UNUSED(Obj *, caller)
     SET_STRING_FIELD("home_dir", user->pw_dir);
     SET_STRING_FIELD("shell", user->pw_shell);
 
-    return OK(instance);
+    OK(instance);
 }
 
 ObjClass *get_sys_user_class() {

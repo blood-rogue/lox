@@ -83,7 +83,7 @@ static BuiltinResult _archive_tar_file_list_entries(int argc, UNUSED(Obj **, arg
 
     ObjInstance *tar_file_instance = AS_INSTANCE(caller);
     Obj *field;
-    table_get(&tar_file_instance->fields, AS_OBJ(new_string("_internal", 9)), &field);
+    table_get(&tar_file_instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
 
     struct archive *a = AS_NATIVE_STRUCT(field)->ptr;
 
@@ -99,7 +99,7 @@ static BuiltinResult _archive_tar_file_list_entries(int argc, UNUSED(Obj **, arg
         archive_read_data_skip(a);
     }
 
-    return OK(entries);
+    OK(entries);
 }
 
 static BuiltinResult _archive_tar_file_extract(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -107,7 +107,7 @@ static BuiltinResult _archive_tar_file_extract(int argc, UNUSED(Obj **, argv), O
 
     ObjInstance *instance = AS_INSTANCE(caller);
     Obj *field;
-    table_get(&instance->fields, AS_OBJ(new_string("_internal", 9)), &field);
+    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
 
     struct archive *a = AS_NATIVE_STRUCT(field)->ptr;
     struct archive_entry *entry;
@@ -123,13 +123,13 @@ static BuiltinResult _archive_tar_file_extract(int argc, UNUSED(Obj **, argv), O
         if (r == ARCHIVE_EOF)
             break;
         if (r < ARCHIVE_OK)
-            return ERR(archive_error_string(a));
+            ERR("Archive error: %s", archive_error_string(a))
         if (r < ARCHIVE_WARN)
-            return ERR("Could not read header.");
+            ERR("Could not read header.")
 
         r = archive_write_header(ext, entry);
         if (r < ARCHIVE_OK)
-            return ERR(archive_error_string(ext));
+            ERR("Archive error: %s", archive_error_string(ext))
         else if (archive_entry_size(entry) > 0) {
             const void *buff;
             size_t size;
@@ -142,27 +142,27 @@ static BuiltinResult _archive_tar_file_extract(int argc, UNUSED(Obj **, argv), O
                 r = archive_write_data_block(ext, buff, size, offset);
 
                 if (r < ARCHIVE_OK) {
-                    return ERR(archive_error_string(ext));
+                    ERR("Archive error: %s", archive_error_string(ext))
                 }
             }
 
             if (r < ARCHIVE_OK)
-                return ERR(archive_error_string(ext));
+                ERR("Archive error: %s", archive_error_string(ext))
             if (r < ARCHIVE_WARN)
-                return ERR("Could not write header.");
+                ERR("Could not write header.")
         }
 
         r = archive_write_finish_entry(ext);
         if (r < ARCHIVE_OK)
-            return ERR(archive_error_string(ext));
+            ERR("Archive error: %s", archive_error_string(ext))
         if (r < ARCHIVE_WARN)
-            return ERR("Could not finish writing entry.");
+            ERR("Could not finish writing entry.")
     }
 
     archive_write_close(ext);
     archive_write_free(ext);
 
-    return OK(new_nil());
+    OK(new_nil());
 }
 
 static BuiltinResult _archive_tar_file_close(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -170,14 +170,14 @@ static BuiltinResult _archive_tar_file_close(int argc, UNUSED(Obj **, argv), Obj
 
     ObjInstance *instance = AS_INSTANCE(caller);
     Obj *field;
-    table_get(&instance->fields, AS_OBJ(new_string("_internal", 9)), &field);
+    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
 
     struct archive *a = AS_NATIVE_STRUCT(field)->ptr;
 
     archive_read_close(a);
     archive_read_free(a);
 
-    return OK(instance);
+    OK(instance);
 }
 
 static BuiltinResult _archive_tar_file_next_entry(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -185,7 +185,7 @@ static BuiltinResult _archive_tar_file_next_entry(int argc, UNUSED(Obj **, argv)
 
     ObjInstance *tar_file_instance = AS_INSTANCE(caller);
     Obj *field;
-    table_get(&tar_file_instance->fields, AS_OBJ(new_string("_internal", 9)), &field);
+    table_get(&tar_file_instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
 
     struct archive *a = AS_NATIVE_STRUCT(field)->ptr;
 
@@ -197,10 +197,10 @@ static BuiltinResult _archive_tar_file_next_entry(int argc, UNUSED(Obj **, argv)
 
         archive_read_data_skip(a);
 
-        return OK(instance);
+        OK(instance);
     }
 
-    return ERR(archive_error_string(a));
+    ERR("Archive error: %s", archive_error_string(a))
 }
 
 ObjClass *get_archive_tar_file_class() {

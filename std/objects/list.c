@@ -6,12 +6,12 @@ static BuiltinResult _list_append(int argc, Obj **argv, Obj *caller) {
 
     write_array(&list->elems, argv[0]);
 
-    return OK(new_nil());
+    OK(new_nil());
 }
 
 static BuiltinResult _list_len(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    return OK(new_int(AS_LIST(caller)->elems.count));
+    OK(new_int(AS_LIST(caller)->elems.count));
 }
 
 static BuiltinResult _list_remove(int argc, Obj **argv, Obj *caller) {
@@ -24,11 +24,10 @@ static BuiltinResult _list_remove(int argc, Obj **argv, Obj *caller) {
     if (index < 0)
         index = list->elems.count + index;
 
-    if (index >= list->elems.count) {
-        return ERR("Index out of bounds.");
-    }
+    if (index >= list->elems.count)
+        ERR("Index out of bounds.")
 
-    return OK(remove_at_array(&list->elems, index));
+    OK(remove_at_array(&list->elems, index));
 }
 
 static BuiltinResult _list_insert(int argc, Obj **argv, Obj *caller) {
@@ -41,13 +40,12 @@ static BuiltinResult _list_insert(int argc, Obj **argv, Obj *caller) {
     if (index < 0)
         index = list->elems.count + index;
 
-    if (index >= list->elems.count) {
-        return ERR("Index out of bounds.");
-    }
+    if (index >= list->elems.count)
+        ERR("Index out of bounds.")
 
     insert_at_array(&list->elems, index, argv[1]);
 
-    return OK(new_nil());
+    OK(new_nil());
 }
 
 static BuiltinResult _list_map(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -59,7 +57,7 @@ static BuiltinResult _list_map(int argc, UNUSED(Obj **, argv), Obj *caller) {
     for (int i = 0; i < list->elems.count; i++)
         write_array(&mapped->elems, list->elems.values[i]);
 
-    return OK(mapped);
+    OK(mapped);
 }
 
 BuiltinTable *list_methods() {

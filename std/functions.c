@@ -16,7 +16,7 @@ BuiltinResult exit_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee))
 
     exit(exit_code);
 
-    return OK(new_nil());
+    OK(new_nil());
 }
 
 BuiltinResult print_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
@@ -26,7 +26,7 @@ BuiltinResult print_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)
     }
 
     printf("\n");
-    return OK(new_nil());
+    OK(new_nil());
 }
 
 BuiltinResult repr_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
@@ -36,7 +36,7 @@ BuiltinResult repr_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee))
     }
 
     printf("\n");
-    return OK(new_nil());
+    OK(new_nil());
 }
 
 BuiltinResult input_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
@@ -48,14 +48,14 @@ BuiltinResult input_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)
     if (s && *s)
         add_history(s);
 
-    return OK(take_string(s, strlen(s)));
+    OK(take_string(s, strlen(s)));
 }
 
 BuiltinResult argv_builtin_function(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(0)
 
     ObjList *args = argv_list(_argc, _argv);
-    return OK(args);
+    OK(args);
 }
 
 BuiltinResult run_gc_builtin_function(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, callee)) {
@@ -63,7 +63,7 @@ BuiltinResult run_gc_builtin_function(int argc, UNUSED(Obj **, argv), UNUSED(Obj
 
     collect_garbage();
 
-    return OK(new_nil());
+    OK(new_nil());
 }
 
 BuiltinResult parse_int_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
@@ -71,13 +71,15 @@ BuiltinResult parse_int_builtin_function(int argc, Obj **argv, UNUSED(Obj *, cal
 
     switch (argv[0]->type) {
         case OBJ_STRING:
-            return OK(new_int((int64_t)strtol(AS_STRING(argv[0])->chars, NULL, 10)));
+            OK(new_int((int64_t)strtol(AS_STRING(argv[0])->chars, NULL, 10)));
         case OBJ_INT:
-            return OK(argv[0]);
+            OK(argv[0]);
         case OBJ_FLOAT:
-            return OK(new_int((int64_t)(AS_FLOAT(argv[0])->value)));
+            OK(new_int((int64_t)(AS_FLOAT(argv[0])->value)));
         default:
-            return ERR("Cannot parse to int.");
+            {
+                ERR("Cannot parse to int.")
+            }
     }
 }
 
@@ -86,13 +88,13 @@ BuiltinResult parse_float_builtin_function(int argc, Obj **argv, UNUSED(Obj *, c
 
     switch (argv[0]->type) {
         case OBJ_STRING:
-            return OK(new_float(strtod(AS_STRING(argv[0])->chars, NULL)));
+            OK(new_float(strtod(AS_STRING(argv[0])->chars, NULL)));
         case OBJ_FLOAT:
-            return OK(argv[0]);
+            OK(argv[0]);
         case OBJ_INT:
-            return OK(new_float((double)(AS_INT(argv[0])->value)));
+            OK(new_float((double)(AS_INT(argv[0])->value)));
         default:
-            return ERR("Cannot parse to int.");
+            ERR("Cannot parse to int.")
     }
 }
 
@@ -102,13 +104,13 @@ BuiltinResult sleep_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)
 
     sleep(argv_0->value);
 
-    return OK(new_nil());
+    OK(new_nil());
 }
 
 BuiltinResult type_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
     CHECK_ARG_COUNT(1)
 
-    return OK(new_string(get_obj_kind(argv[0]), (int)strlen(get_obj_kind(argv[0]))));
+    OK(new_string(get_obj_kind(argv[0]), (int)strlen(get_obj_kind(argv[0]))));
 }
 
 BuiltinResult assert_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee)) {
@@ -116,7 +118,7 @@ BuiltinResult assert_builtin_function(int argc, Obj **argv, UNUSED(Obj *, callee
     CHECK_ARG_TYPE(ObjBool, BOOL, 0)
 
     if (argv_0->value)
-        return OK(new_nil());
+        OK(new_nil());
     else
-        return ERR("Assertion error");
+        ERR("Assertion error")
 }

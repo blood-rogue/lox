@@ -14,11 +14,11 @@ static BuiltinResult _compress_zstd_compress(int argc, Obj **argv, UNUSED(Obj *,
 
     dest_len = ZSTD_compress(dest, dest_len, argv_0->bytes, argv_0->length, argv_1->value);
     if (ZSTD_isError(dest_len))
-        return ERR("Could not compress data.");
+        ERR("Could not compress data.")
 
     dest = realloc(dest, dest_len);
 
-    return OK(take_bytes(dest, dest_len));
+    OK(take_bytes(dest, dest_len));
 }
 
 typedef struct {
@@ -68,7 +68,7 @@ static BuiltinResult _compress_zstd_decompress(int argc, Obj **argv, UNUSED(Obj 
     uint64_t dest_len = ZSTD_getFrameContentSize(bytes->bytes, bytes->length);
 
     if (dest_len == ZSTD_CONTENTSIZE_ERROR)
-        return ERR("Invalid compressed data");
+        ERR("Invalid compressed data")
 
     if (dest_len == ZSTD_CONTENTSIZE_UNKNOWN) {
         size_t buffInSize = ZSTD_DStreamInSize();
@@ -80,7 +80,7 @@ static BuiltinResult _compress_zstd_decompress(int argc, Obj **argv, UNUSED(Obj 
         ZSTD_DCtx *dctx = ZSTD_createDCtx();
 
         if (dctx == NULL)
-            return ERR("Could not create ZSTD Context.");
+            ERR("Could not create ZSTD Context.")
 
         size_t const toRead = buffInSize;
         size_t read;
@@ -110,28 +110,28 @@ static BuiltinResult _compress_zstd_decompress(int argc, Obj **argv, UNUSED(Obj 
         }
 
         if (isEmpty) {
-            return ERR("Empty input.");
+            ERR("Empty input.")
         }
 
         if (lastRet != 0) {
-            return ERR("EOF before end of stream.");
+            ERR("EOF before end of stream.")
         }
 
         ZSTD_freeDCtx(dctx);
         free(buffIn);
         free(buffOut);
 
-        return OK(take_bytes(write_ctx.dest, write_ctx.length));
+        OK(take_bytes(write_ctx.dest, write_ctx.length));
     } else {
         uint8_t *dest = malloc(dest_len);
 
         dest_len = ZSTD_decompress(dest, dest_len, bytes->bytes, bytes->length);
         if (ZSTD_isError(dest_len))
-            return ERR("Could not decompress data.");
+            ERR("Could not decompress data.")
 
         dest = realloc(dest, dest_len);
 
-        return OK(take_bytes(dest, dest_len));
+        OK(take_bytes(dest, dest_len));
     }
 }
 

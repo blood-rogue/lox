@@ -8,7 +8,7 @@ static ObjModule *_math_module = NULL;
     static BuiltinResult _math_##func(int argc, Obj **argv, UNUSED(Obj *, caller)) {               \
         CHECK_ARG_COUNT(1)                                                                         \
         CHECK_ARG_TYPE(ObjFloat, FLOAT, 0)                                                         \
-        return OK(new_float(func(argv_0->value)));                                                 \
+        OK(new_float(func(argv_0->value)));                                                        \
     }
 
 MATH_BLTIN_FN(fabs)
@@ -43,7 +43,7 @@ static BuiltinResult _math_pow(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_TYPE(ObjFloat, FLOAT, 0)
     CHECK_ARG_TYPE(ObjFloat, FLOAT, 1)
 
-    return OK(new_float(pow(argv_0->value, argv_1->value)));
+    OK(new_float(pow(argv_0->value, argv_1->value)));
 }
 
 static BuiltinResult _math_hypot(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -51,7 +51,7 @@ static BuiltinResult _math_hypot(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_TYPE(ObjFloat, FLOAT, 0)
     CHECK_ARG_TYPE(ObjFloat, FLOAT, 1)
 
-    return OK(new_float(hypot(argv_0->value, argv_1->value)));
+    OK(new_float(hypot(argv_0->value, argv_1->value)));
 }
 
 ObjModule *get_math_module(int count, UNUSED(char **, parts)) {

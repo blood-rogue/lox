@@ -11,7 +11,7 @@ static BuiltinResult _fs_dup2(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_TYPE(ObjInt, INT, 0)
     CHECK_ARG_TYPE(ObjInt, INT, 1)
 
-    return OK(new_int(dup2(argv_0->value, argv_1->value)));
+    OK(new_int(dup2(argv_0->value, argv_1->value)));
 }
 
 static BuiltinResult _fs_chown(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -21,9 +21,9 @@ static BuiltinResult _fs_chown(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_TYPE(ObjInt, INT, 2)
 
     if (chown(argv_0->chars, argv_1->value, argv_2->value) == 0)
-        return OK(new_nil());
+        OK(new_nil());
 
-    return ERR("Could not change ownership");
+    ERR("Could not change ownership of file '%s'", argv_0->chars)
 }
 
 static BuiltinResult _fs_link(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -32,9 +32,9 @@ static BuiltinResult _fs_link(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_TYPE(ObjString, STRING, 1)
 
     if (link(argv_0->chars, argv_1->chars) == 0)
-        return OK(new_nil());
+        OK(new_nil());
 
-    return ERR("Could not create link.");
+    ERR("Could not create link from '%s' to '%s'.", argv_0->chars, argv_1->chars)
 }
 
 static BuiltinResult _fs_unlink(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -42,9 +42,9 @@ static BuiltinResult _fs_unlink(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
     if (unlink(argv_0->chars) == 0)
-        return OK(new_nil());
+        OK(new_nil());
 
-    return ERR("Could not delete link.");
+    ERR("Could not delete link '%s'.", argv_0->chars)
 }
 
 static BuiltinResult _fs_symlink(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -53,9 +53,9 @@ static BuiltinResult _fs_symlink(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_TYPE(ObjString, STRING, 1)
 
     if (symlink(argv_0->chars, argv_1->chars) == 0)
-        return OK(new_nil());
+        OK(new_nil());
 
-    return ERR("Could not create symlink.");
+    ERR("Could not create symlink from '%s' to '%s'.", argv_0->chars, argv_1->chars)
 }
 
 static BuiltinResult _fs_rmdir(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -63,16 +63,17 @@ static BuiltinResult _fs_rmdir(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
     if (rmdir(argv_0->chars) == 0)
-        return OK(new_nil());
+        OK(new_nil());
 
-    return ERR("Could not remove directory.");
+    ERR("Could not remove directory '%s'.", argv_0->chars)
 }
 
-static void set_file_instance(int fd, ObjInstance *instance) {
+static ObjInstance *set_file_instance(FILE *file, ObjInstance *instance) {
     struct stat st;
-    fstat(fd, &st);
+    fstat(file->_fileno, &st);
 
-    SET_INT_FIELD("fd", fd);
+    SET_FIELD("$$internal", new_native_struct(file));
+    SET_INT_FIELD("fd", file->_fileno);
     SET_INT_FIELD("device", st.st_dev);
     SET_INT_FIELD("inode", st.st_ino);
     SET_INT_FIELD("mode", st.st_mode);
@@ -83,6 +84,8 @@ static void set_file_instance(int fd, ObjInstance *instance) {
     SET_INT_FIELD("access_time", st.st_atime);
     SET_INT_FIELD("modification_time", st.st_mtime);
     SET_INT_FIELD("status_change_time", st.st_ctime);
+
+    return instance;
 }
 
 ObjModule *get_fs_module(int count, UNUSED(char **, parts)) {
@@ -112,18 +115,9 @@ ObjModule *get_fs_module(int count, UNUSED(char **, parts)) {
         SET_BUILTIN_FN_MEMBER("symlink", _fs_symlink);
         SET_BUILTIN_FN_MEMBER("rmdir", _fs_rmdir);
 
-        ObjInstance *_stdin = new_instance(get_fs_file_class());
-        set_file_instance(STDIN_FILENO, _stdin);
-
-        ObjInstance *_stdout = new_instance(get_fs_file_class());
-        set_file_instance(STDOUT_FILENO, _stdout);
-
-        ObjInstance *_stderr = new_instance(get_fs_file_class());
-        set_file_instance(STDERR_FILENO, _stderr);
-
-        SET_MEMBER("STDIN", _stdin);
-        SET_MEMBER("STDOUT", _stdout);
-        SET_MEMBER("STDERR", _stderr);
+        SET_MEMBER("STDIN", set_file_instance(stdin, new_instance(get_fs_file_class())));
+        SET_MEMBER("STDOUT", set_file_instance(stdout, new_instance(get_fs_file_class())));
+        SET_MEMBER("STDERR", set_file_instance(stderr, new_instance(get_fs_file_class())));
 
         SET_MEMBER("File", get_fs_file_class());
 

@@ -16,11 +16,11 @@ static BuiltinResult _compress_zlib_compress(int argc, Obj **argv, UNUSED(Obj *,
     Bytef *dest = malloc(dest_len);
 
     if (compress2(dest, &dest_len, bytes->bytes, bytes->length, argv_1->value) != Z_OK)
-        return ERR("Could not compress data.");
+        ERR("Could not compress data.")
 
     dest = realloc(dest, dest_len);
 
-    return OK(take_bytes(dest, dest_len));
+    OK(take_bytes(dest, dest_len));
 }
 
 static BuiltinResult _compress_zlib_decompress(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -32,11 +32,11 @@ static BuiltinResult _compress_zlib_decompress(int argc, Obj **argv, UNUSED(Obj 
     Bytef *dest = malloc(2 * bytes->length);
 
     if (uncompress(dest, &dest_len, bytes->bytes, bytes->length) != Z_OK)
-        return ERR("Could not decompress data.");
+        ERR("Could not decompress data.")
 
     dest = realloc(dest, dest_len);
 
-    return OK(take_bytes(dest, dest_len));
+    OK(take_bytes(dest, dest_len));
 }
 
 ObjModule *get_compress_zlib_module() {

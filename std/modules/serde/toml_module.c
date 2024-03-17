@@ -108,7 +108,7 @@ static BuiltinResult _serde_toml_deserialize(int argc, Obj **argv, UNUSED(Obj *,
     Obj *obj = toml_table_to_obj(toml);
 
     toml_free(toml);
-    return OK(obj);
+    OK(obj);
 }
 
 ObjModule *get_serde_toml_module() {

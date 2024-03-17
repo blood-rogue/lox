@@ -6,11 +6,12 @@
 
 static ObjClass *_fs_file_class = NULL;
 
-static void set_file_instance(int fd, ObjInstance *instance) {
+static void set_file_instance(FILE *file, ObjInstance *instance) {
     struct stat st;
-    fstat(fd, &st);
+    fstat(file->_fileno, &st);
 
-    SET_INT_FIELD("fd", fd);
+    SET_FIELD("$$internal", new_native_struct(file));
+    SET_INT_FIELD("fd", file->_fileno);
     SET_INT_FIELD("device", st.st_dev);
     SET_INT_FIELD("inode", st.st_ino);
     SET_INT_FIELD("mode", st.st_mode);
@@ -23,41 +24,29 @@ static void set_file_instance(int fd, ObjInstance *instance) {
     SET_INT_FIELD("status_change_time", st.st_ctime);
 }
 
-static BuiltinResult _fs_file_init(int argc, Obj **argv, Obj *caller) {
-    CHECK_ARG_COUNT(1)
-    CHECK_ARG_TYPE(ObjInt, INT, 0)
-
-    int fd = argv_0->value;
-    ObjInstance *instance = AS_INSTANCE(caller);
-
-    set_file_instance(fd, instance);
-
-    return OK(new_nil());
-}
-
 static BuiltinResult _fs_file_open(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
-    CHECK_ARG_TYPE(ObjInt, INT, 1)
+    CHECK_ARG_TYPE(ObjString, STRING, 1)
 
-    int fd = open(argv_0->chars, argv_1->value);
+    FILE *file = fopen(argv_0->chars, argv_1->chars);
     ObjInstance *instance = new_instance(_fs_file_class);
 
-    set_file_instance(fd, instance);
+    set_file_instance(file, instance);
 
-    return OK(instance);
+    OK(instance);
 }
 
 static BuiltinResult _fs_file_create(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
-    int fd = open(argv_0->chars, O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP);
+    FILE *file = fopen(argv_0->chars, "w");
     ObjInstance *instance = new_instance(_fs_file_class);
 
-    set_file_instance(fd, instance);
+    set_file_instance(file, instance);
 
-    return OK(instance);
+    OK(instance);
 }
 
 static BuiltinResult _fs_file_read(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -65,21 +54,21 @@ static BuiltinResult _fs_file_read(int argc, UNUSED(Obj **, argv), Obj *caller) 
 
     ObjInstance *instance = AS_INSTANCE(caller);
 
-    Obj *fd_obj;
-    table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
+    Obj *file_obj;
+    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &file_obj);
 
-    int64_t fd = AS_INT(fd_obj)->value;
-    off_t fsize = lseek(fd, 0, SEEK_END);
+    FILE *file = AS_NATIVE_STRUCT(file_obj)->ptr;
+    size_t fsize = fseek(file, 0, SEEK_END);
 
     char *buf = malloc(fsize);
 
-    lseek(fd, 0, SEEK_SET);
+    fseek(file, 0, SEEK_SET);
 
-    if (read(fd, buf, fsize) == fsize) {
-        return OK(take_string(buf, fsize));
+    if (fread(buf, 1, fsize, file) == fsize) {
+        OK(take_string(buf, fsize));
     }
 
-    return ERR("Could not read file.");
+    ERR("Could not read file.")
 }
 
 static BuiltinResult _fs_file_is_a_tty(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -91,7 +80,7 @@ static BuiltinResult _fs_file_is_a_tty(int argc, UNUSED(Obj **, argv), Obj *call
     table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
 
     int64_t fd = AS_INT(fd_obj)->value;
-    return OK(new_bool(isatty(fd)));
+    OK(new_bool(isatty(fd)));
 }
 
 static BuiltinResult _fs_file_write(int argc, Obj **argv, Obj *caller) {
@@ -100,15 +89,15 @@ static BuiltinResult _fs_file_write(int argc, Obj **argv, Obj *caller) {
 
     ObjInstance *instance = AS_INSTANCE(caller);
 
-    Obj *fd_obj;
-    table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
+    Obj *file_obj;
+    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &file_obj);
 
-    int64_t fd = AS_INT(fd_obj)->value;
+    FILE *file = AS_NATIVE_STRUCT(file_obj)->ptr;
 
-    if (write(fd, argv_0->chars, argv_0->raw_length) == argv_0->raw_length)
-        return OK(new_nil());
+    if (fwrite(argv_0->chars, 1, argv_0->raw_length, file) == (size_t)argv_0->raw_length)
+        OK(new_nil());
 
-    return ERR("Could not write file.");
+    ERR("Could not write file.")
 }
 
 static BuiltinResult _fs_file_close(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -116,14 +105,14 @@ static BuiltinResult _fs_file_close(int argc, UNUSED(Obj **, argv), Obj *caller)
 
     ObjInstance *instance = AS_INSTANCE(caller);
 
-    Obj *fd_obj;
-    table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
+    Obj *file_obj;
+    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &file_obj);
 
-    int64_t fd = AS_INT(fd_obj)->value;
+    FILE *file = AS_NATIVE_STRUCT(file_obj)->ptr;
 
-    close(fd);
+    fclose(file);
 
-    return OK(new_nil());
+    OK(new_nil());
 }
 
 static BuiltinResult _fs_file_seek(int argc, Obj **argv, Obj *caller) {
@@ -133,14 +122,14 @@ static BuiltinResult _fs_file_seek(int argc, Obj **argv, Obj *caller) {
 
     ObjInstance *instance = AS_INSTANCE(caller);
 
-    Obj *fd_obj;
-    table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
+    Obj *file_obj;
+    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &file_obj);
 
-    int64_t fd = AS_INT(fd_obj)->value;
+    FILE *file = AS_NATIVE_STRUCT(file_obj)->ptr;
     int64_t offset = argv_0->value;
     int64_t whence = argv_1->value;
 
-    return OK(new_int(lseek(fd, offset, whence)));
+    OK(new_int(fseek(file, offset, whence)));
 }
 
 static BuiltinResult _fs_file_tell(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -148,12 +137,12 @@ static BuiltinResult _fs_file_tell(int argc, UNUSED(Obj **, argv), Obj *caller) 
 
     ObjInstance *instance = AS_INSTANCE(caller);
 
-    Obj *fd_obj;
-    table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
+    Obj *file_obj;
+    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &file_obj);
 
-    int64_t fd = AS_INT(fd_obj)->value;
+    FILE *file = AS_NATIVE_STRUCT(file_obj)->ptr;
 
-    return OK(new_int(lseek(fd, 0, SEEK_CUR)));
+    OK(new_int(ftell(file)));
 }
 
 static BuiltinResult _fs_file_dup(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -166,7 +155,7 @@ static BuiltinResult _fs_file_dup(int argc, UNUSED(Obj **, argv), Obj *caller) {
 
     int64_t fd = AS_INT(fd_obj)->value;
 
-    return OK(new_int(dup(fd)));
+    OK(new_int(dup(fd)));
 }
 
 ObjClass *get_fs_file_class() {
@@ -178,7 +167,6 @@ ObjClass *get_fs_file_class() {
         SET_BUILTIN_FN_STATIC("open", _fs_file_open);
         SET_BUILTIN_FN_STATIC("create", _fs_file_create);
 
-        SET_BUILTIN_FN_METHOD("init", _fs_file_init);
         SET_BUILTIN_FN_METHOD("read", _fs_file_read);
         SET_BUILTIN_FN_METHOD("write", _fs_file_write);
         SET_BUILTIN_FN_METHOD("close", _fs_file_close);

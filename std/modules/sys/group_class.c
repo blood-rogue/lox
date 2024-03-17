@@ -24,7 +24,7 @@ static BuiltinResult _sys_group_by_name(int argc, Obj **argv, UNUSED(Obj *, call
 
     SET_FIELD("members", members);
 
-    return OK(instance);
+    OK(instance);
 }
 
 static BuiltinResult _sys_group_by_id(int argc, Obj **argv, UNUSED(Obj *, caller)) {
@@ -45,7 +45,7 @@ static BuiltinResult _sys_group_by_id(int argc, Obj **argv, UNUSED(Obj *, caller
 
     SET_FIELD("members", members);
 
-    return OK(instance);
+    OK(instance);
 }
 
 ObjClass *get_sys_group_class() {

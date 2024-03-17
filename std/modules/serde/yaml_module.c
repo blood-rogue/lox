@@ -12,14 +12,14 @@ static BuiltinResult _serde_yaml_deserialize(int argc, Obj **argv, UNUSED(Obj *,
     yaml_event_t event;
 
     if (!yaml_parser_initialize(&parser))
-        return ERR("Failed to initialize parser.");
+        ERR("Failed to initialize parser.")
 
     yaml_parser_set_input_string(&parser, (uint8_t *)argv_0->chars, argv_0->raw_length);
 
     yaml_event_delete(&event);
     yaml_parser_delete(&parser);
 
-    return OK(new_nil());
+    OK(new_nil());
 }
 
 ObjModule *get_serde_yaml_module() {

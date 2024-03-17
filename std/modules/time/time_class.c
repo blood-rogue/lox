@@ -19,7 +19,7 @@ static BuiltinResult _time_time_local_now(int argc, UNUSED(Obj **, argv), UNUSED
     SET_INT_FIELD("minute", _tm->tm_min);
     SET_INT_FIELD("second", _tm->tm_sec);
 
-    return OK(instance);
+    OK(instance);
 }
 
 static BuiltinResult _time_time_utc_now(int argc, UNUSED(Obj **, argv), UNUSED(Obj *, caller)) {
@@ -37,7 +37,7 @@ static BuiltinResult _time_time_utc_now(int argc, UNUSED(Obj **, argv), UNUSED(O
     SET_INT_FIELD("minute", _tm->tm_min);
     SET_INT_FIELD("second", _tm->tm_sec);
 
-    return OK(instance);
+    OK(instance);
 }
 
 static BuiltinResult _time_time_to_str(int argc, Obj **argv, Obj *caller) {
@@ -71,7 +71,7 @@ static BuiltinResult _time_time_to_str(int argc, Obj **argv, Obj *caller) {
 
     strftime(strf, 70, argv_0->chars, &t);
 
-    return OK(take_string(strf, (int)strlen(strf)));
+    OK(take_string(strf, (int)strlen(strf)));
 }
 
 ObjClass *get_time_time_class() {

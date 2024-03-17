@@ -2,7 +2,7 @@
 
 static BuiltinResult _map_len(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    return OK(new_int(AS_MAP(caller)->table.count));
+    OK(new_int(AS_MAP(caller)->table.count));
 }
 
 static BuiltinResult _map_keys(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -17,7 +17,7 @@ static BuiltinResult _map_keys(int argc, UNUSED(Obj **, argv), Obj *caller) {
             write_array(&keys->elems, entry->key);
     }
 
-    return OK(keys);
+    OK(keys);
 }
 
 static BuiltinResult _map_values(int argc, UNUSED(Obj **, argv), Obj *caller) {
@@ -32,7 +32,7 @@ static BuiltinResult _map_values(int argc, UNUSED(Obj **, argv), Obj *caller) {
             write_array(&values->elems, entry->value);
     }
 
-    return OK(values);
+    OK(values);
 }
 
 BuiltinTable *map_methods() {

@@ -183,25 +183,33 @@ static bool is_std_import(ObjString *path) {
     return path->raw_length > 6 && memcmp(path->chars, "@std/", 5) == 0;
 }
 
-static bool call(ObjClosure *closure, int argc) {
+#define CALL_OK             0
+#define CALL_INVALID_OBJ    1
+#define CALL_STACK_OVERFLOW 2
+#define CALL_INVALID_ARGC   3
+#define CALL_UNKNOWN_MEMBER 4
+#define CALL_NATIVE_ERR     5
+
+static int call(ObjClosure *closure, int argc) {
     if (argc != closure->function->arity) {
         runtime_error("Expected %d arguments but got %d.", closure->function->arity, argc);
-        return false;
+        return CALL_INVALID_ARGC;
     }
 
     if (vm.frame_count == FRAMES_MAX) {
         runtime_error("Stack overflow.");
-        return false;
+        return CALL_STACK_OVERFLOW;
     }
 
     CallFrame *frame = &vm.frames[vm.frame_count++];
     frame->closure = closure;
     frame->ip = closure->function->chunk.code;
     frame->slots = vm.stack_top - argc - 1;
-    return true;
+
+    return CALL_OK;
 }
 
-static bool call_object(Obj *callee, int argc, Obj *caller) {
+static int call_object(Obj *callee, int argc, Obj *caller) {
     switch (callee->type) {
         case OBJ_BOUND_METHOD:
             {
@@ -231,24 +239,24 @@ static bool call_object(Obj *callee, int argc, Obj *caller) {
 
                                 if (result.error != NULL) {
                                     runtime_error(result.error);
-                                    return false;
+                                    free(result.error);
+                                    return CALL_NATIVE_ERR;
                                 }
 
                                 vm.stack_top -= argc;
 
-                                return true;
+                                return CALL_OK;
                             }
                         default:
                             runtime_error("Invalid initializer.");
-                            return false;
+                            return CALL_INVALID_OBJ;
                     }
-
                 } else if (argc != 0) {
                     runtime_error("Expected 0 arguments but got %d.", argc);
-                    return false;
+                    return CALL_INVALID_ARGC;
                 }
 
-                return true;
+                return CALL_OK;
             }
         case OBJ_CLOSURE:
             return call(AS_CLOSURE(callee), argc);
@@ -259,12 +267,14 @@ static bool call_object(Obj *callee, int argc, Obj *caller) {
 
                 if (result.error != NULL) {
                     runtime_error(result.error);
-                    return false;
+                    free(result.error);
+                    return CALL_NATIVE_ERR;
                 }
 
                 vm.stack_top -= argc + 1;
                 push(result.value);
-                return true;
+
+                return CALL_OK;
             }
         case OBJ_BUILTIN_BOUND_METHOD:
             {
@@ -275,48 +285,52 @@ static bool call_object(Obj *callee, int argc, Obj *caller) {
 
                 if (result.error != NULL) {
                     runtime_error(result.error);
-                    return false;
+                    free(result.error);
+                    return CALL_NATIVE_ERR;
                 }
 
                 vm.stack_top -= argc + 1;
                 push(result.value);
-                return true;
+
+                return CALL_OK;
             }
         default:
             runtime_error("Cannot call %s", get_obj_kind(callee));
-            return false;
+            return CALL_INVALID_OBJ;
     }
 }
 
-static bool invoke_from_class(ObjClass *klass, ObjString *name, int argc, ObjInstance *caller) {
+static int invoke_from_class(ObjClass *klass, ObjString *name, int argc, ObjInstance *caller) {
     Obj *method;
     if (!table_get(&klass->methods, AS_OBJ(name), &method) &&
         !table_get(&klass->statics, AS_OBJ(name), &method) &&
         !table_get(&klass->fields, AS_OBJ(name), &method)) {
         runtime_error("Undefined property '%s' for class '%s'.", name->chars, klass->name->chars);
-        return false;
+        return CALL_INVALID_OBJ;
     }
 
-    if (!call_object(method, argc, AS_OBJ(caller))) {
-        runtime_error(
-            "Property '%s' of class '%s' is not callable.", name->chars, klass->name->chars);
-        return false;
+    int ret;
+    if ((ret = call_object(method, argc, AS_OBJ(caller))) != CALL_OK) {
+        if (ret < CALL_NATIVE_ERR)
+            runtime_error(
+                "Property '%s' of class '%s' is not callable.", name->chars, klass->name->chars);
+        return ret;
     }
 
-    return true;
+    return CALL_OK;
 }
 
-static bool invoke_scoped_member(ObjModule *module, ObjString *name, int argc) {
+static int invoke_scoped_member(ObjModule *module, ObjString *name, int argc) {
     Obj *member;
     if (table_get(&module->globals, AS_OBJ(name), &member)) {
         return call_object(member, argc, AS_OBJ(module));
     }
 
     runtime_error("No member named '%s' in module '%s'.", name->chars, module->name->chars);
-    return false;
+    return CALL_INVALID_OBJ;
 }
 
-static bool invoke(ObjString *name, int argc) {
+static int invoke(ObjString *name, int argc) {
     Obj *receiver = peek(argc);
 
     switch (receiver->type) {
@@ -341,18 +355,20 @@ static bool invoke(ObjString *name, int argc) {
                     !table_get(&klass->fields, AS_OBJ(name), &method)) {
                     runtime_error(
                         "Undefined property '%s' for class '%s'.", name->chars, klass->name->chars);
-                    return false;
+                    return CALL_UNKNOWN_MEMBER;
                 }
 
-                if (!call_object(method, argc, AS_OBJ(klass))) {
-                    runtime_error(
-                        "Property '%s' for class '%s' is not callable.",
-                        name->chars,
-                        klass->name->chars);
-                    return false;
+                int ret;
+                if ((ret = call_object(method, argc, AS_OBJ(klass))) != CALL_OK) {
+                    if (ret < CALL_NATIVE_ERR)
+                        runtime_error(
+                            "Property '%s' for class '%s' is not callable.",
+                            name->chars,
+                            klass->name->chars);
+                    return ret;
                 }
 
-                return true;
+                return CALL_OK;
             }
         default:
             {
@@ -367,34 +383,36 @@ static bool invoke(ObjString *name, int argc) {
                         "Could not invoke method '%s' on '%s'.",
                         name->chars,
                         get_obj_kind(receiver));
-                    return false;
+                    return CALL_UNKNOWN_MEMBER;
                 }
 
                 BuiltinResult result = method(argc, vm.stack_top - argc, receiver);
 
                 if (result.error != NULL) {
                     runtime_error(result.error);
-                    return false;
+                    free(result.error);
+                    return CALL_NATIVE_ERR;
                 }
 
                 vm.stack_top -= argc + 1;
                 push(result.value);
-                return true;
+                return CALL_OK;
             }
     }
 }
 
-static bool bind_method(ObjClass *klass, ObjString *name) {
+static int bind_method(ObjClass *klass, ObjString *name) {
     Obj *method;
     if (!table_get(&klass->methods, AS_OBJ(name), &method)) {
         runtime_error("Undefined property '%s' of class '%s'.", name->chars, klass->name->chars);
-        return false;
+        return CALL_UNKNOWN_MEMBER;
     }
 
     ObjBoundMethod *bound = new_bound_method(peek(0), AS_CLOSURE(method));
     pop();
     push(AS_OBJ(bound));
-    return true;
+
+    return CALL_OK;
 }
 
 static ObjUpvalue *capture_upvalue(Obj **local) {
@@ -779,11 +797,12 @@ static InterpretResult run() {
                                     break;
                                 }
 
-                                if (!bind_method(instance->klass, name)) {
+                                if (bind_method(instance->klass, name) != CALL_OK) {
                                     runtime_error(
                                         "Could not bind '%s' from class '%s'.",
                                         name->chars,
                                         instance->klass->name->chars);
+
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
                                 break;
@@ -1033,7 +1052,7 @@ static InterpretResult run() {
             case OP_CALL:
                 {
                     int argc = READ_BYTE();
-                    if (!call_object(peek(argc), argc, NULL)) {
+                    if (call_object(peek(argc), argc, NULL) != CALL_OK) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     frame = &vm.frames[vm.frame_count - 1];
@@ -1043,7 +1062,7 @@ static InterpretResult run() {
                 {
                     ObjString *method = READ_STRING();
                     int argc = READ_BYTE();
-                    if (!invoke(method, argc)) {
+                    if (invoke(method, argc) != CALL_OK) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     frame = &vm.frames[vm.frame_count - 1];
@@ -1054,7 +1073,7 @@ static InterpretResult run() {
                     ObjString *method = READ_STRING();
                     int argc = READ_BYTE();
                     ObjClass *superclass = AS_CLASS(pop());
-                    if (!invoke_from_class(superclass, method, argc, NULL)) {
+                    if (invoke_from_class(superclass, method, argc, NULL) != CALL_OK) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     frame = &vm.frames[vm.frame_count - 1];
@@ -1065,7 +1084,7 @@ static InterpretResult run() {
                     ObjString *method = READ_STRING();
                     int argc = READ_BYTE();
 
-                    if (!invoke_scoped_member(AS_MODULE(peek(argc)), method, argc))
+                    if (invoke_scoped_member(AS_MODULE(peek(argc)), method, argc) != CALL_OK)
                         return INTERPRET_RUNTIME_ERROR;
 
                     frame = &vm.frames[vm.frame_count - 1];
