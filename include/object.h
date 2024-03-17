@@ -9,7 +9,7 @@
 #include "method_table.h"
 #include "table.h"
 
-#define NUM_OBJS                     18
+#define NUM_OBJS                     19
 
 #define AS_OBJ(obj)                  ((Obj *)(obj))
 
@@ -31,6 +31,7 @@
 #define IS_MODULE(obj)               (obj->type == OBJ_MODULE)
 #define IS_BUILTIN_FUNCTION(obj)     (obj->type == OBJ_BUILTIN_FUNCTION)
 #define IS_BUILTIN_BOUND_METHOD(obj) (obj->type == OBJ_BUILTIN_BOUND_METHOD)
+#define IS_NATIVE_STRUCT(obj)        (obj->type == OBJ_NATIVE_STRUCT)
 
 #define AS_NIL(obj)                  ((ObjNil *)(obj))
 #define AS_INT(obj)                  ((ObjInt *)(obj))
@@ -50,6 +51,7 @@
 #define AS_MODULE(obj)               ((ObjModule *)(obj))
 #define AS_BUILTIN_FUNCTION(obj)     ((ObjBuiltinFunction *)(obj))
 #define AS_BUILTIN_BOUND_METHOD(obj) ((ObjBuiltinBoundMethod *)(obj))
+#define AS_NATIVE_STRUCT(obj)        ((ObjNativeStruct *)(obj))
 
 typedef enum {
     OBJ_NIL = 1 << 0,
@@ -74,6 +76,7 @@ typedef enum {
 
     OBJ_BUILTIN_FUNCTION = 1 << 16,
     OBJ_BUILTIN_BOUND_METHOD = 1 << 17,
+    OBJ_NATIVE_STRUCT = 1 << 18
 } ObjType;
 
 struct Obj {
@@ -192,6 +195,12 @@ typedef struct {
     BuiltinFn function;
 } ObjBuiltinBoundMethod;
 
+typedef struct {
+    Obj obj;
+    void *ptr;
+    size_t size;
+} ObjNativeStruct;
+
 ObjNil *new_nil();
 ObjInt *new_int(int64_t);
 ObjMap *new_map(Obj **, int);
@@ -213,6 +222,7 @@ ObjModule *new_module(ObjString *);
 
 ObjBuiltinFunction *new_builtin_function(BuiltinFn, char *);
 ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinFn, Obj *, char *);
+ObjNativeStruct *new_native_struct(void *, size_t);
 
 ObjList *argv_list(int, const char **);
 ObjBytes *take_bytes(uint8_t *, int);

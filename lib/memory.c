@@ -128,6 +128,11 @@ static void free_object(Obj *object) {
                 FREE(ObjModule, object);
                 break;
             }
+        case OBJ_NATIVE_STRUCT:
+            {
+                FREE(ObjBuiltinFunction, object);
+                break;
+            }
     }
 }
 
@@ -233,6 +238,7 @@ static void blacken_object(Obj *object) {
             }
         case OBJ_BUILTIN_BOUND_METHOD:
         case OBJ_BUILTIN_FUNCTION:
+        case OBJ_NATIVE_STRUCT:
         case OBJ_STRING:
         case OBJ_BYTES:
         case OBJ_BOOL:

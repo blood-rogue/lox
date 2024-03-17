@@ -60,3 +60,5 @@ ObjModule *get_serde_toml_module();
 
 ObjModule *get_archive_module();
 ObjModule *get_archive_tar_module();
+ObjClass *get_archive_tar_file();
+ObjClass *get_archive_tar_info();

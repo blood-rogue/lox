@@ -3,27 +3,20 @@
 
 #include "builtins.h"
 
-static ObjModule *_archive_tar_module = NULL;
+static ObjClass *_archive_tar_file = NULL;
 
-static BuiltinResult _compress_tar_list_entries(int argc, Obj **argv, UNUSED(Obj *, caller)) {
-    CHECK_ARG_COUNT(1)
-    CHECK_ARG_TYPE(ObjString, STRING, 0)
+static BuiltinResult _compress_tar_list_entries(int argc, UNUSED(Obj **, argv), Obj *caller) {
+    CHECK_ARG_COUNT(0)
 
-    struct archive_entry *entry;
-    struct archive *a = archive_read_new();
+    ObjInstance *instance = AS_INSTANCE(caller);
+    Obj *field;
+    table_get(&instance->fields, AS_OBJ(new_string("_internal", 9)), &field);
 
-    archive_read_support_filter_gzip(a);
-    archive_read_support_filter_bzip2(a);
-    archive_read_support_filter_xz(a);
-
-    archive_read_support_format_tar(a);
-    archive_read_support_format_gnutar(a);
+    struct archive *a = AS_NATIVE_STRUCT(field)->ptr;
 
     ObjList *entries = new_list(NULL, 0);
 
-    if (archive_read_open_filename(a, argv_0->chars, 10240) != ARCHIVE_OK)
-        return ERR("Could not open archive.");
-
+    struct archive_entry *entry;
     while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
         const char *entry_name = archive_entry_pathname(entry);
         write_array(&entries->elems, AS_OBJ(new_string(entry_name, strlen(entry_name))));
@@ -37,28 +30,22 @@ static BuiltinResult _compress_tar_list_entries(int argc, Obj **argv, UNUSED(Obj
     return OK(entries);
 }
 
-static BuiltinResult _compress_tar_extract(int argc, Obj **argv, UNUSED(Obj *, caller)) {
-    CHECK_ARG_COUNT(1)
-    CHECK_ARG_TYPE(ObjString, STRING, 0)
+static BuiltinResult _compress_tar_extract(int argc, UNUSED(Obj **, argv), Obj *caller) {
+    CHECK_ARG_COUNT(0)
+
+    ObjInstance *instance = AS_INSTANCE(caller);
+    Obj *field;
+    table_get(&instance->fields, AS_OBJ(new_string("_internal", 9)), &field);
+
+    struct archive *a = AS_NATIVE_STRUCT(field)->ptr;
 
     struct archive_entry *entry;
-    struct archive *a = archive_read_new();
-
-    archive_read_support_filter_gzip(a);
-    archive_read_support_filter_bzip2(a);
-    archive_read_support_filter_xz(a);
-
-    archive_read_support_format_tar(a);
-    archive_read_support_format_gnutar(a);
 
     struct archive *ext = archive_write_disk_new();
     archive_write_disk_set_options(
         ext,
         ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_ACL | ARCHIVE_EXTRACT_FFLAGS);
     archive_write_disk_set_standard_lookup(ext);
-
-    if (archive_read_open_filename(a, argv_0->chars, 10240) != ARCHIVE_OK)
-        return ERR("Could not open archive.");
 
     int r;
     while ((r = archive_read_next_header(a, &entry)) == ARCHIVE_OK) {
@@ -110,15 +97,15 @@ static BuiltinResult _compress_tar_extract(int argc, Obj **argv, UNUSED(Obj *, c
     return OK(new_nil());
 }
 
-ObjModule *get_archive_tar_module() {
-    if (_archive_tar_module == NULL) {
-        ObjModule *module = new_module(new_string("tar", 3));
+ObjClass *get_archive_tar_file() {
+    if (_archive_tar_file == NULL) {
+        ObjClass *klass = new_class(new_string("TarFile", 7));
 
-        SET_BUILTIN_FN_MEMBER("list_entries", _compress_tar_list_entries);
-        SET_BUILTIN_FN_MEMBER("extract", _compress_tar_extract);
+        SET_BUILTIN_FN_METHOD("list_entries", _compress_tar_list_entries);
+        SET_BUILTIN_FN_METHOD("extract", _compress_tar_extract);
 
-        _archive_tar_module = module;
+        _archive_tar_file = klass;
     }
 
-    return _archive_tar_module;
+    return _archive_tar_file;
 }
