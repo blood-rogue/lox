@@ -5,7 +5,7 @@
 
 typedef struct {
     Obj *value;
-    char *error;
+    const char *error;
 } BuiltinResult;
 
 typedef BuiltinResult (*BuiltinFn)(int, Obj **, Obj *);

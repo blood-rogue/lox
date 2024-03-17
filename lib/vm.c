@@ -131,7 +131,7 @@ void init_vm() {
 
 #undef SET_BLTIN_FN
 
-    read_history(NULL);
+    read_history("~/.lox_history");
 }
 
 void free_vm() {
@@ -164,7 +164,7 @@ void free_vm() {
     if (_source != NULL)
         free(_source);
 
-    write_history(NULL);
+    write_history("~/.lox_history");
 }
 
 static Table *get_current_global() {

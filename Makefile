@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -Werror -Wextra -pedantic -Iinclude
 LDFLAGS = -Wl,--gc-sections
-EXT_LIBS = -lm -lreadline -l:libunistring.a -l:libpcre2-8.a -l:libz.a -l:liblz4.a -l:libzstd.a -l:libjson-c.a -l:libyaml.a -l:libarchive.a
+EXT_LIBS = -lm -lreadline -lunistring -lpcre2-8 -lz -llz4 -lzstd -ljson-c -lyaml -larchive
 
 LIB_DIR = lib
 STD_DIR = std
