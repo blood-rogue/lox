@@ -134,6 +134,7 @@ static BuiltinResult _math_complex_pow(int argc, Obj **argv, Obj *caller) {
 ObjClass *get_math_complex_class() {
     if (_math_complex_class == NULL) {
         ObjClass *klass = new_class(new_string("Complex", 7));
+        klass->is_builtin = true;
 
         SET_BUILTIN_FN_METHOD("init", _math_complex_init);
         SET_BUILTIN_FN_METHOD("abs", _math_complex_abs);

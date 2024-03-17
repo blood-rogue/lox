@@ -152,8 +152,6 @@ static TokenType identifier_type() {
                 }
             }
             break;
-        case 'm':
-            return check_keyword(1, 2, "ap", TOKEN_MAP);
         case 'n':
             return check_keyword(1, 2, "il", TOKEN_NIL);
         case 'o':

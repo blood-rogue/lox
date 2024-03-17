@@ -45,6 +45,7 @@ static BuiltinResult _sys_user_by_id(int argc, Obj **argv, UNUSED(Obj *, caller)
 ObjClass *get_sys_user_class() {
     if (_sys_user_class == NULL) {
         ObjClass *klass = new_class(new_string("User", 4));
+        klass->is_builtin = true;
 
         SET_BUILTIN_FN_STATIC("by_name", _sys_user_by_name);
         SET_BUILTIN_FN_STATIC("by_id", _sys_user_by_id);

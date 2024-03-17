@@ -51,6 +51,7 @@ static BuiltinResult _sys_group_by_id(int argc, Obj **argv, UNUSED(Obj *, caller
 ObjClass *get_sys_group_class() {
     if (_sys_group_class == NULL) {
         ObjClass *klass = new_class(new_string("Group", 5));
+        klass->is_builtin = true;
 
         SET_BUILTIN_FN_STATIC("by_name", _sys_group_by_name);
         SET_BUILTIN_FN_STATIC("by_id", _sys_group_by_id);

@@ -201,7 +201,7 @@ static bool call(ObjClosure *closure, int argc) {
     return true;
 }
 
-static bool call_value(Obj *callee, int argc, Obj *caller) {
+static bool call_object(Obj *callee, int argc, Obj *caller) {
     switch (callee->type) {
         case OBJ_BOUND_METHOD:
             {
@@ -297,7 +297,7 @@ static bool invoke_from_class(ObjClass *klass, ObjString *name, int argc, ObjIns
         return false;
     }
 
-    if (!call_value(method, argc, AS_OBJ(caller))) {
+    if (!call_object(method, argc, AS_OBJ(caller))) {
         runtime_error(
             "Property '%s' of class '%s' is not callable.", name->chars, klass->name->chars);
         return false;
@@ -309,7 +309,7 @@ static bool invoke_from_class(ObjClass *klass, ObjString *name, int argc, ObjIns
 static bool invoke_scoped_member(ObjModule *module, ObjString *name, int argc) {
     Obj *member;
     if (table_get(&module->globals, AS_OBJ(name), &member)) {
-        return call_value(member, argc, AS_OBJ(module));
+        return call_object(member, argc, AS_OBJ(module));
     }
 
     runtime_error("No member named '%s' in module '%s'.", name->chars, module->name->chars);
@@ -327,7 +327,7 @@ static bool invoke(ObjString *name, int argc) {
                 Obj *value;
                 if (table_get(&instance->fields, AS_OBJ(name), &value)) {
                     vm.stack_top[-argc - 1] = value;
-                    return call_value(value, argc, AS_OBJ(instance));
+                    return call_object(value, argc, AS_OBJ(instance));
                 }
 
                 return invoke_from_class(instance->klass, name, argc, instance);
@@ -344,7 +344,7 @@ static bool invoke(ObjString *name, int argc) {
                     return false;
                 }
 
-                if (!call_value(method, argc, AS_OBJ(klass))) {
+                if (!call_object(method, argc, AS_OBJ(klass))) {
                     runtime_error(
                         "Property '%s' for class '%s' is not callable.",
                         name->chars,
@@ -539,20 +539,20 @@ static InterpretResult run() {
                 }
             case OP_GET_INDEX:
                 {
-                    Obj *index_value = pop();
+                    Obj *index_obj = pop();
                     Obj *value = pop();
 
                     Obj *indexed;
                     switch (value->type) {
                         case OBJ_LIST:
                             {
-                                if (!IS_INT(index_value)) {
+                                if (!IS_INT(index_obj)) {
                                     runtime_error("Lists can only be indexed "
                                                   "using integers.");
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
 
-                                int64_t index = AS_INT(index_value)->value;
+                                int64_t index = AS_INT(index_obj)->value;
                                 ObjList *list = AS_LIST(value);
 
                                 if (index < 0)
@@ -568,14 +568,13 @@ static InterpretResult run() {
                             }
                         case OBJ_MAP:
                             {
-                                if (!is_hashable(index_value)) {
+                                if (!is_hashable(index_obj)) {
                                     runtime_error(
-                                        "Maps cannot be indexed by '%s'.",
-                                        get_obj_kind(index_value));
+                                        "Maps cannot be indexed by '%s'.", get_obj_kind(index_obj));
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
 
-                                ObjString *index = AS_STRING(index_value);
+                                ObjString *index = AS_STRING(index_obj);
                                 ObjMap *map = AS_MAP(value);
 
                                 if (!table_get(&map->table, AS_OBJ(index), &indexed)) {
@@ -586,13 +585,13 @@ static InterpretResult run() {
                             }
                         case OBJ_STRING:
                             {
-                                if (!IS_INT(index_value)) {
+                                if (!IS_INT(index_obj)) {
                                     runtime_error("Strings can only be indexed "
                                                   "using integers.");
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
 
-                                int64_t index = AS_INT(index_value)->value;
+                                int64_t index = AS_INT(index_obj)->value;
                                 ObjString *string = AS_STRING(value);
 
                                 if (index < 0)
@@ -628,16 +627,16 @@ static InterpretResult run() {
             case OP_SET_INDEX:
                 {
                     Obj *to_be_assigned = peek(0);
-                    Obj *index_value = peek(1);
+                    Obj *index_obj = peek(1);
                     Obj *value = peek(2);
 
                     if (IS_LIST(value)) {
-                        if (!IS_INT(index_value)) {
+                        if (!IS_INT(index_obj)) {
                             runtime_error("Lists can only be indexed using numbers.");
                             return INTERPRET_RUNTIME_ERROR;
                         }
 
-                        int64_t index = AS_INT(index_value)->value;
+                        int64_t index = AS_INT(index_obj)->value;
                         ObjList *list = AS_LIST(value);
 
                         if (index >= list->elems.count) {
@@ -647,13 +646,13 @@ static InterpretResult run() {
 
                         list->elems.values[index] = to_be_assigned;
                     } else if (IS_MAP(value)) {
-                        if (!is_hashable(index_value)) {
+                        if (!is_hashable(index_obj)) {
                             runtime_error(
-                                "Maps cannot be indexed by '%s'.", get_obj_kind(index_value));
+                                "Maps cannot be indexed by '%s'.", get_obj_kind(index_obj));
                             return INTERPRET_RUNTIME_ERROR;
                         }
 
-                        ObjString *index = AS_STRING(index_value);
+                        ObjString *index = AS_STRING(index_obj);
                         ObjMap *map = AS_MAP(value);
 
                         table_set(&map->table, AS_OBJ(index), to_be_assigned);
@@ -1034,7 +1033,7 @@ static InterpretResult run() {
             case OP_CALL:
                 {
                     int argc = READ_BYTE();
-                    if (!call_value(peek(argc), argc, NULL)) {
+                    if (!call_object(peek(argc), argc, NULL)) {
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     frame = &vm.frames[vm.frame_count - 1];

@@ -89,7 +89,11 @@ ObjList *new_list(Obj **elems, int elem_count) {
     return list;
 }
 
-ObjBool *new_bool(bool value) { return value ? _TRUE : _FALSE; }
+ObjBool *new_bool(bool value) {
+    if (value)
+        return _TRUE;
+    return _FALSE;
+}
 
 ObjBytes *new_bytes(const uint8_t *inp, int length) {
     ObjBytes *bytes = ALLOCATE_OBJ(ObjBytes, OBJ_BYTES);

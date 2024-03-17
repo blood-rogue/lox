@@ -50,6 +50,18 @@ static BuiltinResult _list_insert(int argc, Obj **argv, Obj *caller) {
     return OK(new_nil());
 }
 
+static BuiltinResult _list_map(int argc, UNUSED(Obj **, argv), Obj *caller) {
+    CHECK_ARG_COUNT(1)
+
+    ObjList *mapped = new_list(NULL, 0);
+    ObjList *list = AS_LIST(caller);
+
+    for (int i = 0; i < list->elems.count; i++)
+        write_array(&mapped->elems, list->elems.values[i]);
+
+    return OK(mapped);
+}
+
 BuiltinTable *list_methods() {
     BuiltinTable *table = malloc(sizeof(BuiltinTable));
     init_method_table(table, 8);
@@ -58,6 +70,7 @@ BuiltinTable *list_methods() {
     SET_BLTIN_METHOD("len", _list_len);
     SET_BLTIN_METHOD("remove", _list_remove);
     SET_BLTIN_METHOD("insert", _list_insert);
+    SET_BLTIN_METHOD("map", _list_map);
 
     return table;
 }

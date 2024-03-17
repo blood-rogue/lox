@@ -5,7 +5,7 @@ project(lox)
 set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 
-add_link_options(-s -flto=auto -Wl,--gc-sections)
+add_link_options(-flto=auto -Wl,--gc-sections)
 add_compile_options(-Wall -Werror -Wextra -pedantic -Ofast -flto=auto -ffunction-sections -fdata-sections)
 
 file(GLOB HEADERS ${lox_SOURCE_DIR}/include/*.h)

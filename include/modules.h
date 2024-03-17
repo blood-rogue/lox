@@ -11,6 +11,7 @@
     table_set(&instance->fields, AS_OBJ(new_string(name, (int)strlen(name))), AS_OBJ(value))
 
 #define SET_INT_FIELD(name, value)    SET_FIELD(name, new_int(value))
+#define SET_BOOL_FIELD(name, value)   SET_FIELD(name, new_bool(value))
 #define SET_FLOAT_FIELD(name, value)  SET_FIELD(name, new_float(value))
 #define SET_STRING_FIELD(name, value) SET_FIELD(name, new_string(value, (int)strlen(value)))
 
@@ -60,5 +61,5 @@ ObjModule *get_serde_toml_module();
 
 ObjModule *get_archive_module();
 ObjModule *get_archive_tar_module();
-ObjClass *get_archive_tar_file();
-ObjClass *get_archive_tar_info();
+ObjClass *get_archive_tar_file_class();
+ObjClass *get_archive_tar_entry_class();

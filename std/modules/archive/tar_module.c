@@ -1,10 +1,11 @@
 #include <archive.h>
+#include <archive_entry.h>
 
 #include "builtins.h"
 
 static ObjModule *_archive_tar_module = NULL;
 
-static BuiltinResult _compress_tar_open(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _archive_tar_open(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -22,7 +23,7 @@ static BuiltinResult _compress_tar_open(int argc, Obj **argv, UNUSED(Obj *, call
     if (archive_read_open_filename(a, argv_0->chars, 10240) != ARCHIVE_OK)
         return ERR("Could not open archive.");
 
-    ObjInstance *instance = new_instance(get_archive_tar_file());
+    ObjInstance *instance = new_instance(get_archive_tar_file_class());
 
     SET_FIELD("_internal", archive_obj);
 
@@ -33,7 +34,11 @@ ObjModule *get_archive_tar_module() {
     if (_archive_tar_module == NULL) {
         ObjModule *module = new_module(new_string("tar", 3));
 
-        SET_BUILTIN_FN_MEMBER("open", _compress_tar_open);
+        SET_BUILTIN_FN_MEMBER("open", _archive_tar_open);
+
+        SET_INT_MEMBER("SYMLINK_TYPE_DIRECTORY", AE_SYMLINK_TYPE_DIRECTORY);
+        SET_INT_MEMBER("SYMLINK_TYPE_FILE", AE_SYMLINK_TYPE_FILE);
+        SET_INT_MEMBER("SYMLINK_TYPE_UNDEFINED", AE_SYMLINK_TYPE_UNDEFINED);
 
         _archive_tar_module = module;
     }

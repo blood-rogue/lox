@@ -382,7 +382,7 @@ static uint8_t map_pair_list() {
             expression();
 
             if (expression_count == 255) {
-                error("Can't have more than 255 expressions.");
+                error("Can't have more than 255 key value pairs.");
             }
 
             expression_count++;
@@ -441,7 +441,6 @@ static void list(bool) {
 }
 
 static void map(bool) {
-    consume(TOKEN_LEFT_BRACE, "Expected '{' after map keyword.");
     uint8_t pair_count = map_pair_list();
     emit_bytes(OP_MAP, pair_count);
 }
@@ -762,7 +761,7 @@ static void lambda(bool) { function(TYPE_FUNCTION); }
 ParseRule rules[] = {
     [TOKEN_LEFT_PAREN] = {grouping, call, PREC_CALL},
     [TOKEN_RIGHT_PAREN] = {NULL, NULL, PREC_NONE},
-    [TOKEN_LEFT_BRACE] = {NULL, NULL, PREC_NONE},
+    [TOKEN_LEFT_BRACE] = {map, NULL, PREC_NONE},
     [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE},
     [TOKEN_LEFT_SQUARE] = {list, index_, PREC_CALL},
     [TOKEN_RIGHT_SQUARE] = {NULL, NULL, PREC_NONE},
@@ -810,7 +809,6 @@ ParseRule rules[] = {
     [TOKEN_TRUE] = {literal, NULL, PREC_NONE},
     [TOKEN_VAR] = {NULL, NULL, PREC_NONE},
     [TOKEN_WHILE] = {NULL, NULL, PREC_NONE},
-    [TOKEN_MAP] = {map, NULL, PREC_CALL},
     [TOKEN_IMPORT] = {NULL, NULL, PREC_NONE},
     [TOKEN_AS] = {NULL, NULL, PREC_NONE},
     [TOKEN_ERROR] = {NULL, NULL, PREC_NONE},

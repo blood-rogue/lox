@@ -48,7 +48,6 @@ typedef enum {
     TOKEN_TRUE,     // 'true'
     TOKEN_VAR,      // 'var'
     TOKEN_WHILE,    // 'while'
-    TOKEN_MAP,      // 'map'
     TOKEN_STATIC,   // 'static'
     TOKEN_IMPORT,   // 'import'
     TOKEN_AS,       // 'as'
