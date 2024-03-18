@@ -35,6 +35,7 @@ ObjModule *get_random_module(int, char **);
 
 ObjModule *get_regex_module(int, char **);
 ObjClass *get_regex_match_class();
+ObjClass *get_regex_pattern_class();
 
 ObjModule *get_sys_module(int, char **);
 ObjClass *get_sys_user_class();

@@ -172,6 +172,33 @@ static BuiltinResult _regex_findall(int argc, Obj **argv, UNUSED(Obj *, caller))
     OK(matches);
 }
 
+static BuiltinResult _regex_compile(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+    CHECK_ARG_COUNT(1)
+    CHECK_ARG_TYPE(ObjString, STRING, 0)
+
+    const char *pattern = argv_0->chars;
+    size_t pattern_size = argv_0->raw_length;
+
+    PCRE2_SIZE erroffset;
+    int errcode;
+    uint8_t buffer[128];
+
+    uint32_t options = 0;
+
+    pcre2_code *re =
+        pcre2_compile((const uint8_t *)pattern, pattern_size, options, &errcode, &erroffset, NULL);
+
+    if (re == NULL) {
+        pcre2_get_error_message(errcode, buffer, 120);
+        ERR("PCRE2 error: %s", (char *)buffer)
+    }
+
+    ObjInstance *instance = new_instance(get_regex_pattern_class());
+    SET_FIELD("$$internal", new_native_struct(re));
+
+    OK(instance);
+}
+
 ObjModule *get_regex_module(int count, UNUSED(char **, parts)) {
     CHECK_PART_COUNT
 
@@ -182,6 +209,7 @@ ObjModule *get_regex_module(int count, UNUSED(char **, parts)) {
         SET_BUILTIN_FN_MEMBER("match", _regex_match);
         SET_BUILTIN_FN_MEMBER("fullmatch", _regex_fullmatch);
         SET_BUILTIN_FN_MEMBER("findall", _regex_findall);
+        SET_BUILTIN_FN_MEMBER("compile", _regex_compile);
 
         _regex_module = module;
     }
