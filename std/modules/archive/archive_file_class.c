@@ -130,7 +130,6 @@ static BuiltinResult _archive_file_extract(int argc, Obj **argv, Obj *caller) {
             la_int64_t offset;
 
             while ((r = archive_read_data_block(a, &buff, &size, &offset)) == ARCHIVE_OK) {
-
                 if (r == ARCHIVE_EOF)
                     break;
                 r = archive_write_data_block(ext, buff, size, offset);

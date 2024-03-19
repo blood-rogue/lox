@@ -3,7 +3,6 @@
 static ObjModule *_serde_module = NULL;
 
 ObjModule *get_serde_module(int count, char **parts) {
-
     if (_serde_module == NULL) {
         ObjModule *module = new_module("serde");
 

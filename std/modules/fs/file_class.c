@@ -143,7 +143,6 @@ static BuiltinResult _fs_file_dup(int argc, UNUSED(Obj **, argv), Obj *caller) {
 }
 
 ObjClass *get_fs_file_class() {
-
     if (_fs_file_class == NULL) {
         ObjClass *klass = new_builtin_class("File");
 
