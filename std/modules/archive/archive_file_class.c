@@ -81,11 +81,8 @@ void set_entry_instance(ObjInstance *instance, struct archive_entry *entry) {
 static BuiltinResult _archive_file_list_entries(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    ObjInstance *file_instance = AS_INSTANCE(caller);
-    Obj *field;
-    table_get(&file_instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
-
-    struct archive *a = AS_NATIVE_STRUCT(field)->ptr;
+    ObjInstance *a_instance = AS_INSTANCE(caller);
+    GET_INTERNAL(struct archive *, a);
 
     ObjList *entries = new_list(NULL, 0);
 
@@ -106,11 +103,9 @@ static BuiltinResult _archive_file_extract(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
-    ObjInstance *instance = AS_INSTANCE(caller);
-    Obj *field;
-    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
+    ObjInstance *a_instance = AS_INSTANCE(caller);
+    GET_INTERNAL(struct archive *, a);
 
-    struct archive *a = AS_NATIVE_STRUCT(field)->ptr;
     struct archive_entry *entry;
 
     struct archive *ext = archive_write_disk_new();
@@ -167,26 +162,20 @@ static BuiltinResult _archive_file_extract(int argc, Obj **argv, Obj *caller) {
 static BuiltinResult _archive_file_close(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    ObjInstance *instance = AS_INSTANCE(caller);
-    Obj *field;
-    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
-
-    struct archive *a = AS_NATIVE_STRUCT(field)->ptr;
+    ObjInstance *a_instance = AS_INSTANCE(caller);
+    GET_INTERNAL(struct archive *, a);
 
     archive_read_close(a);
     archive_read_free(a);
 
-    OK(instance);
+    OK(new_nil());
 }
 
 static BuiltinResult _archive_file_next_entry(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    ObjInstance *file_instance = AS_INSTANCE(caller);
-    Obj *field;
-    table_get(&file_instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
-
-    struct archive *a = AS_NATIVE_STRUCT(field)->ptr;
+    ObjInstance *a_instance = AS_INSTANCE(caller);
+    GET_INTERNAL(struct archive *, a);
 
     struct archive_entry *entry;
     if (archive_read_next_header(a, &entry) == ARCHIVE_OK) {

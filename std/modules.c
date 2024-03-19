@@ -21,6 +21,8 @@ ObjModule *get_module(int part_count, char **parts) {
         return get_serde_module(part_count - 1, parts + 1);
     else if (strcmp(name, "archive") == 0)
         return get_archive_module(part_count - 1, parts + 1);
+    else if (strcmp(name, "hash") == 0)
+        return get_hash_module(part_count - 1, parts + 1);
 
     return NULL;
 }

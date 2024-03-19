@@ -1,6 +1,132 @@
+#include <openssl/evp.h>
+
 #include "builtins.h"
 
 static ObjModule *_hash_module = NULL;
+
+static BuiltinResult md_digest(const char *alg, uint8_t *bytes, int bytes_len) {
+    EVP_MD_CTX *ctx = NULL;
+    EVP_MD *md = NULL;
+
+    ctx = EVP_MD_CTX_new();
+    if (ctx == NULL)
+        ERR("Could not initialize context.")
+
+    md = EVP_MD_fetch(NULL, alg, NULL);
+    if (md == NULL) {
+        EVP_MD_CTX_free(ctx);
+        ERR("Could not get %s algorithm.", alg)
+    }
+
+    if (!EVP_DigestInit_ex(ctx, md, NULL)) {
+        EVP_MD_CTX_free(ctx);
+        EVP_MD_free(md);
+        ERR("Could not init digest.")
+    }
+
+    if (!EVP_DigestUpdate(ctx, bytes, bytes_len)) {
+        EVP_MD_CTX_free(ctx);
+        EVP_MD_free(md);
+        ERR("Could not update digest.")
+    }
+
+    uint8_t *outdigest = OPENSSL_malloc(EVP_MD_get_size(md));
+    if (outdigest == NULL) {
+        EVP_MD_CTX_free(ctx);
+        EVP_MD_free(md);
+        ERR("Could not allocate ")
+    }
+
+    uint32_t len;
+    if (!EVP_DigestFinal_ex(ctx, outdigest, &len)) {
+        EVP_MD_CTX_free(ctx);
+        EVP_MD_free(md);
+        OPENSSL_free(outdigest);
+        ERR("Could not finalize digest.")
+    }
+
+    OK(new_bytes(outdigest, len));
+}
+
+static void free_mdctx(MdCtx *md_ctx) {
+    EVP_MD_CTX_free(md_ctx->ctx);
+    EVP_MD_free(md_ctx->md);
+
+    free(md_ctx);
+}
+
+BuiltinResult md_init(const char *alg, ObjInstance *instance) {
+    EVP_MD_CTX *ctx = NULL;
+    EVP_MD *md = NULL;
+
+    unsigned int len = 0;
+    uint8_t *outdigest = NULL;
+
+    ctx = EVP_MD_CTX_new();
+    if (ctx == NULL)
+        ERR("Could not initialize context.")
+
+    md = EVP_MD_fetch(NULL, alg, NULL);
+    if (md == NULL) {
+        EVP_MD_CTX_free(ctx);
+        ERR("Could not get %s algorithm.", alg)
+    }
+
+    if (!EVP_DigestInit_ex(ctx, md, NULL)) {
+        EVP_MD_CTX_free(ctx);
+        EVP_MD_free(md);
+        ERR("Could not init digest.")
+    }
+
+    MdCtx *md_ctx = malloc(sizeof(MdCtx));
+    md_ctx->ctx = ctx;
+    md_ctx->md = md;
+
+    SET_FIELD("$$internal", new_native_struct(md_ctx, free_mdctx));
+
+    OK(new_nil());
+}
+
+BuiltinResult md_update(int argc, Obj **argv, Obj *caller) {
+    CHECK_ARG_COUNT(1)
+    CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
+
+    ObjInstance *md_ctx_instance = AS_INSTANCE(caller);
+
+    GET_INTERNAL(MdCtx *, md_ctx)
+
+    if (!EVP_DigestUpdate(md_ctx->ctx, argv_0->bytes, argv_0->length)) {
+        EVP_MD_CTX_free(md_ctx->ctx);
+        EVP_MD_free(md_ctx->md);
+        ERR("Could not update digest.")
+    }
+
+    OK(new_nil());
+}
+
+BuiltinResult md_finish(int argc, UNUSED(Obj **, argv), Obj *caller) {
+    CHECK_ARG_COUNT(0)
+
+    ObjInstance *md_ctx_instance = AS_INSTANCE(caller);
+    GET_INTERNAL(MdCtx *, md_ctx)
+
+    uint8_t *outdigest = OPENSSL_malloc(EVP_MD_get_size(md_ctx->md));
+    if (outdigest == NULL) {
+        EVP_MD_CTX_free(md_ctx->ctx);
+        EVP_MD_free(md_ctx->md);
+        ERR("Could not allocate ")
+    }
+
+    uint32_t len;
+    if (!EVP_DigestFinal_ex(md_ctx->ctx, outdigest, &len)) {
+        EVP_MD_CTX_free(md_ctx->ctx);
+        EVP_MD_free(md_ctx->md);
+        OPENSSL_free(outdigest);
+        ERR("Could not finalize digest.")
+    }
+
+    OK(new_bytes(outdigest, len));
+}
 
 ObjModule *get_hash_module(int count, UNUSED(char **, parts)) {
     CHECK_PART_COUNT
@@ -8,9 +134,13 @@ ObjModule *get_hash_module(int count, UNUSED(char **, parts)) {
     if (_hash_module == NULL) {
         ObjModule *module = new_module(new_string("hash", 4));
 
-        SET_MEMBER("Sha1", get_hash_sha1_class());
-        SET_MEMBER("Sha2", get_hash_sha2_class());
-        SET_MEMBER("Sha3", get_hash_sha3_class());
+        SET_MEMBER("SHA1", get_hash_sha1_class());
+        SET_MEMBER("SHA2", get_hash_sha2_class());
+        SET_MEMBER("SHA3", get_hash_sha3_class());
+        SET_MEMBER("MD4", get_hash_md4_class());
+        SET_MEMBER("MD5", get_hash_md5_class());
+        SET_MEMBER("Shake128", get_hash_shake128_class());
+        SET_MEMBER("Shake256", get_hash_shake256_class());
 
         _hash_module = module;
     }

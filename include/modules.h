@@ -1,4 +1,4 @@
-#include "object.h"
+#include "hash_module.h"
 
 #define SET_MEMBER(name, value)                                                                    \
     table_set(&module->globals, AS_OBJ(new_string(name, (int)strlen(name))), AS_OBJ(value))
@@ -63,8 +63,3 @@ ObjModule *get_serde_toml_module();
 ObjModule *get_archive_module(int, char **);
 ObjClass *get_archive_file_class();
 ObjClass *get_archive_entry_class();
-
-ObjModule *get_hash_module(int, char **);
-ObjClass *get_hash_sha1_class();
-ObjClass *get_hash_sha2_class();
-ObjClass *get_hash_sha3_class();

@@ -42,11 +42,8 @@ static BuiltinResult _regex_pattern_search(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
-    ObjInstance *pattern_instance = AS_INSTANCE(caller);
-    Obj *field;
-    table_get(&pattern_instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
-
-    pcre2_code *re = AS_NATIVE_STRUCT(field)->ptr;
+    ObjInstance *re_instance = AS_INSTANCE(caller);
+    GET_INTERNAL(pcre2_code *, re);
 
     return regex(re, argv_0->chars, argv_0->raw_length);
 }
@@ -55,11 +52,8 @@ static BuiltinResult _regex_pattern_findall(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
-    ObjInstance *pattern_instance = AS_INSTANCE(caller);
-    Obj *field;
-    table_get(&pattern_instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
-
-    pcre2_code *re = AS_NATIVE_STRUCT(field)->ptr;
+    ObjInstance *re_instance = AS_INSTANCE(caller);
+    GET_INTERNAL(pcre2_code *, re);
 
     const char *subject = argv_0->chars;
     size_t subject_size = argv_0->raw_length;
@@ -134,11 +128,8 @@ static BuiltinResult _regex_pattern_findall(int argc, Obj **argv, Obj *caller) {
 static BuiltinResult _regex_pattern_free(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    ObjInstance *pattern_instance = AS_INSTANCE(caller);
-    Obj *field;
-    table_get(&pattern_instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
-
-    pcre2_code *re = AS_NATIVE_STRUCT(field)->ptr;
+    ObjInstance *re_instance = AS_INSTANCE(caller);
+    GET_INTERNAL(pcre2_code *, re);
 
     pcre2_code_free(re);
 

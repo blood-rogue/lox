@@ -54,12 +54,9 @@ static BuiltinResult _fs_file_create(int argc, Obj **argv, UNUSED(Obj *, caller)
 static BuiltinResult _fs_file_read(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    ObjInstance *instance = AS_INSTANCE(caller);
+    ObjInstance *file_instance = AS_INSTANCE(caller);
+    GET_INTERNAL(FILE *, file);
 
-    Obj *file_obj;
-    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &file_obj);
-
-    FILE *file = AS_NATIVE_STRUCT(file_obj)->ptr;
     size_t fsize = fseek(file, 0, SEEK_END);
 
     char *buf = malloc(fsize);
@@ -89,12 +86,8 @@ static BuiltinResult _fs_file_write(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
-    ObjInstance *instance = AS_INSTANCE(caller);
-
-    Obj *file_obj;
-    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &file_obj);
-
-    FILE *file = AS_NATIVE_STRUCT(file_obj)->ptr;
+    ObjInstance *file_instance = AS_INSTANCE(caller);
+    GET_INTERNAL(FILE *, file);
 
     if (fwrite(argv_0->chars, 1, argv_0->raw_length, file) == (size_t)argv_0->raw_length)
         OK(new_nil());
@@ -105,12 +98,8 @@ static BuiltinResult _fs_file_write(int argc, Obj **argv, Obj *caller) {
 static BuiltinResult _fs_file_close(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    ObjInstance *instance = AS_INSTANCE(caller);
-
-    Obj *file_obj;
-    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &file_obj);
-
-    FILE *file = AS_NATIVE_STRUCT(file_obj)->ptr;
+    ObjInstance *file_instance = AS_INSTANCE(caller);
+    GET_INTERNAL(FILE *, file);
 
     fclose(file);
 
@@ -122,12 +111,9 @@ static BuiltinResult _fs_file_seek(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_TYPE(ObjInt, INT, 0)
     CHECK_ARG_TYPE(ObjInt, INT, 1)
 
-    ObjInstance *instance = AS_INSTANCE(caller);
+    ObjInstance *file_instance = AS_INSTANCE(caller);
+    GET_INTERNAL(FILE *, file);
 
-    Obj *file_obj;
-    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &file_obj);
-
-    FILE *file = AS_NATIVE_STRUCT(file_obj)->ptr;
     int64_t offset = argv_0->value;
     int64_t whence = argv_1->value;
 
@@ -137,12 +123,8 @@ static BuiltinResult _fs_file_seek(int argc, Obj **argv, Obj *caller) {
 static BuiltinResult _fs_file_tell(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    ObjInstance *instance = AS_INSTANCE(caller);
-
-    Obj *file_obj;
-    table_get(&instance->fields, AS_OBJ(new_string("$$internal", 10)), &file_obj);
-
-    FILE *file = AS_NATIVE_STRUCT(file_obj)->ptr;
+    ObjInstance *file_instance = AS_INSTANCE(caller);
+    GET_INTERNAL(FILE *, file);
 
     OK(new_int(ftell(file)));
 }

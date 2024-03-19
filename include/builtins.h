@@ -30,6 +30,11 @@
 
 #define BLTIN_FN(name) BuiltinResult name##_builtin_function(int, Obj **, Obj *)
 
+#define GET_INTERNAL(typ, name)                                                                    \
+    Obj *name##_obj;                                                                               \
+    table_get(&name##_instance->fields, AS_OBJ(new_string("$$internal", 10)), &name##_obj);        \
+    typ name = AS_NATIVE_STRUCT(name##_obj)->ptr;
+
 BLTIN_FN(exit);
 BLTIN_FN(print);
 BLTIN_FN(input);
