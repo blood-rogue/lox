@@ -147,8 +147,7 @@ static BuiltinResult _regex_pattern_free(int argc, UNUSED(Obj **, argv), Obj *ca
 
 ObjClass *get_regex_pattern_class() {
     if (_regex_pattern_class == NULL) {
-        ObjClass *klass = new_class(new_string("Pattern", 7));
-        klass->is_builtin = true;
+        ObjClass *klass = new_builtin_class("Pattern");
 
         SET_BUILTIN_FN_METHOD("search", _regex_pattern_search);
         SET_BUILTIN_FN_METHOD("findall", _regex_pattern_findall);

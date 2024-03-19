@@ -6,11 +6,13 @@
 
 static ObjClass *_fs_file_class = NULL;
 
+static void free_file(void *file) { fclose(file); }
+
 static void set_file_instance(FILE *file, ObjInstance *instance) {
     struct stat st;
     fstat(file->_fileno, &st);
 
-    SET_FIELD("$$internal", new_native_struct(file));
+    SET_FIELD("$$internal", new_native_struct(file, free_file));
     SET_INT_FIELD("fd", file->_fileno);
     SET_INT_FIELD("device", st.st_dev);
     SET_INT_FIELD("inode", st.st_ino);
@@ -161,8 +163,7 @@ static BuiltinResult _fs_file_dup(int argc, UNUSED(Obj **, argv), Obj *caller) {
 ObjClass *get_fs_file_class() {
 
     if (_fs_file_class == NULL) {
-        ObjClass *klass = new_class(new_string("File", 4));
-        klass->is_builtin = true;
+        ObjClass *klass = new_builtin_class("File");
 
         SET_BUILTIN_FN_STATIC("open", _fs_file_open);
         SET_BUILTIN_FN_STATIC("create", _fs_file_create);

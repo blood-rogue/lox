@@ -761,7 +761,7 @@ static void lambda(bool) { function(TYPE_FUNCTION); }
 ParseRule rules[] = {
     [TOKEN_LEFT_PAREN] = {grouping, call, PREC_CALL},
     [TOKEN_RIGHT_PAREN] = {NULL, NULL, PREC_NONE},
-    [TOKEN_LEFT_BRACE] = {map, NULL, PREC_NONE},
+    [TOKEN_LEFT_BRACE] = {map, NULL, PREC_CALL},
     [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE},
     [TOKEN_LEFT_SQUARE] = {list, index_, PREC_CALL},
     [TOKEN_RIGHT_SQUARE] = {NULL, NULL, PREC_NONE},
@@ -1228,10 +1228,6 @@ static void statement() {
         break_statement();
     } else if (match(TOKEN_CONTINUE)) {
         continue_statement();
-    } else if (match(TOKEN_LEFT_BRACE)) {
-        begin_scope();
-        block();
-        end_scope();
     } else {
         expression_statement();
     }

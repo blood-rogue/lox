@@ -27,8 +27,7 @@ static BuiltinResult _regex_match_group(int argc, Obj **argv, Obj *caller) {
 
 ObjClass *get_regex_match_class() {
     if (_regex_match_class == NULL) {
-        ObjClass *klass = new_class(new_string("Match", 5));
-        klass->is_builtin = true;
+        ObjClass *klass = new_builtin_class("Match");
 
         SET_BUILTIN_FN_METHOD("group", _regex_match_group);
 

@@ -68,11 +68,13 @@ static BuiltinResult _fs_rmdir(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     ERR("Could not remove directory '%s'.", argv_0->chars)
 }
 
+static void free_file(void *file) { fclose(file); }
+
 static ObjInstance *set_file_instance(FILE *file, ObjInstance *instance) {
     struct stat st;
     fstat(file->_fileno, &st);
 
-    SET_FIELD("$$internal", new_native_struct(file));
+    SET_FIELD("$$internal", new_native_struct(file, free_file));
     SET_INT_FIELD("fd", file->_fileno);
     SET_INT_FIELD("device", st.st_dev);
     SET_INT_FIELD("inode", st.st_ino);

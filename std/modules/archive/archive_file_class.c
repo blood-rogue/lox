@@ -3,9 +3,9 @@
 
 #include "builtins.h"
 
-static ObjClass *_archive_tar_file_class = NULL;
+static ObjClass *_archive_file_class = NULL;
 
-static void set_tar_entry_instance(ObjInstance *instance, struct archive_entry *entry) {
+void set_entry_instance(ObjInstance *instance, struct archive_entry *entry) {
     SET_INT_FIELD("atime", archive_entry_atime(entry));
     SET_INT_FIELD("atime_nsec", archive_entry_atime_nsec(entry));
     SET_INT_FIELD("birthtime", archive_entry_birthtime(entry));
@@ -78,12 +78,12 @@ static void set_tar_entry_instance(ObjInstance *instance, struct archive_entry *
                                                    : AS_OBJ(new_string(s, strlen(s))));
 }
 
-static BuiltinResult _archive_tar_file_list_entries(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _archive_file_list_entries(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    ObjInstance *tar_file_instance = AS_INSTANCE(caller);
+    ObjInstance *file_instance = AS_INSTANCE(caller);
     Obj *field;
-    table_get(&tar_file_instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
+    table_get(&file_instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
 
     struct archive *a = AS_NATIVE_STRUCT(field)->ptr;
 
@@ -91,8 +91,8 @@ static BuiltinResult _archive_tar_file_list_entries(int argc, UNUSED(Obj **, arg
 
     struct archive_entry *entry;
     while (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
-        ObjInstance *instance = new_instance(get_archive_tar_entry_class());
-        set_tar_entry_instance(instance, entry);
+        ObjInstance *instance = new_instance(get_archive_entry_class());
+        set_entry_instance(instance, entry);
 
         write_array(&entries->elems, AS_OBJ(instance));
 
@@ -102,8 +102,9 @@ static BuiltinResult _archive_tar_file_list_entries(int argc, UNUSED(Obj **, arg
     OK(entries);
 }
 
-static BuiltinResult _archive_tar_file_extract(int argc, UNUSED(Obj **, argv), Obj *caller) {
-    CHECK_ARG_COUNT(0)
+static BuiltinResult _archive_file_extract(int argc, Obj **argv, Obj *caller) {
+    CHECK_ARG_COUNT(1)
+    CHECK_ARG_TYPE(ObjInt, INT, 0)
 
     ObjInstance *instance = AS_INSTANCE(caller);
     Obj *field;
@@ -113,9 +114,7 @@ static BuiltinResult _archive_tar_file_extract(int argc, UNUSED(Obj **, argv), O
     struct archive_entry *entry;
 
     struct archive *ext = archive_write_disk_new();
-    archive_write_disk_set_options(
-        ext,
-        ARCHIVE_EXTRACT_TIME | ARCHIVE_EXTRACT_PERM | ARCHIVE_EXTRACT_ACL | ARCHIVE_EXTRACT_FFLAGS);
+    archive_write_disk_set_options(ext, argv_0->value);
     archive_write_disk_set_standard_lookup(ext);
 
     int r;
@@ -165,7 +164,7 @@ static BuiltinResult _archive_tar_file_extract(int argc, UNUSED(Obj **, argv), O
     OK(new_nil());
 }
 
-static BuiltinResult _archive_tar_file_close(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _archive_file_close(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *instance = AS_INSTANCE(caller);
@@ -180,20 +179,20 @@ static BuiltinResult _archive_tar_file_close(int argc, UNUSED(Obj **, argv), Obj
     OK(instance);
 }
 
-static BuiltinResult _archive_tar_file_next_entry(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _archive_file_next_entry(int argc, UNUSED(Obj **, argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
-    ObjInstance *tar_file_instance = AS_INSTANCE(caller);
+    ObjInstance *file_instance = AS_INSTANCE(caller);
     Obj *field;
-    table_get(&tar_file_instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
+    table_get(&file_instance->fields, AS_OBJ(new_string("$$internal", 10)), &field);
 
     struct archive *a = AS_NATIVE_STRUCT(field)->ptr;
 
     struct archive_entry *entry;
     if (archive_read_next_header(a, &entry) == ARCHIVE_OK) {
-        ObjInstance *instance = new_instance(get_archive_tar_entry_class());
+        ObjInstance *instance = new_instance(get_archive_entry_class());
 
-        set_tar_entry_instance(instance, entry);
+        set_entry_instance(instance, entry);
 
         archive_read_data_skip(a);
 
@@ -203,18 +202,17 @@ static BuiltinResult _archive_tar_file_next_entry(int argc, UNUSED(Obj **, argv)
     ERR("Archive error: %s", archive_error_string(a))
 }
 
-ObjClass *get_archive_tar_file_class() {
-    if (_archive_tar_file_class == NULL) {
-        ObjClass *klass = new_class(new_string("TarFile", 7));
-        klass->is_builtin = true;
+ObjClass *get_archive_file_class() {
+    if (_archive_file_class == NULL) {
+        ObjClass *klass = new_builtin_class("ArchiveFile");
 
-        SET_BUILTIN_FN_METHOD("list_entries", _archive_tar_file_list_entries);
-        SET_BUILTIN_FN_METHOD("extract", _archive_tar_file_extract);
-        SET_BUILTIN_FN_METHOD("close", _archive_tar_file_close);
-        SET_BUILTIN_FN_METHOD("next_entry", _archive_tar_file_next_entry);
+        SET_BUILTIN_FN_METHOD("list_entries", _archive_file_list_entries);
+        SET_BUILTIN_FN_METHOD("extract", _archive_file_extract);
+        SET_BUILTIN_FN_METHOD("close", _archive_file_close);
+        SET_BUILTIN_FN_METHOD("next_entry", _archive_file_next_entry);
 
-        _archive_tar_file_class = klass;
+        _archive_file_class = klass;
     }
 
-    return _archive_tar_file_class;
+    return _archive_file_class;
 }

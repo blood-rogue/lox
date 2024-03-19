@@ -219,10 +219,11 @@ ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinFn fn, Obj *caller, char 
     return bound_method;
 }
 
-ObjNativeStruct *new_native_struct(void *ptr) {
+ObjNativeStruct *new_native_struct(void *ptr, FreeFn free_fn) {
     ObjNativeStruct *native = ALLOCATE_OBJ(ObjNativeStruct, OBJ_NATIVE_STRUCT);
 
     native->ptr = ptr;
+    native->free_fn = free_fn;
 
     return native;
 }
@@ -261,6 +262,13 @@ ObjString *take_string(char *chars, int length) {
     }
 
     return allocate_string(chars, length, hash);
+}
+
+ObjClass *new_builtin_class(char *name) {
+    ObjClass *klass = new_class(new_string(name, strlen(name)));
+    klass->is_builtin = true;
+
+    return klass;
 }
 
 static void print_function(ObjFunction *function) {

@@ -76,8 +76,7 @@ static BuiltinResult _time_time_to_str(int argc, Obj **argv, Obj *caller) {
 
 ObjClass *get_time_time_class() {
     if (_time_time_class == NULL) {
-        ObjClass *klass = new_class(new_string("Time", 4));
-        klass->is_builtin = true;
+        ObjClass *klass = new_builtin_class("Time");
 
         SET_BUILTIN_FN_STATIC("local_now", _time_time_local_now);
         SET_BUILTIN_FN_STATIC("utc_now", _time_time_utc_now);

@@ -194,7 +194,7 @@ static BuiltinResult _regex_compile(int argc, Obj **argv, UNUSED(Obj *, caller))
     }
 
     ObjInstance *instance = new_instance(get_regex_pattern_class());
-    SET_FIELD("$$internal", new_native_struct(re));
+    SET_FIELD("$$internal", new_native_struct(re, (FreeFn)pcre2_code_free));
 
     OK(instance);
 }

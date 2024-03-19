@@ -130,6 +130,8 @@ static void free_object(Obj *object) {
             }
         case OBJ_NATIVE_STRUCT:
             {
+                ObjNativeStruct *native = AS_NATIVE_STRUCT(object);
+                native->free_fn(native->ptr);
                 FREE(ObjBuiltinFunction, object);
                 break;
             }

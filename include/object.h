@@ -79,6 +79,8 @@ typedef enum {
     OBJ_NATIVE_STRUCT = 1 << 18
 } ObjType;
 
+typedef void (*FreeFn)(void *);
+
 struct Obj {
     ObjType type;
     bool is_marked;
@@ -198,6 +200,7 @@ typedef struct {
 typedef struct {
     Obj obj;
     void *ptr;
+    FreeFn free_fn;
 } ObjNativeStruct;
 
 ObjNil *new_nil();
@@ -221,11 +224,12 @@ ObjModule *new_module(ObjString *);
 
 ObjBuiltinFunction *new_builtin_function(BuiltinFn, char *);
 ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinFn, Obj *, char *);
-ObjNativeStruct *new_native_struct(void *);
+ObjNativeStruct *new_native_struct(void *, FreeFn);
 
 ObjList *argv_list(int, const char **);
 ObjBytes *take_bytes(uint8_t *, int);
 ObjString *take_string(char *, int);
+ObjClass *new_builtin_class(char *);
 
 int utf_strlen(char *);
 

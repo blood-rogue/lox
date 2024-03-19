@@ -89,6 +89,11 @@ static char *read_file(char *path) {
 }
 
 void init_vm() {
+    if (!read_history("~/.lox_history")) {
+        runtime_error("Could not read history.");
+        exit(1);
+    }
+
     init_literals();
 
     reset_stack();
@@ -130,8 +135,6 @@ void init_vm() {
     SET_BLTIN_FN("assert", assert_builtin_function);
 
 #undef SET_BLTIN_FN
-
-    read_history("~/.lox_history");
 }
 
 void free_vm() {
@@ -164,7 +167,9 @@ void free_vm() {
     if (_source != NULL)
         free(_source);
 
-    write_history("~/.lox_history");
+    if (!write_history("~/.lox_history")) {
+        runtime_error("Could not write history.");
+    }
 }
 
 static Table *get_current_global() {
