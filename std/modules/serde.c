@@ -5,7 +5,7 @@ static ObjModule *_serde_module = NULL;
 ObjModule *get_serde_module(int count, char **parts) {
 
     if (_serde_module == NULL) {
-        ObjModule *module = new_module(new_string("serde", 5));
+        ObjModule *module = new_module("serde");
 
         SET_MEMBER("json", get_serde_json_module());
         SET_MEMBER("yaml", get_serde_yaml_module());

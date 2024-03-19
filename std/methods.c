@@ -1,4 +1,4 @@
-#include "methods.h"
+#include "std/methods.h"
 
 BuiltinTable **get_builtin_methods() {
     BuiltinTable **statics = calloc(NUM_OBJS, sizeof(BuiltinTable *));

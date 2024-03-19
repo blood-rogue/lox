@@ -31,7 +31,7 @@ ObjModule *get_random_module(int count, UNUSED(char **, parts)) {
     CHECK_PART_COUNT
 
     if (_random_module == NULL) {
-        ObjModule *module = new_module(new_string("random", 6));
+        ObjModule *module = new_module("random");
 
         SET_BUILTIN_FN_MEMBER("seed", _random_seed);
         SET_BUILTIN_FN_MEMBER("random", _random_random);

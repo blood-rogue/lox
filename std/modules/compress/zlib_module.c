@@ -41,7 +41,7 @@ static BuiltinResult _compress_zlib_decompress(int argc, Obj **argv, UNUSED(Obj 
 
 ObjModule *get_compress_zlib_module() {
     if (_compress_zlib_module == NULL) {
-        ObjModule *module = new_module(new_string("zlib", 4));
+        ObjModule *module = new_module("zlib");
 
         SET_BUILTIN_FN_MEMBER("compress", _compress_zlib_compress);
         SET_BUILTIN_FN_MEMBER("decompress", _compress_zlib_decompress);

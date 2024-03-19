@@ -34,7 +34,7 @@ ObjModule *get_archive_module(int count, UNUSED(char **, parts)) {
     CHECK_PART_COUNT
 
     if (_archive_module == NULL) {
-        ObjModule *module = new_module(new_string("archive", 7));
+        ObjModule *module = new_module("archive");
 
         SET_BUILTIN_FN_MEMBER("open", _archive_open);
 

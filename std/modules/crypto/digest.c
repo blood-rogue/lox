@@ -2,9 +2,9 @@
 
 #include "builtins.h"
 
-static ObjModule *_hash_module = NULL;
+static ObjModule *_digest_module = NULL;
 
-static BuiltinResult md_digest(const char *alg, uint8_t *bytes, int bytes_len) {
+BuiltinResult md_digest(const char *alg, uint8_t *bytes, int bytes_len) {
     EVP_MD_CTX *ctx = NULL;
     EVP_MD *md = NULL;
 
@@ -59,9 +59,6 @@ BuiltinResult md_init(const char *alg, ObjInstance *instance) {
     EVP_MD_CTX *ctx = NULL;
     EVP_MD *md = NULL;
 
-    unsigned int len = 0;
-    uint8_t *outdigest = NULL;
-
     ctx = EVP_MD_CTX_new();
     if (ctx == NULL)
         ERR("Could not initialize context.")
@@ -82,7 +79,7 @@ BuiltinResult md_init(const char *alg, ObjInstance *instance) {
     md_ctx->ctx = ctx;
     md_ctx->md = md;
 
-    SET_FIELD("$$internal", new_native_struct(md_ctx, free_mdctx));
+    SET_FIELD("$$internal", new_native_struct(md_ctx, (FreeFn)free_mdctx));
 
     OK(new_nil());
 }
@@ -128,22 +125,20 @@ BuiltinResult md_finish(int argc, UNUSED(Obj **, argv), Obj *caller) {
     OK(new_bytes(outdigest, len));
 }
 
-ObjModule *get_hash_module(int count, UNUSED(char **, parts)) {
-    CHECK_PART_COUNT
+ObjModule *get_digest_module() {
+    if (_digest_module == NULL) {
+        ObjModule *module = new_module("digest");
 
-    if (_hash_module == NULL) {
-        ObjModule *module = new_module(new_string("hash", 4));
+        SET_MEMBER("SHA1", get_digest_sha1_class());
+        SET_MEMBER("SHA2", get_digest_sha2_class());
+        SET_MEMBER("SHA3", get_digest_sha3_class());
+        SET_MEMBER("MD4", get_digest_md4_class());
+        SET_MEMBER("MD5", get_digest_md5_class());
+        SET_MEMBER("Shake128", get_digest_shake128_class());
+        SET_MEMBER("Shake256", get_digest_shake256_class());
 
-        SET_MEMBER("SHA1", get_hash_sha1_class());
-        SET_MEMBER("SHA2", get_hash_sha2_class());
-        SET_MEMBER("SHA3", get_hash_sha3_class());
-        SET_MEMBER("MD4", get_hash_md4_class());
-        SET_MEMBER("MD5", get_hash_md5_class());
-        SET_MEMBER("Shake128", get_hash_shake128_class());
-        SET_MEMBER("Shake256", get_hash_shake256_class());
-
-        _hash_module = module;
+        _digest_module = module;
     }
 
-    return _hash_module;
+    return _digest_module;
 }

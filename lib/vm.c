@@ -180,7 +180,7 @@ static Table *get_current_global() {
     if (vm.current_module != NULL)
         return &vm.current_module->current->globals;
 
-    runtime_error("Could not import module '%s'.", vm.current_module->current->name->chars);
+    runtime_error("Could not import module '%s'.", vm.current_module->current->name);
     return NULL;
 }
 
@@ -331,7 +331,7 @@ static int invoke_scoped_member(ObjModule *module, ObjString *name, int argc) {
         return call_object(member, argc, AS_OBJ(module));
     }
 
-    runtime_error("No member named '%s' in module '%s'.", name->chars, module->name->chars);
+    runtime_error("No member named '%s' in module '%s'.", name->chars, module->name);
     return CALL_INVALID_OBJ;
 }
 
@@ -923,9 +923,7 @@ static InterpretResult run() {
                     }
 
                     runtime_error(
-                        "No method named '%s' found in module '%s'.",
-                        name->chars,
-                        module->name->chars);
+                        "No method named '%s' found in module '%s'.", name->chars, module->name);
                     return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_EQUAL:
@@ -1242,7 +1240,7 @@ static InterpretResult run() {
                         Module *module = malloc(sizeof(Module));
 
                         module->prev = vm.current_module;
-                        module->current = new_module(import_path);
+                        module->current = new_module(import_path->chars);
 
                         vm.current_module = module;
                         vm.module_count++;

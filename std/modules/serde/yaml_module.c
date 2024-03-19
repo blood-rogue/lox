@@ -24,7 +24,7 @@ static BuiltinResult _serde_yaml_deserialize(int argc, Obj **argv, UNUSED(Obj *,
 
 ObjModule *get_serde_yaml_module() {
     if (_serde_yaml_module == NULL) {
-        ObjModule *module = new_module(new_string("yaml", 4));
+        ObjModule *module = new_module("yaml");
 
         SET_BUILTIN_FN_MEMBER("deserialize", _serde_yaml_deserialize);
 

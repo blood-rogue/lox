@@ -190,7 +190,7 @@ ObjBoundMethod *new_bound_method(Obj *receiver, ObjClosure *method) {
     return bound;
 }
 
-ObjModule *new_module(ObjString *name) {
+ObjModule *new_module(const char *name) {
     ObjModule *module = ALLOCATE_OBJ(ObjModule, OBJ_MODULE);
 
     init_table(&module->globals);
@@ -392,7 +392,7 @@ void print_object(Obj *obj) {
                 AS_BUILTIN_BOUND_METHOD(obj)->name);
             break;
         case OBJ_MODULE:
-            printf("<module '%s'>", AS_MODULE(obj)->name->chars);
+            printf("<module '%s'>", AS_MODULE(obj)->name);
             break;
         case OBJ_NATIVE_STRUCT:
             printf("<C struct at %p>", AS_NATIVE_STRUCT(obj)->ptr);
@@ -484,7 +484,7 @@ void free_literals() {
     free(_FALSE);
 }
 
-static char *OBJ_NAMES[] = {
+static char *_OBJ_NAMES[] = {
     "NIL",
     "INT",
     "MAP",
@@ -502,6 +502,13 @@ static char *OBJ_NAMES[] = {
     "BOUND_METHOD",
     "MODULE",
     "BUILTIN_METHOD",
-    "BUILTIN_BOUND_METHOD"};
+    "BUILTIN_BOUND_METHOD",
+    "NATIVE_STRUCT"};
 
-char *get_obj_kind(Obj *obj) { return OBJ_NAMES[__builtin_ctz(obj->type)]; }
+struct {
+    char _;
+    int : (((sizeof(_OBJ_NAMES) / 8) == NUM_OBJS) -
+           1); // Compile time check so that we don't forget to add obj name here
+} _;
+
+char *get_obj_kind(Obj *obj) { return _OBJ_NAMES[__builtin_ctz(obj->type)]; }

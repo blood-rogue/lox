@@ -80,7 +80,7 @@ ObjModule *get_sys_module(int count, UNUSED(char **, parts)) {
     CHECK_PART_COUNT
 
     if (_sys_module == NULL) {
-        ObjModule *module = new_module(new_string("sys", 3));
+        ObjModule *module = new_module("sys");
 
         ObjList *_sys_environ = new_list(NULL, 0);
         for (int i = 0; __environ[i] != NULL; i++) {

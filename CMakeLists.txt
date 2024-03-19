@@ -8,8 +8,7 @@ set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
 add_link_options(-flto=auto -Wl,--gc-sections)
 add_compile_options(-Wall -Werror -Wextra -pedantic -Ofast -flto=auto -ffunction-sections -fdata-sections)
 
-file(GLOB HEADERS ${lox_SOURCE_DIR}/include/*.h)
-
+file(GLOB_RECURSE HEADERS ${lox_SOURCE_DIR}/include/*.h)
 file(GLOB LIB_SRCS ${lox_SOURCE_DIR}/lib/*.c)
 file(GLOB_RECURSE STD_SRCS ${lox_SOURCE_DIR}/std/*.c)
 

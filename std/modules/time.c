@@ -53,7 +53,7 @@ ObjModule *get_time_module(int count, UNUSED(char **, parts)) {
     CHECK_PART_COUNT
 
     if (_time_module == NULL) {
-        ObjModule *module = new_module(new_string("time", 4));
+        ObjModule *module = new_module("time");
 
         SET_BUILTIN_FN_MEMBER("now", _time_now);
         SET_BUILTIN_FN_MEMBER("clock", _time_clock);

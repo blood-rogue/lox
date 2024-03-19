@@ -1,3 +1,6 @@
+#ifndef lox_methods_h
+#define lox_methods_h
+
 #include "object.h"
 
 #define SET_BLTIN_METHOD(name, fn)                                                                 \
@@ -12,3 +15,5 @@ BuiltinTable *string_methods();
 BuiltinTable *list_methods();
 BuiltinTable *map_methods();
 BuiltinTable *bytes_methods();
+
+#endif // lox_methods_h

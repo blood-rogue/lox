@@ -58,7 +58,7 @@ ObjModule *get_math_module(int count, UNUSED(char **, parts)) {
     CHECK_PART_COUNT
 
     if (_math_module == NULL) {
-        ObjModule *module = new_module(new_string("math", 4));
+        ObjModule *module = new_module("math");
 
         SET_BUILTIN_FN_MEMBER("abs", _math_fabs);
         SET_BUILTIN_FN_MEMBER("exp", _math_exp);

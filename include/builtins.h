@@ -5,9 +5,9 @@
 
 #include "common.h"
 #include "memory.h"
-#include "methods.h"
-#include "modules.h"
 #include "object.h"
+#include "std/methods.h"
+#include "std/modules.h"
 
 #define ERR(...)                                                                                   \
     {                                                                                              \

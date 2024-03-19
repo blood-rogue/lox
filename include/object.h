@@ -180,7 +180,7 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    ObjString *name;
+    const char *name;
     Table globals;
 } ObjModule;
 
@@ -220,7 +220,7 @@ ObjUpvalue *new_upvalue(Obj **);
 ObjClass *new_class(ObjString *);
 ObjInstance *new_instance(ObjClass *);
 ObjBoundMethod *new_bound_method(Obj *, ObjClosure *);
-ObjModule *new_module(ObjString *);
+ObjModule *new_module(const char *);
 
 ObjBuiltinFunction *new_builtin_function(BuiltinFn, char *);
 ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinFn, Obj *, char *);

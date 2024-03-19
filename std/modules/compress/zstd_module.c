@@ -137,7 +137,7 @@ static BuiltinResult _compress_zstd_decompress(int argc, Obj **argv, UNUSED(Obj 
 
 ObjModule *get_compress_zstd_module() {
     if (_compress_zstd_module == NULL) {
-        ObjModule *module = new_module(new_string("zstd", 4));
+        ObjModule *module = new_module("zstd");
 
         SET_BUILTIN_FN_MEMBER("compress", _compress_zstd_compress);
         SET_BUILTIN_FN_MEMBER("decompress", _compress_zstd_decompress);

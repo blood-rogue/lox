@@ -1,3 +1,6 @@
+#ifndef lox_completion_h
+#define lox_completion_h
+
 #include <readline/readline.h>
 #include <string.h>
 
@@ -45,3 +48,5 @@ static char **completer(const char *text, UNUSED(int, start), UNUSED(int, end)) 
 
     return matches;
 }
+
+#endif // lox_completion_h

@@ -4,7 +4,7 @@ static ObjModule *_compress_module = NULL;
 
 ObjModule *get_compress_module(int count, char **parts) {
     if (_compress_module == NULL) {
-        ObjModule *module = new_module(new_string("compress", 8));
+        ObjModule *module = new_module("compress");
 
         SET_MEMBER("zlib", get_compress_zlib_module());
         SET_MEMBER("lz4", get_compress_lz4_module());

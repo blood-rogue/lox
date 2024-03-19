@@ -40,7 +40,7 @@ static BuiltinResult _compress_lz4_decompress(int argc, Obj **argv, UNUSED(Obj *
 
 ObjModule *get_compress_lz4_module() {
     if (_compress_lz4_module == NULL) {
-        ObjModule *module = new_module(new_string("lz4", 3));
+        ObjModule *module = new_module("lz4");
 
         SET_BUILTIN_FN_MEMBER("compress", _compress_lz4_compress);
         SET_BUILTIN_FN_MEMBER("decompress", _compress_lz4_decompress);

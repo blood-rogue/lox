@@ -203,7 +203,7 @@ ObjModule *get_regex_module(int count, UNUSED(char **, parts)) {
     CHECK_PART_COUNT
 
     if (_regex_module == NULL) {
-        ObjModule *module = new_module(new_string("regex", 5));
+        ObjModule *module = new_module("regex");
 
         SET_BUILTIN_FN_MEMBER("search", _regex_search);
         SET_BUILTIN_FN_MEMBER("match", _regex_match);

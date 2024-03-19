@@ -94,7 +94,7 @@ ObjModule *get_fs_module(int count, UNUSED(char **, parts)) {
     CHECK_PART_COUNT
 
     if (_fs_module == NULL) {
-        ObjModule *module = new_module(new_string("fs", 2));
+        ObjModule *module = new_module("fs");
 
         SET_INT_MEMBER("CREATE", O_CREAT);
         SET_INT_MEMBER("EXCLUSIVE", O_EXCL);

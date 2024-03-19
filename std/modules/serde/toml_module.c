@@ -113,7 +113,7 @@ static BuiltinResult _serde_toml_deserialize(int argc, Obj **argv, UNUSED(Obj *,
 
 ObjModule *get_serde_toml_module() {
     if (_serde_toml_module == NULL) {
-        ObjModule *module = new_module(new_string("toml", 4));
+        ObjModule *module = new_module("toml");
 
         SET_BUILTIN_FN_MEMBER("deserialize", _serde_toml_deserialize);
 

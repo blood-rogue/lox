@@ -152,7 +152,7 @@ static BuiltinResult _serde_json_deserialize(int argc, Obj **argv, UNUSED(Obj *,
 
 ObjModule *get_serde_json_module() {
     if (_serde_json_module == NULL) {
-        ObjModule *module = new_module(new_string("json", 4));
+        ObjModule *module = new_module("json");
 
         SET_BUILTIN_FN_MEMBER("serialize", _serde_json_serialize);
         SET_BUILTIN_FN_MEMBER("deserialize", _serde_json_deserialize);

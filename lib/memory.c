@@ -234,7 +234,6 @@ static void blacken_object(Obj *object) {
         case OBJ_MODULE:
             {
                 ObjModule *module = AS_MODULE(object);
-                mark_object(AS_OBJ(module->name));
                 mark_table(&module->globals);
                 break;
             }

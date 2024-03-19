@@ -1,4 +1,8 @@
-#include "hash_module.h"
+#ifndef lox_modules_h
+#define lox_modules_h
+
+#include "builtins.h"
+#include "crypto.h"
 
 #define SET_MEMBER(name, value)                                                                    \
     table_set(&module->globals, AS_OBJ(new_string(name, (int)strlen(name))), AS_OBJ(value))
@@ -63,3 +67,5 @@ ObjModule *get_serde_toml_module();
 ObjModule *get_archive_module(int, char **);
 ObjClass *get_archive_file_class();
 ObjClass *get_archive_entry_class();
+
+#endif // lox_modules_h
