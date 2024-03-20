@@ -24,7 +24,7 @@ ObjModule *get_module(int part_count, char **parts) {
     else if (strcmp(name, "crypto") == 0)
         return get_crypto_module(part_count - 1, parts + 1);
     else if (strcmp(name, "db") == 0)
-        return get_crypto_module(part_count - 1, parts + 1);
+        return get_db_module(part_count - 1, parts + 1);
 
     return NULL;
 }

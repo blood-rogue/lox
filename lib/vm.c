@@ -426,7 +426,12 @@ static int invoke(ObjString *name, int argc) {
 static int bind_method(ObjClass *klass, ObjString *name) {
     Obj *method;
     if (!table_get(&klass->methods, AS_OBJ(name), &method)) {
-        runtime_error("Undefined property '%s' of class '%s'.", name->chars, klass->name->chars);
+        runtime_error(
+            "Undefined property '%.*s' of class '%.*s'.",
+            name->raw_length,
+            name->chars,
+            klass->name->raw_length,
+            klass->name->chars);
         return CALL_UNKNOWN_MEMBER;
     }
 
@@ -759,7 +764,7 @@ static InterpretResult run() {
                         push(AS_OBJ(new_builtin_function(fn, name->chars)));
                         break;
                     }
-                    runtime_error("Undefined variable '%s'.", name->chars);
+                    runtime_error("Undefined variable '%.*s'.", name->raw_length, name->chars);
                     return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_DEFINE_GLOBAL:
@@ -786,7 +791,7 @@ static InterpretResult run() {
 
                     if (table_set(globals, AS_OBJ(name), peek(0))) {
                         table_delete(globals, AS_OBJ(name));
-                        runtime_error("Undefined variable '%s'.", name->chars);
+                        runtime_error("Undefined variable '%.*s'.", name->raw_length, name->chars);
                         return INTERPRET_RUNTIME_ERROR;
                     }
                     break;
@@ -899,7 +904,9 @@ static InterpretResult run() {
 
                         if (klass->is_builtin) {
                             runtime_error(
-                                "Cannot set property of builtin class '%s'.", klass->name->chars);
+                                "Cannot set property of builtin class '%.*s'.",
+                                klass->name->raw_length,
+                                klass->name->chars);
                             return INTERPRET_RUNTIME_ERROR;
                         }
 
@@ -940,7 +947,10 @@ static InterpretResult run() {
                     }
 
                     runtime_error(
-                        "No method named '%s' found in module '%s'.", name->chars, module->name);
+                        "No method named '%.*s' found in module '%s'.",
+                        name->raw_length,
+                        name->chars,
+                        module->name);
                     return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_EQUAL:
@@ -1234,7 +1244,10 @@ static InterpretResult run() {
                         free(temp);
 
                         if (std_module == NULL) {
-                            runtime_error("No standard module named '%s'.", import_path->chars);
+                            runtime_error(
+                                "No standard module named '%.*s'.",
+                                import_path->raw_length,
+                                import_path->chars);
                             return INTERPRET_RUNTIME_ERROR;
                         } else
                             push(AS_OBJ(std_module));

@@ -70,7 +70,6 @@ ObjClass *get_archive_file_class();
 ObjClass *get_archive_entry_class();
 
 ObjModule *get_db_module();
-ObjModule *get_db_kv_module();
-ObjClass *get_db_kv_kv_class();
+ObjClass *get_db_kv_class();
 
 #endif // lox_modules_h

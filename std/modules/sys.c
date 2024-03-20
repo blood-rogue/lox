@@ -15,7 +15,7 @@ static BuiltinResult _sys_getenv(int argc, Obj **argv, UNUSED(Obj *caller)) {
     if (env != NULL)
         OK(new_string(env, strlen(env)));
 
-    ERR("No environment variable found with the name '%s'.", argv_0->chars)
+    ERR("No environment variable found with the name '%.*s'.", argv_0->raw_length, argv_0->chars)
 }
 
 static BuiltinResult _sys_getcwd(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
@@ -67,7 +67,9 @@ static BuiltinResult _sys_chdir(int argc, Obj **argv, UNUSED(Obj *caller)) {
     if (chdir(argv_0->chars) == 0)
         OK(new_nil());
 
-    ERR("Could not change working directory of current process to '%s'.", argv_0->chars)
+    ERR("Could not change working directory of current process to '%.*s'.",
+        argv_0->raw_length,
+        argv_0->chars)
 }
 
 static BuiltinResult _sys_getpid(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {

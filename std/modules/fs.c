@@ -48,7 +48,7 @@ static BuiltinResult _fs_unlink(int argc, Obj **argv, UNUSED(Obj *caller)) {
     if (unlink(argv_0->chars) == 0)
         OK(new_nil());
 
-    ERR("Could not delete link '%s'.", argv_0->chars)
+    ERR("Could not delete link '%.*s'.", argv_0->raw_length, argv_0->chars)
 }
 
 static BuiltinResult _fs_symlink(int argc, Obj **argv, UNUSED(Obj *caller)) {
@@ -59,7 +59,11 @@ static BuiltinResult _fs_symlink(int argc, Obj **argv, UNUSED(Obj *caller)) {
     if (symlink(argv_0->chars, argv_1->chars) == 0)
         OK(new_nil());
 
-    ERR("Could not create symlink from '%s' to '%s'.", argv_0->chars, argv_1->chars)
+    ERR("Could not create symlink from '%.*s' to '%.*s'.",
+        argv_0->raw_length,
+        argv_0->chars,
+        argv_1->raw_length,
+        argv_1->chars)
 }
 
 static BuiltinResult _fs_rmdir(int argc, Obj **argv, UNUSED(Obj *caller)) {
@@ -69,7 +73,7 @@ static BuiltinResult _fs_rmdir(int argc, Obj **argv, UNUSED(Obj *caller)) {
     if (rmdir(argv_0->chars) == 0)
         OK(new_nil());
 
-    ERR("Could not remove directory '%s'.", argv_0->chars)
+    ERR("Could not remove directory '%.*s'.", argv_0->raw_length, argv_0->chars)
 }
 
 static void free_file(void *file) { fclose(file); }

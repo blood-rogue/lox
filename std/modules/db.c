@@ -2,23 +2,16 @@
 
 static ObjModule *_db_module = NULL;
 
-ObjModule *get_db_module(int count, char **parts) {
+ObjModule *get_db_module(int count, UNUSED(char **parts)) {
+    CHECK_PART_COUNT
+
     if (_db_module == NULL) {
         ObjModule *module = new_module("db");
 
-        SET_MEMBER("kv", get_db_kv_module());
+        SET_MEMBER("KV", get_db_kv_class());
 
         _db_module = module;
     }
 
-    if (count == 0)
-        return _db_module;
-    else if (count == 1) {
-        if (strcmp(parts[0], "kv") == 0)
-            return get_db_kv_module();
-
-        return NULL;
-    }
-
-    return NULL;
+    return _db_module;
 }
