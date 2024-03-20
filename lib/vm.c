@@ -52,7 +52,7 @@ static void runtime_error(const char *format, ...) {
         if (function->name == NULL) {
             fprintf(stderr, "script\n");
         } else {
-            fprintf(stderr, "%s()\n", function->name->chars);
+            fprintf(stderr, "%.*s()\n", function->name->raw_length, function->name->chars);
         }
     }
 
@@ -310,7 +310,12 @@ static int invoke_from_class(ObjClass *klass, ObjString *name, int argc, ObjInst
     if (!table_get(&klass->methods, AS_OBJ(name), &method) &&
         !table_get(&klass->statics, AS_OBJ(name), &method) &&
         !table_get(&klass->fields, AS_OBJ(name), &method)) {
-        runtime_error("Undefined property '%s' for class '%s'.", name->chars, klass->name->chars);
+        runtime_error(
+            "Undefined property '%.*s' for class '%.*s'.",
+            name->raw_length,
+            name->chars,
+            klass->name->raw_length,
+            klass->name->chars);
         return CALL_INVALID_OBJ;
     }
 
@@ -318,7 +323,11 @@ static int invoke_from_class(ObjClass *klass, ObjString *name, int argc, ObjInst
     if ((ret = call_object(method, argc, AS_OBJ(caller))) != CALL_OK) {
         if (ret < CALL_NATIVE_ERR)
             runtime_error(
-                "Property '%s' of class '%s' is not callable.", name->chars, klass->name->chars);
+                "Property '%.*s' of class '%.*s' is not callable.",
+                name->raw_length,
+                name->chars,
+                klass->name->raw_length,
+                klass->name->chars);
         return ret;
     }
 
@@ -331,7 +340,8 @@ static int invoke_scoped_member(ObjModule *module, ObjString *name, int argc) {
         return call_object(member, argc, AS_OBJ(module));
     }
 
-    runtime_error("No member named '%s' in module '%s'.", name->chars, module->name);
+    runtime_error(
+        "No member named '%.*s' in module '%s'.", name->raw_length, name->chars, module->name);
     return CALL_INVALID_OBJ;
 }
 
@@ -359,7 +369,11 @@ static int invoke(ObjString *name, int argc) {
                 if (!table_get(&klass->statics, AS_OBJ(name), &method) &&
                     !table_get(&klass->fields, AS_OBJ(name), &method)) {
                     runtime_error(
-                        "Undefined property '%s' for class '%s'.", name->chars, klass->name->chars);
+                        "Undefined property '%.*s' for class '%.*s'.",
+                        name->raw_length,
+                        name->chars,
+                        klass->name->raw_length,
+                        klass->name->chars);
                     return CALL_UNKNOWN_MEMBER;
                 }
 
@@ -367,8 +381,10 @@ static int invoke(ObjString *name, int argc) {
                 if ((ret = call_object(method, argc, AS_OBJ(klass))) != CALL_OK) {
                     if (ret < CALL_NATIVE_ERR)
                         runtime_error(
-                            "Property '%s' for class '%s' is not callable.",
+                            "Property '%.*s' for class '%.*s' is not callable.",
+                            name->raw_length,
                             name->chars,
+                            klass->name->raw_length,
                             klass->name->chars);
                     return ret;
                 }
@@ -385,7 +401,8 @@ static int invoke(ObjString *name, int argc) {
                         name->obj.hash,
                         &method)) {
                     runtime_error(
-                        "Could not invoke method '%s' on '%s'.",
+                        "Could not invoke method '%.*s' on '%s'.",
+                        name->raw_length,
                         name->chars,
                         get_obj_kind(receiver));
                     return CALL_UNKNOWN_MEMBER;

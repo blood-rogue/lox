@@ -125,7 +125,7 @@ static BuiltinResult _regex_pattern_findall(int argc, Obj **argv, Obj *caller) {
     OK(matches);
 }
 
-static BuiltinResult _regex_pattern_free(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _regex_pattern_free(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *re_instance = AS_INSTANCE(caller);

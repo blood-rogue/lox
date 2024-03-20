@@ -7,7 +7,7 @@ static ObjModule *_archive_module = NULL;
 
 static void free_archive(void *archive) { archive_read_free(archive); }
 
-static BuiltinResult _archive_open(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _archive_open(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(3)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
     CHECK_ARG_TYPE(ObjInt, INT, 1)
@@ -30,7 +30,7 @@ static BuiltinResult _archive_open(int argc, Obj **argv, UNUSED(Obj *, caller)) 
     OK(instance);
 }
 
-ObjModule *get_archive_module(int count, UNUSED(char **, parts)) {
+ObjModule *get_archive_module(int count, UNUSED(char **parts)) {
     CHECK_PART_COUNT
 
     if (_archive_module == NULL) {

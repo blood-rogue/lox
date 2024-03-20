@@ -6,7 +6,7 @@
 
 static ObjModule *_fs_module = NULL;
 
-static BuiltinResult _fs_dup2(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _fs_dup2(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
     CHECK_ARG_TYPE(ObjInt, INT, 1)
@@ -14,7 +14,7 @@ static BuiltinResult _fs_dup2(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     OK(new_int(dup2(argv_0->value, argv_1->value)));
 }
 
-static BuiltinResult _fs_chown(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _fs_chown(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(3)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
     CHECK_ARG_TYPE(ObjInt, INT, 1)
@@ -23,10 +23,10 @@ static BuiltinResult _fs_chown(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     if (chown(argv_0->chars, argv_1->value, argv_2->value) == 0)
         OK(new_nil());
 
-    ERR("Could not change ownership of file '%s'", argv_0->chars)
+    ERR("Could not change ownership of file '%.*s'", argv_0->raw_length, argv_0->chars)
 }
 
-static BuiltinResult _fs_link(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _fs_link(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
     CHECK_ARG_TYPE(ObjString, STRING, 1)
@@ -34,10 +34,14 @@ static BuiltinResult _fs_link(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     if (link(argv_0->chars, argv_1->chars) == 0)
         OK(new_nil());
 
-    ERR("Could not create link from '%s' to '%s'.", argv_0->chars, argv_1->chars)
+    ERR("Could not create link from '%.*s' to '%.*s'.",
+        argv_0->raw_length,
+        argv_0->chars,
+        argv_1->raw_length,
+        argv_1->chars)
 }
 
-static BuiltinResult _fs_unlink(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _fs_unlink(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -47,7 +51,7 @@ static BuiltinResult _fs_unlink(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     ERR("Could not delete link '%s'.", argv_0->chars)
 }
 
-static BuiltinResult _fs_symlink(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _fs_symlink(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
     CHECK_ARG_TYPE(ObjString, STRING, 1)
@@ -58,7 +62,7 @@ static BuiltinResult _fs_symlink(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     ERR("Could not create symlink from '%s' to '%s'.", argv_0->chars, argv_1->chars)
 }
 
-static BuiltinResult _fs_rmdir(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _fs_rmdir(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -90,7 +94,7 @@ static ObjInstance *set_file_instance(FILE *file, ObjInstance *instance) {
     return instance;
 }
 
-ObjModule *get_fs_module(int count, UNUSED(char **, parts)) {
+ObjModule *get_fs_module(int count, UNUSED(char **parts)) {
     CHECK_PART_COUNT
 
     if (_fs_module == NULL) {

@@ -51,7 +51,7 @@ static BuiltinResult regex(char *pattern, size_t pattern_size, char *subject, si
     OK(instance);
 }
 
-static BuiltinResult _regex_search(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _regex_search(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
     CHECK_ARG_TYPE(ObjString, STRING, 1)
@@ -59,7 +59,7 @@ static BuiltinResult _regex_search(int argc, Obj **argv, UNUSED(Obj *, caller)) 
     return regex(argv_0->chars, argv_0->raw_length, argv_1->chars, argv_1->raw_length);
 }
 
-static BuiltinResult _regex_match(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _regex_match(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
     CHECK_ARG_TYPE(ObjString, STRING, 1)
@@ -70,7 +70,7 @@ static BuiltinResult _regex_match(int argc, Obj **argv, UNUSED(Obj *, caller)) {
     return regex(pattern, argv_0->raw_length + 1, argv_1->chars, argv_1->raw_length);
 }
 
-static BuiltinResult _regex_fullmatch(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _regex_fullmatch(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
     CHECK_ARG_TYPE(ObjString, STRING, 1)
@@ -81,7 +81,7 @@ static BuiltinResult _regex_fullmatch(int argc, Obj **argv, UNUSED(Obj *, caller
     return regex(pattern, argv_0->raw_length + 2, argv_1->chars, argv_1->raw_length);
 }
 
-static BuiltinResult _regex_findall(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _regex_findall(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
     CHECK_ARG_TYPE(ObjString, STRING, 1)
@@ -172,7 +172,7 @@ static BuiltinResult _regex_findall(int argc, Obj **argv, UNUSED(Obj *, caller))
     OK(matches);
 }
 
-static BuiltinResult _regex_compile(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _regex_compile(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -199,7 +199,7 @@ static BuiltinResult _regex_compile(int argc, Obj **argv, UNUSED(Obj *, caller))
     OK(instance);
 }
 
-ObjModule *get_regex_module(int count, UNUSED(char **, parts)) {
+ObjModule *get_regex_module(int count, UNUSED(char **parts)) {
     CHECK_PART_COUNT
 
     if (_regex_module == NULL) {

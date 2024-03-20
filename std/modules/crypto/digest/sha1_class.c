@@ -4,20 +4,20 @@
 
 static ObjClass *_digest_sha1_class = NULL;
 
-static BuiltinResult _digest_sha1_hash(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _digest_sha1_hash(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 
     return md_digest("SHA1", argv_0->bytes, argv_0->length);
 }
 
-static BuiltinResult _digest_sha1_init(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _digest_sha1_init(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     return md_init("SHA1", AS_INSTANCE(caller));
 }
 
-ObjClass *get_digest_sha1_class() {
+ObjClass *get_crypto_digest_sha1_class() {
     if (_digest_sha1_class == NULL) {
         ObjClass *klass = new_builtin_class("SHA1");
 

@@ -37,7 +37,7 @@ static char *completer_callback(const char *text, int state) {
     return NULL;
 }
 
-static char **completer(const char *text, UNUSED(int, start), UNUSED(int, end)) {
+static char **completer(const char *text, UNUSED(int start), UNUSED(int end)) {
     char **matches = NULL;
     rl_completion_append_character = '\0';
     matches = rl_completion_matches(text, completer_callback);

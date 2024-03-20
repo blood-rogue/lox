@@ -101,7 +101,7 @@ BuiltinResult md_update(int argc, Obj **argv, Obj *caller) {
     OK(new_nil());
 }
 
-BuiltinResult md_finish(int argc, UNUSED(Obj **, argv), Obj *caller) {
+BuiltinResult md_finish(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *md_ctx_instance = AS_INSTANCE(caller);
@@ -125,20 +125,20 @@ BuiltinResult md_finish(int argc, UNUSED(Obj **, argv), Obj *caller) {
     OK(new_bytes(outdigest, len));
 }
 
-ObjModule *get_digest_module() {
+ObjModule *get_crypto_digest_module() {
     if (_digest_module == NULL) {
         ObjModule *module = new_module("digest");
 
-        SET_MEMBER("SHA1", get_digest_sha1_class());
-        SET_MEMBER("SHA2", get_digest_sha2_class());
-        SET_MEMBER("SHA3", get_digest_sha3_class());
-        SET_MEMBER("MD4", get_digest_md4_class());
-        SET_MEMBER("MD5", get_digest_md5_class());
-        SET_MEMBER("Shake128", get_digest_shake128_class());
-        SET_MEMBER("Shake256", get_digest_shake256_class());
-        SET_MEMBER("SM3", get_digest_sm3_class());
-        SET_MEMBER("RIPEMD160", get_digest_ripemd160_class());
-        SET_MEMBER("Whirlpool", get_digest_whirlpool_class());
+        SET_MEMBER("SHA1", get_crypto_digest_sha1_class());
+        SET_MEMBER("SHA2", get_crypto_digest_sha2_class());
+        SET_MEMBER("SHA3", get_crypto_digest_sha3_class());
+        SET_MEMBER("MD4", get_crypto_digest_md4_class());
+        SET_MEMBER("MD5", get_crypto_digest_md5_class());
+        SET_MEMBER("Shake128", get_crypto_digest_shake128_class());
+        SET_MEMBER("Shake256", get_crypto_digest_shake256_class());
+        SET_MEMBER("SM3", get_crypto_digest_sm3_class());
+        SET_MEMBER("RIPEMD160", get_crypto_digest_ripemd160_class());
+        SET_MEMBER("Whirlpool", get_crypto_digest_whirlpool_class());
 
         SET_INT_MEMBER("SHA2_224", 0);
         SET_INT_MEMBER("SHA2_256", 1);

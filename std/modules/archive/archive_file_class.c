@@ -78,7 +78,7 @@ void set_entry_instance(ObjInstance *instance, struct archive_entry *entry) {
                                                    : AS_OBJ(new_string(s, strlen(s))));
 }
 
-static BuiltinResult _archive_file_list_entries(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _archive_file_list_entries(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *a_instance = AS_INSTANCE(caller);
@@ -158,7 +158,7 @@ static BuiltinResult _archive_file_extract(int argc, Obj **argv, Obj *caller) {
     OK(new_nil());
 }
 
-static BuiltinResult _archive_file_close(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _archive_file_close(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *a_instance = AS_INSTANCE(caller);
@@ -170,7 +170,7 @@ static BuiltinResult _archive_file_close(int argc, UNUSED(Obj **, argv), Obj *ca
     OK(new_nil());
 }
 
-static BuiltinResult _archive_file_next_entry(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _archive_file_next_entry(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *a_instance = AS_INSTANCE(caller);

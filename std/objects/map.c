@@ -1,11 +1,11 @@
 #include "builtins.h"
 
-static BuiltinResult _map_len(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _map_len(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     OK(new_int(AS_MAP(caller)->table.count));
 }
 
-static BuiltinResult _map_keys(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _map_keys(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjMap *map = AS_MAP(caller);
@@ -20,7 +20,7 @@ static BuiltinResult _map_keys(int argc, UNUSED(Obj **, argv), Obj *caller) {
     OK(keys);
 }
 
-static BuiltinResult _map_values(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _map_values(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjMap *map = AS_MAP(caller);

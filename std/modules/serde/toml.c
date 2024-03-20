@@ -98,7 +98,7 @@ static Obj *toml_array_to_obj(toml_array_t *toml_array) {
     return AS_OBJ(list);
 }
 
-static BuiltinResult _serde_toml_deserialize(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _serde_toml_deserialize(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 

@@ -4,7 +4,7 @@
 
 static ObjModule *_compress_zlib_module = NULL;
 
-static BuiltinResult _compress_zlib_compress(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _compress_zlib_compress(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
 
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
@@ -23,7 +23,7 @@ static BuiltinResult _compress_zlib_compress(int argc, Obj **argv, UNUSED(Obj *,
     OK(take_bytes(dest, dest_len));
 }
 
-static BuiltinResult _compress_zlib_decompress(int argc, Obj **argv, UNUSED(Obj *, caller)) {
+static BuiltinResult _compress_zlib_decompress(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 

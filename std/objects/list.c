@@ -9,7 +9,7 @@ static BuiltinResult _list_append(int argc, Obj **argv, Obj *caller) {
     OK(new_nil());
 }
 
-static BuiltinResult _list_len(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _list_len(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     OK(new_int(AS_LIST(caller)->elems.count));
 }
@@ -48,7 +48,7 @@ static BuiltinResult _list_insert(int argc, Obj **argv, Obj *caller) {
     OK(new_nil());
 }
 
-static BuiltinResult _list_map(int argc, UNUSED(Obj **, argv), Obj *caller) {
+static BuiltinResult _list_map(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(1)
 
     ObjList *mapped = new_list(NULL, 0);

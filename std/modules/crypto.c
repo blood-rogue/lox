@@ -6,6 +6,8 @@ ObjModule *get_crypto_module(int count, char **parts) {
     if (_crypto_module == NULL) {
         ObjModule *module = new_module("crypto");
 
+        SET_MEMBER("digest", get_crypto_digest_module());
+
         _crypto_module = module;
     }
 
@@ -13,7 +15,7 @@ ObjModule *get_crypto_module(int count, char **parts) {
         return _crypto_module;
     else if (count == 1) {
         if (strcmp(parts[0], "digest") == 0)
-            return get_digest_module();
+            return get_crypto_digest_module();
 
         return NULL;
     }

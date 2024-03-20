@@ -276,7 +276,7 @@ static void print_function(ObjFunction *function) {
         printf("<script>");
         return;
     }
-    printf("<fn %s>", function->name->chars);
+    printf("<fn %.*s>", function->name->raw_length, function->name->chars);
 }
 
 static void print_list(Array *elems) {
@@ -362,19 +362,22 @@ void print_object(Obj *obj) {
             print_function(AS_BOUND_METHOD(obj)->method->function);
             break;
         case OBJ_CLASS:
-            printf("<class '%s'>", AS_CLASS(obj)->name->chars);
+            printf("<class '%.*s'>", AS_CLASS(obj)->name->raw_length, AS_CLASS(obj)->name->chars);
             break;
         case OBJ_CLOSURE:
             print_function(AS_CLOSURE(obj)->function);
             break;
         case OBJ_STRING:
-            printf("%s", AS_STRING(obj)->chars);
+            printf("%.*s", AS_STRING(obj)->raw_length, AS_STRING(obj)->chars);
             break;
         case OBJ_BYTES:
             print_bytes(AS_BYTES(obj));
             break;
         case OBJ_INSTANCE:
-            printf("<'%s' instance>", AS_INSTANCE(obj)->klass->name->chars);
+            printf(
+                "<'%.*s' instance>",
+                AS_INSTANCE(obj)->klass->name->raw_length,
+                AS_INSTANCE(obj)->klass->name->chars);
             break;
         case OBJ_BUILTIN_FUNCTION:
             printf("<builtin fn '%s'>", AS_BUILTIN_FUNCTION(obj)->name);
@@ -403,7 +406,7 @@ void print_object(Obj *obj) {
 void repr_object(Obj *obj) {
     switch (obj->type) {
         case OBJ_STRING:
-            printf("\"%s\"", AS_STRING(obj)->chars);
+            printf("\"%.*s\"", AS_STRING(obj)->raw_length, AS_STRING(obj)->chars);
             break;
         case OBJ_CHAR:
             print_char(AS_CHAR(obj)->value, true);
