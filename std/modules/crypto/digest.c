@@ -136,6 +136,16 @@ ObjModule *get_digest_module() {
         SET_MEMBER("MD5", get_digest_md5_class());
         SET_MEMBER("Shake128", get_digest_shake128_class());
         SET_MEMBER("Shake256", get_digest_shake256_class());
+        SET_MEMBER("SM3", get_digest_sm3_class());
+        SET_MEMBER("RIPEMD160", get_digest_ripemd160_class());
+        SET_MEMBER("Whirlpool", get_digest_whirlpool_class());
+
+        SET_INT_MEMBER("SHA2_224", 0);
+        SET_INT_MEMBER("SHA2_256", 1);
+        SET_INT_MEMBER("SHA2_384", 2);
+        SET_INT_MEMBER("SHA2_512", 3);
+        SET_INT_MEMBER("SHA2_512_224", 4);
+        SET_INT_MEMBER("SHA2_512_256", 5);
 
         _digest_module = module;
     }

@@ -13,6 +13,9 @@ ObjClass *get_digest_md5_class();
 ObjClass *get_digest_md4_class();
 ObjClass *get_digest_shake128_class();
 ObjClass *get_digest_shake256_class();
+ObjClass *get_digest_sm3_class();
+ObjClass *get_digest_ripemd160_class();
+ObjClass *get_digest_whirlpool_class();
 
 BuiltinResult md_digest(const char *, uint8_t *, int);
 
