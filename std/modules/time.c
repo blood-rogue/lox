@@ -4,17 +4,17 @@
 
 static ObjModule *_time_module = NULL;
 
-static BuiltinResult _time_now(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
+static NativeResult _time_now(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(0)
     OK(new_int(time(NULL)));
 }
 
-static BuiltinResult _time_clock(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
+static NativeResult _time_clock(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(0)
     OK(new_int(clock()));
 }
 
-static BuiltinResult _time_difftime(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _time_difftime(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
 
     CHECK_ARG_TYPE(ObjInt, INT, 0)
@@ -23,7 +23,7 @@ static BuiltinResult _time_difftime(int argc, Obj **argv, UNUSED(Obj *caller)) {
     OK(new_int(difftime(argv_0->value, argv_1->value)));
 }
 
-static BuiltinResult _time_to_utc_str(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _time_to_utc_str(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
 
     CHECK_ARG_TYPE(ObjInt, INT, 0)
@@ -36,7 +36,7 @@ static BuiltinResult _time_to_utc_str(int argc, Obj **argv, UNUSED(Obj *caller))
     OK(take_string(strf, strlen(strf)));
 }
 
-static BuiltinResult _time_to_local_str(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _time_to_local_str(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
 
     CHECK_ARG_TYPE(ObjInt, INT, 0)

@@ -4,35 +4,35 @@
 
 static ObjClass *_digest_sha3_class = NULL;
 
-static BuiltinResult _digest_sha3_hash224(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _digest_sha3_hash224(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 
     return md_digest("SHA3-224", argv_0->bytes, argv_0->length);
 }
 
-static BuiltinResult _digest_sha3_hash256(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _digest_sha3_hash256(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 
     return md_digest("SHA3-256", argv_0->bytes, argv_0->length);
 }
 
-static BuiltinResult _digest_sha3_hash384(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _digest_sha3_hash384(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 
     return md_digest("SHA3-384", argv_0->bytes, argv_0->length);
 }
 
-static BuiltinResult _digest_sha3_hash512(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _digest_sha3_hash512(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 
     return md_digest("SHA3-512", argv_0->bytes, argv_0->length);
 }
 
-static BuiltinResult _digest_sha3_init(int argc, Obj **argv, Obj *caller) {
+static NativeResult _digest_sha3_init(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 

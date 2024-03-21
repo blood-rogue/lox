@@ -4,7 +4,7 @@
 
 static ObjClass *_time_time_class = NULL;
 
-static BuiltinResult _time_time_local_now(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
+static NativeResult _time_time_local_now(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(0)
 
     int64_t now = time(NULL);
@@ -22,7 +22,7 @@ static BuiltinResult _time_time_local_now(int argc, UNUSED(Obj **argv), UNUSED(O
     OK(instance);
 }
 
-static BuiltinResult _time_time_utc_now(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
+static NativeResult _time_time_utc_now(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(0)
 
     int64_t now = time(NULL);
@@ -40,7 +40,7 @@ static BuiltinResult _time_time_utc_now(int argc, UNUSED(Obj **argv), UNUSED(Obj
     OK(instance);
 }
 
-static BuiltinResult _time_time_to_str(int argc, Obj **argv, Obj *caller) {
+static NativeResult _time_time_to_str(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 

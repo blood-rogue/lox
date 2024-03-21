@@ -6,7 +6,7 @@
 
 static ObjClass *_sys_group_class = NULL;
 
-static BuiltinResult _sys_group_by_name(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _sys_group_by_name(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -27,7 +27,7 @@ static BuiltinResult _sys_group_by_name(int argc, Obj **argv, UNUSED(Obj *caller
     OK(instance);
 }
 
-static BuiltinResult _sys_group_by_id(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _sys_group_by_id(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 

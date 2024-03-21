@@ -14,10 +14,10 @@
         int size = snprintf(NULL, 0, __VA_ARGS__);                                                 \
         char *buf = malloc(size + 1);                                                              \
         snprintf(buf, size + 1, __VA_ARGS__);                                                      \
-        return (BuiltinResult){.value = AS_OBJ(new_nil()), .error = buf};                          \
+        return (NativeResult){.value = AS_OBJ(new_nil()), .error = buf};                           \
     }
 #define OK(ok)                                                                                     \
-    return (BuiltinResult) { .value = AS_OBJ(ok), .error = NULL }
+    return (NativeResult) { .value = AS_OBJ(ok), .error = NULL }
 
 #define CHECK_ARG_COUNT(expected)                                                                  \
     if (argc != expected)                                                                          \
@@ -28,7 +28,7 @@
         ERR("Expected %s at pos %d but got %s", #kind, pos, get_obj_kind(argv[pos]))               \
     typ *argv_##pos = AS_##kind(argv[pos]);
 
-#define BLTIN_FN(name) BuiltinResult name##_builtin_function(int, Obj **, Obj *)
+#define BLTIN_FN(name) NativeResult name##_builtin_function(int, Obj **, Obj *)
 
 #define GET_INTERNAL(typ, name)                                                                    \
     Obj *name##_obj;                                                                               \

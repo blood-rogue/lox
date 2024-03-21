@@ -5,7 +5,7 @@
 static ObjModule *_math_module = NULL;
 
 #define MATH_BLTIN_FN(func)                                                                        \
-    static BuiltinResult _math_##func(int argc, Obj **argv, UNUSED(Obj *caller)) {                 \
+    static NativeResult _math_##func(int argc, Obj **argv, UNUSED(Obj *caller)) {                  \
         CHECK_ARG_COUNT(1)                                                                         \
         CHECK_ARG_TYPE(ObjFloat, FLOAT, 0)                                                         \
         OK(new_float(func(argv_0->value)));                                                        \
@@ -38,7 +38,7 @@ MATH_BLTIN_FN(round)
 MATH_BLTIN_FN(nearbyint)
 MATH_BLTIN_FN(rint)
 
-static BuiltinResult _math_pow(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _math_pow(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjFloat, FLOAT, 0)
     CHECK_ARG_TYPE(ObjFloat, FLOAT, 1)
@@ -46,7 +46,7 @@ static BuiltinResult _math_pow(int argc, Obj **argv, UNUSED(Obj *caller)) {
     OK(new_float(pow(argv_0->value, argv_1->value)));
 }
 
-static BuiltinResult _math_hypot(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _math_hypot(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjFloat, FLOAT, 0)
     CHECK_ARG_TYPE(ObjFloat, FLOAT, 1)

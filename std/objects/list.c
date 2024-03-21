@@ -1,6 +1,6 @@
 #include "builtins.h"
 
-static BuiltinResult _list_append(int argc, Obj **argv, Obj *caller) {
+static NativeResult _list_append(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     ObjList *list = AS_LIST(caller);
 
@@ -9,12 +9,12 @@ static BuiltinResult _list_append(int argc, Obj **argv, Obj *caller) {
     OK(new_nil());
 }
 
-static BuiltinResult _list_len(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _list_len(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     OK(new_int(AS_LIST(caller)->elems.count));
 }
 
-static BuiltinResult _list_remove(int argc, Obj **argv, Obj *caller) {
+static NativeResult _list_remove(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
@@ -30,7 +30,7 @@ static BuiltinResult _list_remove(int argc, Obj **argv, Obj *caller) {
     OK(remove_at_array(&list->elems, index));
 }
 
-static BuiltinResult _list_insert(int argc, Obj **argv, Obj *caller) {
+static NativeResult _list_insert(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
@@ -48,7 +48,7 @@ static BuiltinResult _list_insert(int argc, Obj **argv, Obj *caller) {
     OK(new_nil());
 }
 
-static BuiltinResult _list_map(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _list_map(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(1)
 
     ObjList *mapped = new_list(NULL, 0);
@@ -60,8 +60,8 @@ static BuiltinResult _list_map(int argc, UNUSED(Obj **argv), Obj *caller) {
     OK(mapped);
 }
 
-BuiltinTable *list_methods() {
-    BuiltinTable *table = malloc(sizeof(BuiltinTable));
+NativeTable *list_methods() {
+    NativeTable *table = malloc(sizeof(NativeTable));
     init_method_table(table, 8);
 
     SET_BLTIN_METHOD("append", _list_append);

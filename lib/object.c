@@ -199,8 +199,8 @@ ObjModule *new_module(const char *name) {
     return module;
 }
 
-ObjBuiltinFunction *new_builtin_function(BuiltinFn fn, char *name) {
-    ObjBuiltinFunction *builtin = ALLOCATE_OBJ(ObjBuiltinFunction, OBJ_BUILTIN_FUNCTION);
+ObjNativeFunction *new_builtin_function(NativeFn fn, char *name) {
+    ObjNativeFunction *builtin = ALLOCATE_OBJ(ObjNativeFunction, OBJ_BUILTIN_FUNCTION);
 
     builtin->method = fn;
     builtin->name = name;
@@ -208,9 +208,9 @@ ObjBuiltinFunction *new_builtin_function(BuiltinFn fn, char *name) {
     return builtin;
 }
 
-ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinFn fn, Obj *caller, char *name) {
-    ObjBuiltinBoundMethod *bound_method =
-        ALLOCATE_OBJ(ObjBuiltinBoundMethod, OBJ_BUILTIN_BOUND_METHOD);
+ObjNativeBoundMethod *new_builtin_bound_method(NativeFn fn, Obj *caller, char *name) {
+    ObjNativeBoundMethod *bound_method =
+        ALLOCATE_OBJ(ObjNativeBoundMethod, OBJ_BUILTIN_BOUND_METHOD);
 
     bound_method->caller = caller;
     bound_method->function = fn;

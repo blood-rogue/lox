@@ -1,11 +1,11 @@
 #include "builtins.h"
 
-static BuiltinResult _map_len(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _map_len(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     OK(new_int(AS_MAP(caller)->table.count));
 }
 
-static BuiltinResult _map_keys(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _map_keys(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjMap *map = AS_MAP(caller);
@@ -20,7 +20,7 @@ static BuiltinResult _map_keys(int argc, UNUSED(Obj **argv), Obj *caller) {
     OK(keys);
 }
 
-static BuiltinResult _map_values(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _map_values(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjMap *map = AS_MAP(caller);
@@ -35,8 +35,8 @@ static BuiltinResult _map_values(int argc, UNUSED(Obj **argv), Obj *caller) {
     OK(values);
 }
 
-BuiltinTable *map_methods() {
-    BuiltinTable *table = malloc(sizeof(BuiltinTable));
+NativeTable *map_methods() {
+    NativeTable *table = malloc(sizeof(NativeTable));
     init_method_table(table, 8);
 
     SET_BLTIN_METHOD("len", _map_len);

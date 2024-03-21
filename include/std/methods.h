@@ -6,14 +6,14 @@
 #define SET_BLTIN_METHOD(name, fn)                                                                 \
     method_table_set(table, name, hash_string(name, (int)strlen(name)), fn)
 
-BuiltinTable **get_builtin_methods();
+NativeTable **get_builtin_methods();
 
-BuiltinTable *float_methods();
-BuiltinTable *int_methods();
-BuiltinTable *char_methods();
-BuiltinTable *string_methods();
-BuiltinTable *list_methods();
-BuiltinTable *map_methods();
-BuiltinTable *bytes_methods();
+NativeTable *float_methods();
+NativeTable *int_methods();
+NativeTable *char_methods();
+NativeTable *string_methods();
+NativeTable *list_methods();
+NativeTable *map_methods();
+NativeTable *bytes_methods();
 
 #endif // lox_methods_h

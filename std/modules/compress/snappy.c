@@ -4,7 +4,7 @@
 
 static ObjModule *_compress_snappy_module = NULL;
 
-static BuiltinResult _compress_snappy_compress(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _compress_snappy_compress(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 
@@ -18,7 +18,7 @@ static BuiltinResult _compress_snappy_compress(int argc, Obj **argv, UNUSED(Obj 
     OK(take_bytes((uint8_t *)dest, dest_len));
 }
 
-static BuiltinResult _compress_snappy_decompress(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _compress_snappy_decompress(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 

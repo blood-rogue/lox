@@ -49,8 +49,8 @@
 #define AS_INSTANCE(obj)             ((ObjInstance *)(obj))
 #define AS_BOUND_METHOD(obj)         ((ObjBoundMethod *)(obj))
 #define AS_MODULE(obj)               ((ObjModule *)(obj))
-#define AS_BUILTIN_FUNCTION(obj)     ((ObjBuiltinFunction *)(obj))
-#define AS_BUILTIN_BOUND_METHOD(obj) ((ObjBuiltinBoundMethod *)(obj))
+#define AS_BUILTIN_FUNCTION(obj)     ((ObjNativeFunction *)(obj))
+#define AS_BUILTIN_BOUND_METHOD(obj) ((ObjNativeBoundMethod *)(obj))
 #define AS_NATIVE_STRUCT(obj)        ((ObjNativeStruct *)(obj))
 
 typedef enum {
@@ -187,15 +187,15 @@ typedef struct {
 typedef struct {
     Obj obj;
     char *name;
-    BuiltinFn method;
-} ObjBuiltinFunction;
+    NativeFn method;
+} ObjNativeFunction;
 
 typedef struct {
     Obj obj;
     Obj *caller;
     char *name;
-    BuiltinFn function;
-} ObjBuiltinBoundMethod;
+    NativeFn function;
+} ObjNativeBoundMethod;
 
 typedef struct {
     Obj obj;
@@ -222,8 +222,8 @@ ObjInstance *new_instance(ObjClass *);
 ObjBoundMethod *new_bound_method(Obj *, ObjClosure *);
 ObjModule *new_module(const char *);
 
-ObjBuiltinFunction *new_builtin_function(BuiltinFn, char *);
-ObjBuiltinBoundMethod *new_builtin_bound_method(BuiltinFn, Obj *, char *);
+ObjNativeFunction *new_builtin_function(NativeFn, char *);
+ObjNativeBoundMethod *new_builtin_bound_method(NativeFn, Obj *, char *);
 ObjNativeStruct *new_native_struct(void *, FreeFn);
 
 ObjList *argv_list(int, const char **);

@@ -4,7 +4,7 @@
 
 static ObjModule *_compress_zstd_module = NULL;
 
-static BuiltinResult _compress_zstd_compress(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _compress_zstd_compress(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
     CHECK_ARG_TYPE(ObjInt, INT, 1)
@@ -59,7 +59,7 @@ static void write_bytes(writer_ctx_t *ctx, uint8_t *src, size_t count) {
     ctx->length += count;
 }
 
-static BuiltinResult _compress_zstd_decompress(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _compress_zstd_decompress(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 

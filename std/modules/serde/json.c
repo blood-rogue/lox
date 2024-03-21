@@ -78,7 +78,7 @@ static json_object *obj_to_json(Obj *obj, char **err) {
     }
 }
 
-static BuiltinResult _serde_json_serialize(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _serde_json_serialize(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjInt, INT, 1)
 
@@ -138,7 +138,7 @@ static Obj *json_to_obj(json_object *json) {
     return NULL;
 }
 
-static BuiltinResult _serde_json_deserialize(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _serde_json_deserialize(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 

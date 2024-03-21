@@ -26,7 +26,7 @@ static void set_file_instance(FILE *file, ObjInstance *instance) {
     SET_INT_FIELD("status_change_time", st.st_ctime);
 }
 
-static BuiltinResult _fs_file_open(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _fs_file_open(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
     CHECK_ARG_TYPE(ObjString, STRING, 1)
@@ -39,7 +39,7 @@ static BuiltinResult _fs_file_open(int argc, Obj **argv, UNUSED(Obj *caller)) {
     OK(instance);
 }
 
-static BuiltinResult _fs_file_create(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _fs_file_create(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -51,7 +51,7 @@ static BuiltinResult _fs_file_create(int argc, Obj **argv, UNUSED(Obj *caller)) 
     OK(instance);
 }
 
-static BuiltinResult _fs_file_read(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _fs_file_read(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *file_instance = AS_INSTANCE(caller);
@@ -70,7 +70,7 @@ static BuiltinResult _fs_file_read(int argc, UNUSED(Obj **argv), Obj *caller) {
     ERR("Could not read file.")
 }
 
-static BuiltinResult _fs_file_is_a_tty(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _fs_file_is_a_tty(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *instance = AS_INSTANCE(caller);
@@ -82,7 +82,7 @@ static BuiltinResult _fs_file_is_a_tty(int argc, UNUSED(Obj **argv), Obj *caller
     OK(new_bool(isatty(fd)));
 }
 
-static BuiltinResult _fs_file_write(int argc, Obj **argv, Obj *caller) {
+static NativeResult _fs_file_write(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -95,7 +95,7 @@ static BuiltinResult _fs_file_write(int argc, Obj **argv, Obj *caller) {
     ERR("Could not write file.")
 }
 
-static BuiltinResult _fs_file_close(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _fs_file_close(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *file_instance = AS_INSTANCE(caller);
@@ -108,7 +108,7 @@ static BuiltinResult _fs_file_close(int argc, UNUSED(Obj **argv), Obj *caller) {
     OK(new_nil());
 }
 
-static BuiltinResult _fs_file_seek(int argc, Obj **argv, Obj *caller) {
+static NativeResult _fs_file_seek(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
     CHECK_ARG_TYPE(ObjInt, INT, 1)
@@ -122,7 +122,7 @@ static BuiltinResult _fs_file_seek(int argc, Obj **argv, Obj *caller) {
     OK(new_int(fseek(file, offset, whence)));
 }
 
-static BuiltinResult _fs_file_tell(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _fs_file_tell(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *file_instance = AS_INSTANCE(caller);
@@ -131,7 +131,7 @@ static BuiltinResult _fs_file_tell(int argc, UNUSED(Obj **argv), Obj *caller) {
     OK(new_int(ftell(file)));
 }
 
-static BuiltinResult _fs_file_dup(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _fs_file_dup(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *instance = AS_INSTANCE(caller);

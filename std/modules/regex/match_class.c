@@ -2,7 +2,7 @@
 
 static ObjClass *_regex_match_class = NULL;
 
-static BuiltinResult _regex_match_group(int argc, Obj **argv, Obj *caller) {
+static NativeResult _regex_match_group(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 

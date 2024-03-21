@@ -7,7 +7,7 @@ static ObjModule *_archive_module = NULL;
 
 static void free_archive(void *archive) { archive_read_free(archive); }
 
-static BuiltinResult _archive_open(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _archive_open(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(3)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
     CHECK_ARG_TYPE(ObjInt, INT, 1)

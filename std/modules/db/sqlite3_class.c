@@ -6,7 +6,7 @@ ObjClass *_db_sqlite3_class = NULL;
 
 static void close_db(void *db) { sqlite3_close(db); }
 
-static BuiltinResult _db_sqlite3_class_init(int argc, Obj **argv, Obj *caller) {
+static NativeResult _db_sqlite3_class_init(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 

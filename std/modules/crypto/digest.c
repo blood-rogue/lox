@@ -4,7 +4,7 @@
 
 static ObjModule *_digest_module = NULL;
 
-BuiltinResult md_digest(const char *alg, uint8_t *bytes, int bytes_len) {
+NativeResult md_digest(const char *alg, uint8_t *bytes, int bytes_len) {
     EVP_MD_CTX *ctx = NULL;
     EVP_MD *md = NULL;
 
@@ -55,7 +55,7 @@ static void free_mdctx(MdCtx *md_ctx) {
     free(md_ctx);
 }
 
-BuiltinResult md_init(const char *alg, ObjInstance *instance) {
+NativeResult md_init(const char *alg, ObjInstance *instance) {
     EVP_MD_CTX *ctx = NULL;
     EVP_MD *md = NULL;
 
@@ -84,7 +84,7 @@ BuiltinResult md_init(const char *alg, ObjInstance *instance) {
     OK(new_nil());
 }
 
-BuiltinResult md_update(int argc, Obj **argv, Obj *caller) {
+NativeResult md_update(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 
@@ -101,7 +101,7 @@ BuiltinResult md_update(int argc, Obj **argv, Obj *caller) {
     OK(new_nil());
 }
 
-BuiltinResult md_finish(int argc, UNUSED(Obj **argv), Obj *caller) {
+NativeResult md_finish(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *md_ctx_instance = AS_INSTANCE(caller);

@@ -3,7 +3,7 @@
 #include "builtins.h"
 
 #define COMPLEX_METHOD(name, func)                                                                 \
-    static BuiltinResult name(int argc, UNUSED(Obj **argv), Obj *caller) {                         \
+    static NativeResult name(int argc, UNUSED(Obj **argv), Obj *caller) {                          \
         CHECK_ARG_COUNT(0)                                                                         \
         ObjInstance *_instance = AS_INSTANCE(caller);                                              \
         double r, i;                                                                               \
@@ -39,7 +39,7 @@ COMPLEX_METHOD(_math_complex_asinh, casinh)
 COMPLEX_METHOD(_math_complex_acosh, cacosh)
 COMPLEX_METHOD(_math_complex_atanh, catanh)
 
-static BuiltinResult _math_complex_init(int argc, Obj **argv, Obj *caller) {
+static NativeResult _math_complex_init(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(2)
 
     if (!IS_INT(argv[0]) && !IS_FLOAT(argv[0])) {
@@ -58,7 +58,7 @@ static BuiltinResult _math_complex_init(int argc, Obj **argv, Obj *caller) {
     OK(new_nil());
 }
 
-static BuiltinResult _math_complex_abs(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _math_complex_abs(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *instance = AS_INSTANCE(caller);
@@ -75,7 +75,7 @@ static BuiltinResult _math_complex_abs(int argc, UNUSED(Obj **argv), Obj *caller
     OK(new_float(cabs(CMPLX(r, i))));
 }
 
-static BuiltinResult _math_complex_arg(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _math_complex_arg(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *instance = AS_INSTANCE(caller);
@@ -92,7 +92,7 @@ static BuiltinResult _math_complex_arg(int argc, UNUSED(Obj **argv), Obj *caller
     OK(new_float(carg(CMPLX(r, i))));
 }
 
-static BuiltinResult _math_complex_pow(int argc, Obj **argv, Obj *caller) {
+static NativeResult _math_complex_pow(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInstance, INSTANCE, 0)
 

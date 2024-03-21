@@ -4,7 +4,7 @@
 
 static ObjClass *_db_kv_class = NULL;
 
-static BuiltinResult _db_kv_init(int argc, Obj **argv, Obj *caller) {
+static NativeResult _db_kv_init(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -21,7 +21,7 @@ static BuiltinResult _db_kv_init(int argc, Obj **argv, Obj *caller) {
     OK(instance);
 }
 
-static BuiltinResult _db_kv_set(int argc, Obj **argv, Obj *caller) {
+static NativeResult _db_kv_set(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
     CHECK_ARG_TYPE(ObjString, STRING, 1)
@@ -40,7 +40,7 @@ static BuiltinResult _db_kv_set(int argc, Obj **argv, Obj *caller) {
     OK(new_nil());
 }
 
-static BuiltinResult _db_kv_get(int argc, Obj **argv, Obj *caller) {
+static NativeResult _db_kv_get(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -61,7 +61,7 @@ static BuiltinResult _db_kv_get(int argc, Obj **argv, Obj *caller) {
     OK(take_string(val, val_len));
 }
 
-static BuiltinResult _db_kv_delete(int argc, Obj **argv, Obj *caller) {
+static NativeResult _db_kv_delete(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -79,7 +79,7 @@ static BuiltinResult _db_kv_delete(int argc, Obj **argv, Obj *caller) {
     OK(new_nil());
 }
 
-static BuiltinResult _db_kv_close(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _db_kv_close(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *db_instance = AS_INSTANCE(caller);

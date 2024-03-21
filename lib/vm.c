@@ -238,8 +238,8 @@ static int call_object(Obj *callee, int argc, Obj *caller) {
                             return call(AS_CLOSURE(initializer), argc);
                         case OBJ_BUILTIN_FUNCTION:
                             {
-                                ObjBuiltinFunction *builtin = AS_BUILTIN_FUNCTION(initializer);
-                                BuiltinResult result =
+                                ObjNativeFunction *builtin = AS_BUILTIN_FUNCTION(initializer);
+                                NativeResult result =
                                     builtin->method(argc, vm.stack_top - argc, AS_OBJ(instance));
 
                                 if (result.error != NULL) {
@@ -267,8 +267,8 @@ static int call_object(Obj *callee, int argc, Obj *caller) {
             return call(AS_CLOSURE(callee), argc);
         case OBJ_BUILTIN_FUNCTION:
             {
-                BuiltinFn builtin = AS_BUILTIN_FUNCTION(callee)->method;
-                BuiltinResult result = builtin(argc, vm.stack_top - argc, caller);
+                NativeFn builtin = AS_BUILTIN_FUNCTION(callee)->method;
+                NativeResult result = builtin(argc, vm.stack_top - argc, caller);
 
                 if (result.error != NULL) {
                     runtime_error(result.error);
@@ -283,9 +283,9 @@ static int call_object(Obj *callee, int argc, Obj *caller) {
             }
         case OBJ_BUILTIN_BOUND_METHOD:
             {
-                ObjBuiltinBoundMethod *bound_method = AS_BUILTIN_BOUND_METHOD(callee);
+                ObjNativeBoundMethod *bound_method = AS_BUILTIN_BOUND_METHOD(callee);
 
-                BuiltinResult result =
+                NativeResult result =
                     bound_method->function(argc, vm.stack_top - argc, bound_method->caller);
 
                 if (result.error != NULL) {
@@ -393,7 +393,7 @@ static int invoke(ObjString *name, int argc) {
             }
         default:
             {
-                BuiltinFn method;
+                NativeFn method;
 
                 if (vm.builtin_methods[__builtin_ctz(receiver->type)] == NULL ||
                     !method_table_get(
@@ -408,7 +408,7 @@ static int invoke(ObjString *name, int argc) {
                     return CALL_UNKNOWN_MEMBER;
                 }
 
-                BuiltinResult result = method(argc, vm.stack_top - argc, receiver);
+                NativeResult result = method(argc, vm.stack_top - argc, receiver);
 
                 if (result.error != NULL) {
                     runtime_error(result.error);
@@ -750,7 +750,7 @@ static InterpretResult run() {
                 {
                     ObjString *name = READ_STRING();
                     Obj *value;
-                    BuiltinFn fn;
+                    NativeFn fn;
                     Table *globals = get_current_global();
 
                     if (globals == NULL) {
@@ -855,7 +855,7 @@ static InterpretResult run() {
                             }
                         default:
                             if (vm.builtin_methods[__builtin_ctz(obj->type)] != NULL) {
-                                BuiltinFn method;
+                                NativeFn method;
                                 if (method_table_get(
                                         vm.builtin_methods[__builtin_ctz(obj->type)],
                                         name->obj.hash,

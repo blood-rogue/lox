@@ -2,7 +2,7 @@
 
 static ObjModule *_random_module = NULL;
 
-static BuiltinResult _random_seed(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _random_seed(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
@@ -13,13 +13,13 @@ static BuiltinResult _random_seed(int argc, Obj **argv, UNUSED(Obj *caller)) {
     OK(new_nil());
 }
 
-static BuiltinResult _random_random(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
+static NativeResult _random_random(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(0)
 
     OK(new_int(rand()));
 }
 
-static BuiltinResult _random_randint(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _random_randint(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(2)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
     CHECK_ARG_TYPE(ObjInt, INT, 1)

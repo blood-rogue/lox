@@ -6,7 +6,7 @@
 
 static ObjModule *_sys_module = NULL;
 
-static BuiltinResult _sys_getenv(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _sys_getenv(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -18,7 +18,7 @@ static BuiltinResult _sys_getenv(int argc, Obj **argv, UNUSED(Obj *caller)) {
     ERR("No environment variable found with the name '%.*s'.", argv_0->raw_length, argv_0->chars)
 }
 
-static BuiltinResult _sys_getcwd(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
+static NativeResult _sys_getcwd(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(0)
 
     char *cwd = getcwd(NULL, 0);
@@ -28,19 +28,19 @@ static BuiltinResult _sys_getcwd(int argc, UNUSED(Obj **argv), UNUSED(Obj *calle
     ERR("Could not read current working dir.")
 }
 
-static BuiltinResult _sys_getuid(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
+static NativeResult _sys_getuid(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(0)
 
     OK(new_int(getuid()));
 }
 
-static BuiltinResult _sys_getgid(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
+static NativeResult _sys_getgid(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(0)
 
     OK(new_int(getgid()));
 }
 
-static BuiltinResult _sys_setuid(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _sys_setuid(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
@@ -50,7 +50,7 @@ static BuiltinResult _sys_setuid(int argc, Obj **argv, UNUSED(Obj *caller)) {
     ERR("Could not set uid.")
 }
 
-static BuiltinResult _sys_setgid(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _sys_setgid(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
@@ -60,7 +60,7 @@ static BuiltinResult _sys_setgid(int argc, Obj **argv, UNUSED(Obj *caller)) {
     ERR("Could not set gid.")
 }
 
-static BuiltinResult _sys_chdir(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _sys_chdir(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -72,7 +72,7 @@ static BuiltinResult _sys_chdir(int argc, Obj **argv, UNUSED(Obj *caller)) {
         argv_0->chars)
 }
 
-static BuiltinResult _sys_getpid(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
+static NativeResult _sys_getpid(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(0)
 
     OK(new_int(getpid()));

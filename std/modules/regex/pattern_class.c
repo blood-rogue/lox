@@ -6,7 +6,7 @@
 
 static ObjClass *_regex_pattern_class = NULL;
 
-static BuiltinResult regex(pcre2_code *re, char *subject, size_t subject_size) {
+static NativeResult regex(pcre2_code *re, char *subject, size_t subject_size) {
     uint32_t options = 0;
 
     pcre2_match_data *match_data = pcre2_match_data_create_from_pattern(re, NULL);
@@ -38,7 +38,7 @@ static BuiltinResult regex(pcre2_code *re, char *subject, size_t subject_size) {
     OK(instance);
 }
 
-static BuiltinResult _regex_pattern_search(int argc, Obj **argv, Obj *caller) {
+static NativeResult _regex_pattern_search(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -48,7 +48,7 @@ static BuiltinResult _regex_pattern_search(int argc, Obj **argv, Obj *caller) {
     return regex(re, argv_0->chars, argv_0->raw_length);
 }
 
-static BuiltinResult _regex_pattern_findall(int argc, Obj **argv, Obj *caller) {
+static NativeResult _regex_pattern_findall(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 
@@ -125,7 +125,7 @@ static BuiltinResult _regex_pattern_findall(int argc, Obj **argv, Obj *caller) {
     OK(matches);
 }
 
-static BuiltinResult _regex_pattern_free(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _regex_pattern_free(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjInstance *re_instance = AS_INSTANCE(caller);

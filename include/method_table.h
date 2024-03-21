@@ -6,29 +6,29 @@
 typedef struct {
     Obj *value;
     char *error;
-} BuiltinResult;
+} NativeResult;
 
-typedef BuiltinResult (*BuiltinFn)(int, Obj **, Obj *);
+typedef NativeResult (*NativeFn)(int, Obj **, Obj *);
 
 typedef struct {
     uint32_t hash;
     char *key;
-    BuiltinFn value;
-} BuiltinEntry;
+    NativeFn value;
+} NativeEntry;
 
 typedef struct {
     int count;
     int capacity;
-    BuiltinEntry *entries;
-} BuiltinTable;
+    NativeEntry *entries;
+} NativeTable;
 
-void init_method_table(BuiltinTable *, int);
-void free_method_table(BuiltinTable *);
+void init_method_table(NativeTable *, int);
+void free_method_table(NativeTable *);
 
-bool method_table_get(BuiltinTable *, uint32_t, BuiltinFn *);
-bool method_table_set(BuiltinTable *, char *, uint32_t, BuiltinFn);
-bool method_table_delete(BuiltinTable *, uint32_t);
+bool method_table_get(NativeTable *, uint32_t, NativeFn *);
+bool method_table_set(NativeTable *, char *, uint32_t, NativeFn);
+bool method_table_delete(NativeTable *, uint32_t);
 
-void method_table_add_all(BuiltinTable *, BuiltinTable *);
+void method_table_add_all(NativeTable *, NativeTable *);
 
 #endif // lox_method_table_h

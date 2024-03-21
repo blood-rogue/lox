@@ -1,7 +1,7 @@
 #include "std/methods.h"
 
-BuiltinTable **get_builtin_methods() {
-    BuiltinTable **statics = calloc(NUM_OBJS, sizeof(BuiltinTable *));
+NativeTable **get_builtin_methods() {
+    NativeTable **statics = calloc(NUM_OBJS, sizeof(NativeTable *));
 
     statics[__builtin_ctz(OBJ_FLOAT)] = float_methods();
     statics[__builtin_ctz(OBJ_INT)] = int_methods();

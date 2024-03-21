@@ -118,7 +118,7 @@ static void free_object(Obj *object) {
             }
         case OBJ_BUILTIN_FUNCTION:
             {
-                FREE(ObjBuiltinFunction, object);
+                FREE(ObjNativeFunction, object);
                 break;
             }
         case OBJ_MODULE:
@@ -135,7 +135,7 @@ static void free_object(Obj *object) {
                 if (native->ptr != NULL)
                     native->free_fn(native->ptr);
 
-                FREE(ObjBuiltinFunction, object);
+                FREE(ObjNativeFunction, object);
                 break;
             }
     }

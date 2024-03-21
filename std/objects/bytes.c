@@ -2,12 +2,12 @@
 
 #include "builtins.h"
 
-static BuiltinResult _bytes_len(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _bytes_len(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     OK(new_int(AS_BYTES(caller)->length));
 }
 
-static BuiltinResult _bytes_decode(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _bytes_decode(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     ObjBytes *bytes = AS_BYTES(caller);
@@ -27,22 +27,22 @@ static char *bytes_to_hex(uint8_t *bytes, int bytes_len, const char *format) {
     return hex_str;
 }
 
-static BuiltinResult _bytes_hex_lower(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _bytes_hex_lower(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     ObjBytes *bytes = AS_BYTES(caller);
 
     OK(take_string(bytes_to_hex(bytes->bytes, bytes->length, "%02x"), bytes->length * 2 + 1));
 }
 
-static BuiltinResult _bytes_hex_upper(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _bytes_hex_upper(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
     ObjBytes *bytes = AS_BYTES(caller);
 
     OK(take_string(bytes_to_hex(bytes->bytes, bytes->length, "%02X"), bytes->length * 2 + 1));
 }
 
-BuiltinTable *bytes_methods() {
-    BuiltinTable *table = malloc(sizeof(BuiltinTable));
+NativeTable *bytes_methods() {
+    NativeTable *table = malloc(sizeof(NativeTable));
     init_method_table(table, 8);
 
     SET_BLTIN_METHOD("len", _bytes_len);

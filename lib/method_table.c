@@ -2,19 +2,19 @@
 #include "memory.h"
 #include "object.h"
 
-void init_method_table(BuiltinTable *table, int methods) {
+void init_method_table(NativeTable *table, int methods) {
     table->count = 0;
     table->capacity = methods;
-    table->entries = calloc(methods, sizeof(BuiltinEntry));
+    table->entries = calloc(methods, sizeof(NativeEntry));
 }
 
-void free_method_table(BuiltinTable *table) { free(table->entries); }
+void free_method_table(NativeTable *table) { free(table->entries); }
 
-static BuiltinEntry *find_method_entry(BuiltinEntry *entries, int capacity, uint32_t hash) {
+static NativeEntry *find_method_entry(NativeEntry *entries, int capacity, uint32_t hash) {
     uint32_t index = hash & (capacity - 1);
 
     for (;;) {
-        BuiltinEntry *entry = &entries[index];
+        NativeEntry *entry = &entries[index];
 
         if (entry->key == NULL || entry->hash == hash) {
             return entry;
@@ -24,11 +24,11 @@ static BuiltinEntry *find_method_entry(BuiltinEntry *entries, int capacity, uint
     }
 }
 
-bool method_table_get(BuiltinTable *table, uint32_t hash, BuiltinFn *value) {
+bool method_table_get(NativeTable *table, uint32_t hash, NativeFn *value) {
     if (table->count == 0)
         return false;
 
-    BuiltinEntry *entry = find_method_entry(table->entries, table->capacity, hash);
+    NativeEntry *entry = find_method_entry(table->entries, table->capacity, hash);
 
     if (entry->key != NULL) {
         *value = entry->value;
@@ -38,8 +38,8 @@ bool method_table_get(BuiltinTable *table, uint32_t hash, BuiltinFn *value) {
     return false;
 }
 
-bool method_table_set(BuiltinTable *table, char *key, uint32_t hash, BuiltinFn fn) {
-    BuiltinEntry *entry = find_method_entry(table->entries, table->capacity, hash);
+bool method_table_set(NativeTable *table, char *key, uint32_t hash, NativeFn fn) {
+    NativeEntry *entry = find_method_entry(table->entries, table->capacity, hash);
     bool is_new_key = entry->key == NULL;
 
     if (is_new_key && entry->value == NULL)
@@ -52,11 +52,11 @@ bool method_table_set(BuiltinTable *table, char *key, uint32_t hash, BuiltinFn f
     return is_new_key;
 }
 
-bool method_table_delete(BuiltinTable *table, uint32_t hash) {
+bool method_table_delete(NativeTable *table, uint32_t hash) {
     if (table->count == 0)
         return false;
 
-    BuiltinEntry *entry = find_method_entry(table->entries, table->capacity, hash);
+    NativeEntry *entry = find_method_entry(table->entries, table->capacity, hash);
     if (entry->key == NULL)
         return false;
 
@@ -67,9 +67,9 @@ bool method_table_delete(BuiltinTable *table, uint32_t hash) {
     return true;
 }
 
-void method_table_add_all(BuiltinTable *from, BuiltinTable *to) {
+void method_table_add_all(NativeTable *from, NativeTable *to) {
     for (int i = 0; i < from->capacity; i++) {
-        BuiltinEntry *entry = &from->entries[i];
+        NativeEntry *entry = &from->entries[i];
         if (entry->key != NULL) {
             method_table_set(to, entry->key, entry->hash, entry->value);
         }

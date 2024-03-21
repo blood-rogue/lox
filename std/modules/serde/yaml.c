@@ -4,7 +4,7 @@
 
 ObjModule *_serde_yaml_module = NULL;
 
-static BuiltinResult _serde_yaml_deserialize(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _serde_yaml_deserialize(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjString, STRING, 0)
 

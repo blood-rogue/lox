@@ -4,14 +4,14 @@
 
 static ObjClass *_digest_md5_class = NULL;
 
-static BuiltinResult _digest_md5_hash(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _digest_md5_hash(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 
     return md_digest("MD5", argv_0->bytes, argv_0->length);
 }
 
-static BuiltinResult _digest_md5_init(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _digest_md5_init(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     return md_init("MD5", AS_INSTANCE(caller));

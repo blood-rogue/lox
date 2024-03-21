@@ -4,14 +4,14 @@
 
 static ObjClass *_digest_blake2b512_class = NULL;
 
-static BuiltinResult _digest_blake2b512_hash(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _digest_blake2b512_hash(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjBytes, BYTES, 0)
 
     return md_digest("BLAKE2b512", argv_0->bytes, argv_0->length);
 }
 
-static BuiltinResult _digest_blake2b512_init(int argc, UNUSED(Obj **argv), Obj *caller) {
+static NativeResult _digest_blake2b512_init(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
 
     return md_init("BLAKE2b512", AS_INSTANCE(caller));
