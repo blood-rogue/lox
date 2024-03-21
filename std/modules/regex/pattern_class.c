@@ -133,6 +133,8 @@ static BuiltinResult _regex_pattern_free(int argc, UNUSED(Obj **argv), Obj *call
 
     pcre2_code_free(re);
 
+    native->ptr = NULL;
+
     OK(new_nil());
 }
 

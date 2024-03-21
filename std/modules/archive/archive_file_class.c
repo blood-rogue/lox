@@ -167,6 +167,8 @@ static BuiltinResult _archive_file_close(int argc, UNUSED(Obj **argv), Obj *call
     archive_read_close(a);
     archive_read_free(a);
 
+    native->ptr = NULL;
+
     OK(new_nil());
 }
 

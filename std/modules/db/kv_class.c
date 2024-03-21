@@ -87,6 +87,8 @@ static BuiltinResult _db_kv_close(int argc, UNUSED(Obj **argv), Obj *caller) {
 
     leveldb_close(db);
 
+    native->ptr = NULL;
+
     OK(new_nil());
 }
 

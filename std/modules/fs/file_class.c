@@ -103,6 +103,8 @@ static BuiltinResult _fs_file_close(int argc, UNUSED(Obj **argv), Obj *caller) {
 
     fclose(file);
 
+    native->ptr = NULL;
+
     OK(new_nil());
 }
 
