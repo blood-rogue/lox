@@ -139,6 +139,8 @@ ObjModule *get_crypto_digest_module() {
         SET_MEMBER("SM3", get_crypto_digest_sm3_class());
         SET_MEMBER("RIPEMD160", get_crypto_digest_ripemd160_class());
         SET_MEMBER("Whirlpool", get_crypto_digest_whirlpool_class());
+        SET_MEMBER("BLAKE2b512", get_crypto_digest_blake2b512_class());
+        SET_MEMBER("BLAKE2s256", get_crypto_digest_blake2s256_class());
 
         SET_INT_MEMBER("SHA2_224", 0);
         SET_INT_MEMBER("SHA2_256", 1);

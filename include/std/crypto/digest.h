@@ -16,6 +16,8 @@ ObjClass *get_crypto_digest_shake256_class();
 ObjClass *get_crypto_digest_sm3_class();
 ObjClass *get_crypto_digest_ripemd160_class();
 ObjClass *get_crypto_digest_whirlpool_class();
+ObjClass *get_crypto_digest_blake2b512_class();
+ObjClass *get_crypto_digest_blake2s256_class();
 
 BuiltinResult md_digest(const char *, uint8_t *, int);
 

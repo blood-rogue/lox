@@ -15,4 +15,4 @@ file(GLOB_RECURSE STD_SRCS ${lox_SOURCE_DIR}/std/*.c)
 add_executable(lox main.c ${HEADERS} ${LIB_SRCS} ${STD_SRCS})
 
 target_include_directories(lox PRIVATE include)
-target_link_libraries(lox m readline unistring pcre2-8 z lz4 zstd snappy json-c yaml archive crypto ssl leveldb)
+target_link_libraries(lox m readline unistring pcre2-8 z lz4 zstd snappy json-c yaml archive crypto ssl leveldb sqlite3)

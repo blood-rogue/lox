@@ -9,6 +9,7 @@ ObjModule *get_db_module(int count, UNUSED(char **parts)) {
         ObjModule *module = new_module("db");
 
         SET_MEMBER("KV", get_db_kv_class());
+        SET_MEMBER("SQLite3", get_db_sqlite3_class());
 
         _db_module = module;
     }
