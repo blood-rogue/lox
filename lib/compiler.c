@@ -240,6 +240,18 @@ static void init_compiler(Compiler *compiler, FunctionType type) {
     if (type != TYPE_SCRIPT) {
         current->function->name = new_string(parser.previous.start, parser.previous.length);
     }
+
+    Local *local = &current->locals[current->local_count++];
+    local->depth = 0;
+    local->is_captured = false;
+
+    if (type != TYPE_FUNCTION) {
+        local->name.start = "this";
+        local->name.length = 4;
+    } else {
+        local->name.start = "";
+        local->name.length = 0;
+    }
 }
 
 static ObjFunction *end_compiler(bool ended) {
@@ -703,6 +715,8 @@ static void super(bool) {
     consume(TOKEN_IDENTIFIER, "Expect superclass method name.");
     uint8_t name = identifier_constant(&parser.previous);
 
+    named_variable(synthetic_token("this"), false);
+
     if (match(TOKEN_LEFT_PAREN)) {
         uint8_t argc = expression_list(TOKEN_RIGHT_PAREN);
         named_variable(synthetic_token("super"), false);
@@ -712,6 +726,18 @@ static void super(bool) {
         named_variable(synthetic_token("super"), false);
         emit_bytes(OP_GET_SUPER, name);
     }
+}
+
+static void this(bool) {
+    if (current_class == NULL) {
+        error("Can't use 'this' outside of a class.");
+        return;
+    } else if (current->type == TYPE_METHOD_STATIC) {
+        error("Can't use 'this' inside static methods.");
+        return;
+    }
+
+    variable(false);
 }
 
 static void scope(bool) {
@@ -779,6 +805,7 @@ ParseRule rules[] = {
     [TOKEN_OR] = {NULL, or, PREC_OR},
     [TOKEN_RETURN] = {NULL, NULL, PREC_NONE},
     [TOKEN_SUPER] = {super, NULL, PREC_NONE},
+    [TOKEN_THIS] = {this, NULL, PREC_NONE},
     [TOKEN_TRUE] = {literal, NULL, PREC_NONE},
     [TOKEN_VAR] = {NULL, NULL, PREC_NONE},
     [TOKEN_WHILE] = {NULL, NULL, PREC_NONE},
@@ -876,9 +903,17 @@ static void function(FunctionType type) {
     }
 }
 
-static void method() {
-    OpCode op_code = OP_METHOD;
-    FunctionType type = TYPE_METHOD;
+static void method(bool is_static) {
+    OpCode op_code;
+    FunctionType type;
+
+    if (is_static) {
+        op_code = OP_STATIC_METHOD;
+        type = TYPE_METHOD_STATIC;
+    } else {
+        op_code = OP_METHOD;
+        type = TYPE_METHOD;
+    }
 
     consume(TOKEN_IDENTIFIER, "Expect method name.");
     uint8_t constant = identifier_constant(&parser.previous);
@@ -943,6 +978,8 @@ static void class_declaration() {
     while (!check(TOKEN_RIGHT_BRACE) && !check(TOKEN_EOF)) {
         if (match(TOKEN_FUN)) {
             method(false);
+        } else if (match(TOKEN_STATIC) && match(TOKEN_FUN)) {
+            method(true);
         } else if (match(TOKEN_VAR)) {
             field();
         } else {

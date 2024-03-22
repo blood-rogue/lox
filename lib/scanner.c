@@ -159,9 +159,25 @@ static TokenType identifier_type() {
         case 'r':
             return check_keyword(1, 5, "eturn", TOKEN_RETURN);
         case 's':
-            return check_keyword(1, 4, "uper", TOKEN_SUPER);
+            if (scanner.current - scanner.start > 1) {
+                switch (scanner.start[1]) {
+                    case 't':
+                        return check_keyword(2, 4, "atic", TOKEN_STATIC);
+                    case 'u':
+                        return check_keyword(2, 3, "per", TOKEN_SUPER);
+                }
+            }
+            break;
         case 't':
-            return check_keyword(1, 3, "rue", TOKEN_TRUE);
+            if (scanner.current - scanner.start > 1) {
+                switch (scanner.start[1]) {
+                    case 'h':
+                        return check_keyword(2, 2, "is", TOKEN_THIS);
+                    case 'r':
+                        return check_keyword(2, 2, "ue", TOKEN_TRUE);
+                }
+            }
+            break;
         case 'v':
             return check_keyword(1, 2, "ar", TOKEN_VAR);
         case 'w':
