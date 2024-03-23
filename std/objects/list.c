@@ -60,15 +60,23 @@ static NativeResult _list_map(int argc, UNUSED(Obj **argv), Obj *caller) {
     OK(mapped);
 }
 
-NativeTable *list_methods() {
-    NativeTable *table = malloc(sizeof(NativeTable));
-    init_method_table(table, 8);
+static ObjClass *_list_class = NULL;
 
-    SET_BLTIN_METHOD("append", _list_append);
-    SET_BLTIN_METHOD("len", _list_len);
-    SET_BLTIN_METHOD("remove", _list_remove);
-    SET_BLTIN_METHOD("insert", _list_insert);
-    SET_BLTIN_METHOD("map", _list_map);
+ObjClass *get_list_class() {
+    if (_list_class == NULL) {
+        printf("here why?\n");
+        ObjClass *klass = new_builtin_class("List");
 
-    return table;
+        SET_BUILTIN_FN_METHOD("len", _list_len);
+        SET_BUILTIN_FN_METHOD("append", _list_append);
+        SET_BUILTIN_FN_METHOD("remove", _list_remove);
+        SET_BUILTIN_FN_METHOD("insert", _list_insert);
+        SET_BUILTIN_FN_METHOD("map", _list_map);
+
+        _list_class = klass;
+    }
+
+    printf("name of list object class = %s\n", _list_class->name->chars);
+
+    return _list_class;
 }

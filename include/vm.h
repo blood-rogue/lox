@@ -32,9 +32,6 @@ typedef struct {
     Module *current_module;
     uint8_t module_count;
 
-    NativeTable **builtin_methods;
-    NativeTable builtin_functions;
-
     ObjString *init_string;
     ObjUpvalue *open_upvalues;
 

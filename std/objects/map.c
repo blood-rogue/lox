@@ -35,13 +35,18 @@ static NativeResult _map_values(int argc, UNUSED(Obj **argv), Obj *caller) {
     OK(values);
 }
 
-NativeTable *map_methods() {
-    NativeTable *table = malloc(sizeof(NativeTable));
-    init_method_table(table, 8);
+static ObjClass *_map_class = NULL;
 
-    SET_BLTIN_METHOD("len", _map_len);
-    SET_BLTIN_METHOD("keys", _map_keys);
-    SET_BLTIN_METHOD("values", _map_values);
+ObjClass *get_map_class() {
+    if (_map_class == NULL) {
+        ObjClass *klass = new_builtin_class("Map");
 
-    return table;
+        SET_BUILTIN_FN_METHOD("len", _map_len);
+        SET_BUILTIN_FN_METHOD("keys", _map_keys);
+        SET_BUILTIN_FN_METHOD("values", _map_values);
+
+        _map_class = klass;
+    }
+
+    return _map_class;
 }

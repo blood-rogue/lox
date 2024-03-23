@@ -72,19 +72,26 @@ static NativeResult _int_trailing_zeroes(int argc, UNUSED(Obj **argv), Obj *call
     OK(new_int(__builtin_ctzl(AS_INT(caller)->value)));
 }
 
-NativeTable *int_methods() {
-    NativeTable *table = malloc(sizeof(NativeTable));
-    init_method_table(table, 16);
+static ObjClass *_int_class = NULL;
 
-    SET_BLTIN_METHOD("to_str", _int_to_str);
-    SET_BLTIN_METHOD("to_hex", _int_to_hex);
-    SET_BLTIN_METHOD("to_oct", _int_to_oct);
-    SET_BLTIN_METHOD("abs", _int_abs);
-    SET_BLTIN_METHOD("num_ones", _int_num_ones);
-    SET_BLTIN_METHOD("num_zeroes", _int_num_zeroes);
-    SET_BLTIN_METHOD("parity", _int_parity);
-    SET_BLTIN_METHOD("leading_zeroes", _int_leading_zeroes);
-    SET_BLTIN_METHOD("trailing_zeroes", _int_trailing_zeroes);
+ObjClass *get_int_class() {
+    if (_int_class == NULL) {
+        ObjClass *klass = new_builtin_class("Int");
 
-    return table;
+        SET_BUILTIN_FN_METHOD("to_str", _int_to_str);
+        SET_BUILTIN_FN_METHOD("to_hex", _int_to_hex);
+        SET_BUILTIN_FN_METHOD("to_oct", _int_to_oct);
+        SET_BUILTIN_FN_METHOD("abs", _int_abs);
+        SET_BUILTIN_FN_METHOD("num_ones", _int_num_ones);
+        SET_BUILTIN_FN_METHOD("num_zeroes", _int_num_zeroes);
+        SET_BUILTIN_FN_METHOD("parity", _int_parity);
+        SET_BUILTIN_FN_METHOD("leading_zeroes", _int_leading_zeroes);
+        SET_BUILTIN_FN_METHOD("trailing_zeroes", _int_trailing_zeroes);
+
+        printf("%p", (void *)klass->methods.entries);
+
+        _int_class = klass;
+    }
+
+    return _int_class;
 }

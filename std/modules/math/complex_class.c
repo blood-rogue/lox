@@ -96,7 +96,7 @@ static NativeResult _math_complex_pow(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInstance, INSTANCE, 0)
 
-    if (!obj_equal(AS_OBJ(new_string("Complex", 7)), AS_OBJ(argv_0->klass->name)))
+    if (!obj_equal(AS_OBJ(new_string("Complex", 7)), AS_OBJ(argv_0->obj.klass->name)))
         ERR("Instance of 'Complex' required.")
 
     ObjInstance *_instance = AS_INSTANCE(caller);

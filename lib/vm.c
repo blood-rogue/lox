@@ -112,15 +112,14 @@ void init_vm() {
     vm.current_module = NULL;
     vm.module_count = 0;
 
-    vm.builtin_methods = get_builtin_methods();
-
     vm.init_string = NULL;
     vm.init_string = new_string("init", 4);
 
-    init_method_table(&vm.builtin_functions, 16);
-
 #define SET_BLTIN_FN(name, fn)                                                                     \
-    method_table_set(&vm.builtin_functions, name, hash_string(name, (int)strlen(name)), fn)
+    table_set(                                                                                     \
+        &vm.globals,                                                                               \
+        AS_OBJ(new_string(name, strlen(name))),                                                    \
+        AS_OBJ(new_builtin_function(fn, name)))
 
     SET_BLTIN_FN("exit", exit_builtin_function);
     SET_BLTIN_FN("print", print_builtin_function);
@@ -153,16 +152,6 @@ void free_vm() {
     free_literals();
 
     free_objects();
-    free_method_table(&vm.builtin_functions);
-
-    for (int i = 0; i < NUM_OBJS; i++) {
-        if (vm.builtin_methods[i] != NULL) {
-            free_method_table(vm.builtin_methods[i]);
-            free(vm.builtin_methods[i]);
-        }
-    }
-
-    free(vm.builtin_methods);
 
     if (_source != NULL)
         free(_source);
@@ -220,7 +209,7 @@ static int call_object(Obj *callee, int argc, Obj *caller) {
             {
                 ObjBoundMethod *bound = AS_BOUND_METHOD(callee);
                 vm.stack_top[-argc - 1] = bound->receiver;
-                return call(bound->method, argc);
+                return call_object(bound->method, argc, bound->receiver);
             }
         case OBJ_CLASS:
             {
@@ -281,32 +270,15 @@ static int call_object(Obj *callee, int argc, Obj *caller) {
 
                 return CALL_OK;
             }
-        case OBJ_BUILTIN_BOUND_METHOD:
-            {
-                ObjNativeBoundMethod *bound_method = AS_BUILTIN_BOUND_METHOD(callee);
-
-                NativeResult result =
-                    bound_method->function(argc, vm.stack_top - argc, bound_method->caller);
-
-                if (result.error != NULL) {
-                    runtime_error(result.error);
-                    free(result.error);
-                    return CALL_NATIVE_ERR;
-                }
-
-                vm.stack_top -= argc + 1;
-                push(result.value);
-
-                return CALL_OK;
-            }
         default:
             runtime_error("Cannot call %s", get_obj_kind(callee));
             return CALL_INVALID_OBJ;
     }
 }
 
-static int invoke_from_class(ObjClass *klass, ObjString *name, int argc, ObjInstance *caller) {
+static int invoke_from_class(ObjClass *klass, ObjString *name, int argc, Obj *caller) {
     Obj *method;
+
     if (!table_get(&klass->methods, AS_OBJ(name), &method) &&
         !table_get(&klass->statics, AS_OBJ(name), &method) &&
         !table_get(&klass->fields, AS_OBJ(name), &method)) {
@@ -320,7 +292,7 @@ static int invoke_from_class(ObjClass *klass, ObjString *name, int argc, ObjInst
     }
 
     int ret;
-    if ((ret = call_object(method, argc, AS_OBJ(caller))) != CALL_OK) {
+    if ((ret = call_object(method, argc, caller)) != CALL_OK) {
         if (ret < CALL_NATIVE_ERR)
             runtime_error(
                 "Property '%.*s' of class '%.*s' is not callable.",
@@ -359,7 +331,7 @@ static int invoke(ObjString *name, int argc) {
                     return call_object(value, argc, AS_OBJ(instance));
                 }
 
-                return invoke_from_class(instance->klass, name, argc, instance);
+                return invoke_from_class(instance->obj.klass, name, argc, AS_OBJ(instance));
             }
         case OBJ_CLASS:
             {
@@ -393,32 +365,16 @@ static int invoke(ObjString *name, int argc) {
             }
         default:
             {
-                NativeFn method;
-
-                if (vm.builtin_methods[__builtin_ctz(receiver->type)] == NULL ||
-                    !method_table_get(
-                        vm.builtin_methods[__builtin_ctz(receiver->type)],
-                        name->obj.hash,
-                        &method)) {
-                    runtime_error(
-                        "Could not invoke method '%.*s' on '%s'.",
-                        name->raw_length,
-                        name->chars,
-                        get_obj_kind(receiver));
-                    return CALL_UNKNOWN_MEMBER;
+                if (receiver->klass != NULL) {
+                    return invoke_from_class(receiver->klass, name, argc, receiver);
                 }
 
-                NativeResult result = method(argc, vm.stack_top - argc, receiver);
-
-                if (result.error != NULL) {
-                    runtime_error(result.error);
-                    free(result.error);
-                    return CALL_NATIVE_ERR;
-                }
-
-                vm.stack_top -= argc + 1;
-                push(result.value);
-                return CALL_OK;
+                runtime_error(
+                    "Undefined property '%.*s' for '%s'.",
+                    name->raw_length,
+                    name->chars,
+                    get_obj_kind(receiver));
+                return CALL_UNKNOWN_MEMBER;
             }
     }
 }
@@ -435,7 +391,7 @@ static int bind_method(ObjClass *klass, ObjString *name) {
         return CALL_UNKNOWN_MEMBER;
     }
 
-    ObjBoundMethod *bound = new_bound_method(peek(0), AS_CLOSURE(method));
+    ObjBoundMethod *bound = new_bound_method(peek(0), method);
     pop();
     push(AS_OBJ(bound));
 
@@ -750,7 +706,6 @@ static InterpretResult run() {
                 {
                     ObjString *name = READ_STRING();
                     Obj *value;
-                    NativeFn fn;
                     Table *globals = get_current_global();
 
                     if (globals == NULL) {
@@ -760,10 +715,8 @@ static InterpretResult run() {
                     if (table_get(globals, AS_OBJ(name), &value)) {
                         push(value);
                         break;
-                    } else if (method_table_get(&vm.builtin_functions, name->obj.hash, &fn)) {
-                        push(AS_OBJ(new_builtin_function(fn, name->chars)));
-                        break;
                     }
+
                     runtime_error("Undefined variable '%.*s'.", name->raw_length, name->chars);
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -824,11 +777,11 @@ static InterpretResult run() {
                                     break;
                                 }
 
-                                if (bind_method(instance->klass, name) != CALL_OK) {
+                                if (bind_method(instance->obj.klass, name) != CALL_OK) {
                                     runtime_error(
                                         "Could not bind '%s' from class '%s'.",
                                         name->chars,
-                                        instance->klass->name->chars);
+                                        instance->obj.klass->name->chars);
 
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
@@ -854,15 +807,11 @@ static InterpretResult run() {
                                 break;
                             }
                         default:
-                            if (vm.builtin_methods[__builtin_ctz(obj->type)] != NULL) {
-                                NativeFn method;
-                                if (method_table_get(
-                                        vm.builtin_methods[__builtin_ctz(obj->type)],
-                                        name->obj.hash,
-                                        &method)) {
+                            if (obj->klass != NULL) {
+                                Obj *method;
+                                if (table_get(&obj->klass->methods, AS_OBJ(name), &method)) {
                                     pop();
-                                    push(
-                                        AS_OBJ(new_builtin_bound_method(method, obj, name->chars)));
+                                    push(AS_OBJ(new_bound_method(obj, method)));
                                 } else {
                                     runtime_error(
                                         "No method named '%s' on '%s'",
@@ -885,10 +834,10 @@ static InterpretResult run() {
                     if (IS_INSTANCE(peek(1))) {
                         ObjInstance *instance = AS_INSTANCE(peek(1));
 
-                        if (instance->klass->is_builtin) {
+                        if (instance->obj.klass->is_builtin) {
                             runtime_error(
                                 "Cannot set property of instance of builtin class '%s'.",
-                                instance->klass->name->chars);
+                                instance->obj.klass->name->chars);
                             return INTERPRET_RUNTIME_ERROR;
                         }
 

@@ -41,14 +41,19 @@ static NativeResult _bytes_hex_upper(int argc, UNUSED(Obj **argv), Obj *caller) 
     OK(take_string(bytes_to_hex(bytes->bytes, bytes->length, "%02X"), bytes->length * 2 + 1));
 }
 
-NativeTable *bytes_methods() {
-    NativeTable *table = malloc(sizeof(NativeTable));
-    init_method_table(table, 8);
+static ObjClass *_bytes_class = NULL;
 
-    SET_BLTIN_METHOD("len", _bytes_len);
-    SET_BLTIN_METHOD("hex_lower", _bytes_hex_lower);
-    SET_BLTIN_METHOD("hex_upper", _bytes_hex_upper);
-    SET_BLTIN_METHOD("decode", _bytes_decode);
+ObjClass *get_bytes_class() {
+    if (_bytes_class == NULL) {
+        ObjClass *klass = new_builtin_class("Bytes");
 
-    return table;
+        SET_BUILTIN_FN_METHOD("len", _bytes_len);
+        SET_BUILTIN_FN_METHOD("hex_lower", _bytes_hex_lower);
+        SET_BUILTIN_FN_METHOD("hex_upper", _bytes_hex_upper);
+        SET_BUILTIN_FN_METHOD("decode", _bytes_decode);
+
+        _bytes_class = klass;
+    }
+
+    return _bytes_class;
 }

@@ -32,17 +32,20 @@ static NativeResult _float_is_normal(int argc, UNUSED(Obj **argv), Obj *caller) 
     OK(AS_OBJ(new_bool(isnormal(AS_FLOAT(caller)->value))));
 }
 
-NativeTable *float_methods() {
-    NativeTable *table = malloc(sizeof(NativeTable));
-    init_method_table(table, 8);
+static ObjClass *_float_class = NULL;
 
-    SET_BLTIN_METHOD("to_str", _float_to_str);
-    SET_BLTIN_METHOD("is_nan", _float_is_nan);
-    SET_BLTIN_METHOD("is_finite", _float_is_finite);
-    SET_BLTIN_METHOD("is_infinite", _float_is_infinite);
-    SET_BLTIN_METHOD("is_normal", _float_is_normal);
+ObjClass *get_float_class() {
+    if (_float_class == NULL) {
+        ObjClass *klass = new_builtin_class("Float");
 
-    INFINITY;
+        SET_BUILTIN_FN_METHOD("to_str", _float_to_str);
+        SET_BUILTIN_FN_METHOD("is_nan", _float_is_nan);
+        SET_BUILTIN_FN_METHOD("is_finite", _float_is_finite);
+        SET_BUILTIN_FN_METHOD("is_infinite", _float_is_infinite);
+        SET_BUILTIN_FN_METHOD("is_normal", _float_is_normal);
 
-    return table;
+        _float_class = klass;
+    }
+
+    return _float_class;
 }

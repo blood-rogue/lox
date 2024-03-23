@@ -109,8 +109,6 @@ static void free_object(Obj *object) {
                 FREE(ObjInstance, object);
                 break;
             }
-        case OBJ_BUILTIN_BOUND_METHOD:
-            break;
         case OBJ_UPVALUE:
             {
                 FREE(ObjUpvalue, object);
@@ -227,7 +225,7 @@ static void blacken_object(Obj *object) {
         case OBJ_INSTANCE:
             {
                 ObjInstance *instance = AS_INSTANCE(object);
-                mark_object(AS_OBJ(instance->klass));
+                mark_object(AS_OBJ(instance->obj.klass));
                 mark_table(&instance->fields);
                 break;
             }
@@ -240,7 +238,6 @@ static void blacken_object(Obj *object) {
                 mark_table(&module->globals);
                 break;
             }
-        case OBJ_BUILTIN_BOUND_METHOD:
         case OBJ_BUILTIN_FUNCTION:
         case OBJ_NATIVE_STRUCT:
         case OBJ_STRING:

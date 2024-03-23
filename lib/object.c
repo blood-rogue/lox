@@ -1,5 +1,6 @@
 #include <unistr.h>
 
+#include "builtins.h"
 #include "memory.h"
 #include "object.h"
 #include "vm.h"
@@ -14,10 +15,9 @@ extern VM vm;
 
 static Obj *allocate_object(size_t size, ObjType type) {
     Obj *object = AS_OBJ(reallocate(NULL, 0, size));
-    object->type = type;
-    object->is_marked = false;
-    object->hash = 0;
+    memset(object, 0, sizeof(Obj));
 
+    object->type = type;
     object->next = vm.objects;
     vm.objects = object;
 
@@ -35,6 +35,7 @@ int utf_strlen(char *chars) {
 
 static ObjString *allocate_string(char *chars, int length, uint32_t hash) {
     ObjString *string = ALLOCATE_OBJ(ObjString, OBJ_STRING);
+    // string->obj.klass = get_string_class();
 
     string->raw_length = length;
     string->length = utf_strlen(chars);
@@ -52,6 +53,8 @@ ObjNil *new_nil() { return _NIL; }
 
 ObjInt *new_int(int64_t value) {
     ObjInt *integer = ALLOCATE_OBJ(ObjInt, OBJ_INT);
+    integer->obj.klass = get_int_class();
+
     integer->value = value;
     integer->obj.hash = (uint64_t)value;
 
@@ -60,6 +63,8 @@ ObjInt *new_int(int64_t value) {
 
 ObjMap *new_map(Obj **elems, int pair_count) {
     ObjMap *map = ALLOCATE_OBJ(ObjMap, OBJ_MAP);
+    map->obj.klass = get_map_class();
+
     init_table(&map->table);
     map->table.count = pair_count;
 
@@ -72,6 +77,8 @@ ObjMap *new_map(Obj **elems, int pair_count) {
 
 ObjChar *new_char(ucs4_t value) {
     ObjChar *_char = ALLOCATE_OBJ(ObjChar, OBJ_CHAR);
+    _char->obj.klass = get_char_class();
+
     _char->value = value;
     _char->obj.hash = (uint64_t)value;
 
@@ -80,6 +87,8 @@ ObjChar *new_char(ucs4_t value) {
 
 ObjList *new_list(Obj **elems, int elem_count) {
     ObjList *list = ALLOCATE_OBJ(ObjList, OBJ_LIST);
+    list->obj.klass = get_list_class();
+
     init_array(&list->elems);
 
     for (int i = 0; i < elem_count; i++) {
@@ -97,6 +106,7 @@ ObjBool *new_bool(bool value) {
 
 ObjBytes *new_bytes(const uint8_t *inp, int length) {
     ObjBytes *bytes = ALLOCATE_OBJ(ObjBytes, OBJ_BYTES);
+    bytes->obj.klass = get_bytes_class();
 
     uint8_t *_bytes = malloc(length);
     memcpy(_bytes, inp, length);
@@ -109,6 +119,8 @@ ObjBytes *new_bytes(const uint8_t *inp, int length) {
 
 ObjFloat *new_float(double value) {
     ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
+    float_->obj.klass = get_float_class();
+
     float_->value = value;
     float_->obj.hash = (uint64_t)value;
 
@@ -176,13 +188,13 @@ ObjClass *new_class(ObjString *name) {
 
 ObjInstance *new_instance(ObjClass *klass) {
     ObjInstance *instance = ALLOCATE_OBJ(ObjInstance, OBJ_INSTANCE);
-    instance->klass = klass;
+    instance->obj.klass = klass;
     init_table(&instance->fields);
 
     return instance;
 }
 
-ObjBoundMethod *new_bound_method(Obj *receiver, ObjClosure *method) {
+ObjBoundMethod *new_bound_method(Obj *receiver, Obj *method) {
     ObjBoundMethod *bound = ALLOCATE_OBJ(ObjBoundMethod, OBJ_BOUND_METHOD);
     bound->receiver = receiver;
     bound->method = method;
@@ -208,17 +220,6 @@ ObjNativeFunction *new_builtin_function(NativeFn fn, char *name) {
     return builtin;
 }
 
-ObjNativeBoundMethod *new_builtin_bound_method(NativeFn fn, Obj *caller, char *name) {
-    ObjNativeBoundMethod *bound_method =
-        ALLOCATE_OBJ(ObjNativeBoundMethod, OBJ_BUILTIN_BOUND_METHOD);
-
-    bound_method->caller = caller;
-    bound_method->function = fn;
-    bound_method->name = name;
-
-    return bound_method;
-}
-
 ObjNativeStruct *new_native_struct(void *ptr, FreeFn free_fn) {
     ObjNativeStruct *native = ALLOCATE_OBJ(ObjNativeStruct, OBJ_NATIVE_STRUCT);
 
@@ -230,6 +231,7 @@ ObjNativeStruct *new_native_struct(void *ptr, FreeFn free_fn) {
 
 ObjList *argv_list(int argc, const char **argv) {
     ObjList *list = ALLOCATE_OBJ(ObjList, OBJ_LIST);
+    list->obj.klass = get_list_class();
 
     Array arr;
     init_array(&arr);
@@ -245,6 +247,7 @@ ObjList *argv_list(int argc, const char **argv) {
 
 ObjBytes *take_bytes(uint8_t *inp, int length) {
     ObjBytes *bytes = ALLOCATE_OBJ(ObjBytes, OBJ_BYTES);
+    bytes->obj.klass = get_bytes_class();
 
     bytes->length = length;
     bytes->bytes = inp;
@@ -359,7 +362,7 @@ void print_object(Obj *obj) {
             print_list(&AS_LIST(obj)->elems);
             break;
         case OBJ_BOUND_METHOD:
-            print_function(AS_BOUND_METHOD(obj)->method->function);
+            print_object(AS_BOUND_METHOD(obj)->method);
             break;
         case OBJ_CLASS:
             printf("<class '%.*s'>", AS_CLASS(obj)->name->raw_length, AS_CLASS(obj)->name->chars);
@@ -374,10 +377,7 @@ void print_object(Obj *obj) {
             print_bytes(AS_BYTES(obj));
             break;
         case OBJ_INSTANCE:
-            printf(
-                "<'%.*s' instance>",
-                AS_INSTANCE(obj)->klass->name->raw_length,
-                AS_INSTANCE(obj)->klass->name->chars);
+            printf("<'%.*s' instance>", obj->klass->name->raw_length, obj->klass->name->chars);
             break;
         case OBJ_BUILTIN_FUNCTION:
             printf("<builtin fn '%s'>", AS_BUILTIN_FUNCTION(obj)->name);
@@ -387,12 +387,6 @@ void print_object(Obj *obj) {
             break;
         case OBJ_UPVALUE:
             printf("upvalue");
-            break;
-        case OBJ_BUILTIN_BOUND_METHOD:
-            printf(
-                "<bound method ''%s.%s'>",
-                get_obj_kind(AS_BUILTIN_BOUND_METHOD(obj)->caller),
-                AS_BUILTIN_BOUND_METHOD(obj)->name);
             break;
         case OBJ_MODULE:
             printf("<module '%s'>", AS_MODULE(obj)->name);
@@ -505,7 +499,6 @@ static char *_OBJ_NAMES[] = {
     "BOUND_METHOD",
     "MODULE",
     "BUILTIN_METHOD",
-    "BUILTIN_BOUND_METHOD",
     "NATIVE_STRUCT"};
 
 struct {
