@@ -23,7 +23,7 @@ ObjClass *get_crypto_digest_md5_class() {
 
         SET_BUILTIN_FN_STATIC("hash", _digest_md5_hash);
 
-        SET_BUILTIN_FN_METHOD("init", _digest_md5_init);
+        SET_BUILTIN_FN_METHOD("__init", _digest_md5_init);
         SET_BUILTIN_FN_METHOD("update", md_update);
         SET_BUILTIN_FN_METHOD("finish", md_finish);
 

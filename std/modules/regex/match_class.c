@@ -13,7 +13,7 @@ static NativeResult _regex_match_group(int argc, Obj **argv, Obj *caller) {
 
     ObjList *groups = AS_LIST(field);
 
-    int64_t index = argv_0->value;
+    int64_t index = mpz_get_si(argv_0->value);
     if (index < 0)
         index = groups->elems.count + index;
 

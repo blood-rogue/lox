@@ -12,7 +12,8 @@ static NativeResult _compress_zstd_compress(int argc, Obj **argv, UNUSED(Obj *ca
     size_t dest_len = ZSTD_compressBound(argv_0->length);
     uint8_t *dest = malloc(dest_len);
 
-    dest_len = ZSTD_compress(dest, dest_len, argv_0->bytes, argv_0->length, argv_1->value);
+    dest_len =
+        ZSTD_compress(dest, dest_len, argv_0->bytes, argv_0->length, mpz_get_si(argv_1->value));
     if (ZSTD_isError(dest_len))
         ERR("Could not compress data.")
 

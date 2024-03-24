@@ -125,8 +125,13 @@ static NativeResult _char_to_decimal_digit(int argc, UNUSED(Obj **argv), Obj *ca
     if (digit == -1) {
         ERR("Could not convert to digit.")
     } else {
-        OK(new_int(digit));
+        OK(new_int_i(digit));
     }
+}
+
+static NativeResult _char_new(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
+    CHECK_ARG_COUNT(0)
+    OK(new_char(0));
 }
 
 static ObjClass *_char_class = NULL;
@@ -134,6 +139,8 @@ static ObjClass *_char_class = NULL;
 ObjClass *get_char_class() {
     if (_char_class == NULL) {
         ObjClass *klass = new_builtin_class("Char");
+
+        SET_BUILTIN_FN_STATIC("__new", _char_new);
 
         SET_BUILTIN_FN_METHOD("is_alphabetic", _char_is_alphabetic);
         SET_BUILTIN_FN_METHOD("is_ascii_hex_digit", _char_is_ascii_hex_digit);

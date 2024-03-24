@@ -43,7 +43,7 @@ static NativeResult _string_to_title(int argc, UNUSED(Obj **argv), Obj *caller) 
 
 static NativeResult _string_len(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    OK(new_int(AS_STRING(caller)->length));
+    OK(new_int_i(AS_STRING(caller)->length));
 }
 
 static NativeResult _string_find(int argc, Obj **argv, Obj *caller) {
@@ -56,7 +56,12 @@ static NativeResult _string_find(int argc, Obj **argv, Obj *caller) {
          tmp = (uint8_t *)u8_next(&puc, tmp))
         idx++;
 
-    OK(puc == argv_0->value ? AS_OBJ(new_int(idx)) : AS_OBJ(new_nil()));
+    OK(puc == argv_0->value ? AS_OBJ(new_int_i(idx)) : AS_OBJ(new_nil()));
+}
+
+static NativeResult _string_new(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
+    CHECK_ARG_COUNT(0)
+    OK(new_char(0));
 }
 
 static ObjClass *_string_class = NULL;
@@ -64,6 +69,8 @@ static ObjClass *_string_class = NULL;
 ObjClass *get_string_class() {
     if (_string_class == NULL) {
         ObjClass *klass = new_builtin_class("String");
+
+        SET_BUILTIN_FN_STATIC("__new", _string_new);
 
         SET_BUILTIN_FN_METHOD("to_upper", _string_to_upper);
         SET_BUILTIN_FN_METHOD("to_lower", _string_to_lower);

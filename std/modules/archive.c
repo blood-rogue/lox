@@ -15,8 +15,8 @@ static NativeResult _archive_open(int argc, Obj **argv, UNUSED(Obj *caller)) {
 
     struct archive *a = archive_read_new();
 
-    archive_read_support_format_by_code(a, argv_1->value);
-    archive_read_support_filter_by_code(a, argv_2->value);
+    archive_read_support_format_by_code(a, mpz_get_si(argv_1->value));
+    archive_read_support_filter_by_code(a, mpz_get_si(argv_2->value));
 
     ObjNativeStruct *archive_obj = new_native_struct(a, free_archive);
 

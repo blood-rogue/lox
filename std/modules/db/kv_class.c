@@ -96,7 +96,7 @@ ObjClass *get_db_kv_class() {
     if (_db_kv_class == NULL) {
         ObjClass *klass = new_builtin_class("KV");
 
-        SET_BUILTIN_FN_METHOD("init", _db_kv_init);
+        SET_BUILTIN_FN_METHOD("__init", _db_kv_init);
         SET_BUILTIN_FN_METHOD("set", _db_kv_set);
         SET_BUILTIN_FN_METHOD("get", _db_kv_get);
         SET_BUILTIN_FN_METHOD("delete", _db_kv_delete);

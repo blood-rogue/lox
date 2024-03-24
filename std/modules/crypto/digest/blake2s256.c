@@ -23,7 +23,7 @@ ObjClass *get_crypto_digest_blake2s256_class() {
 
         SET_BUILTIN_FN_STATIC("hash", _digest_blake2s256_hash);
 
-        SET_BUILTIN_FN_METHOD("init", _digest_blake2s256_init);
+        SET_BUILTIN_FN_METHOD("__init", _digest_blake2s256_init);
         SET_BUILTIN_FN_METHOD("update", md_update);
         SET_BUILTIN_FN_METHOD("finish", md_finish);
 

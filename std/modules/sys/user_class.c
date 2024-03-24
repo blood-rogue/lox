@@ -28,7 +28,7 @@ static NativeResult _sys_user_by_id(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
-    struct passwd *user = getpwuid(argv_0->value);
+    struct passwd *user = getpwuid(mpz_get_ui(argv_0->value));
 
     ObjInstance *instance = new_instance(_sys_user_class);
 

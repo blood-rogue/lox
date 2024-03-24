@@ -19,6 +19,70 @@
 VM vm;
 extern char *_source;
 
+static ObjString *_init_string = NULL;
+static ObjString *_new_string = NULL;
+static ObjString *_add_string = NULL;
+static ObjString *_sub_string = NULL;
+static ObjString *_mul_string = NULL;
+static ObjString *_div_string = NULL;
+static ObjString *_eq_string = NULL;
+static ObjString *_neg_string = NULL;
+static ObjString *_not_string = NULL;
+static ObjString *_bitand_string = NULL;
+static ObjString *_bitor_string = NULL;
+static ObjString *_bitxor_string = NULL;
+static ObjString *_bitnot_string = NULL;
+static ObjString *_bitcomp_string = NULL;
+
+static void init_method_names() {
+    _init_string = new_string("__init", (int)strlen("__init"));
+    _new_string = new_string("__new", (int)strlen("__new"));
+    _add_string = new_string("__add", (int)strlen("__add"));
+    _sub_string = new_string("__sub", (int)strlen("__sub"));
+    _mul_string = new_string("__mul", (int)strlen("__mul"));
+    _div_string = new_string("__div", (int)strlen("__div"));
+    _eq_string = new_string("__eq", (int)strlen("__eq"));
+    _neg_string = new_string("__neg", (int)strlen("__neg"));
+    _not_string = new_string("__not", (int)strlen("__not"));
+    _bitand_string = new_string("__bitand", (int)strlen("__bitand"));
+    _bitor_string = new_string("__bitor", (int)strlen("__bitor"));
+    _bitxor_string = new_string("__bitxor", (int)strlen("__bitxor"));
+    _bitnot_string = new_string("__bitnot", (int)strlen("__bitnot"));
+    _bitcomp_string = new_string("__bitcomp", (int)strlen("__bitcomp"));
+
+    vm.method_names[0] = _init_string;
+    vm.method_names[1] = _new_string;
+    vm.method_names[2] = _add_string;
+    vm.method_names[3] = _sub_string;
+    vm.method_names[4] = _mul_string;
+    vm.method_names[5] = _div_string;
+    vm.method_names[6] = _eq_string;
+    vm.method_names[7] = _neg_string;
+    vm.method_names[8] = _not_string;
+    vm.method_names[9] = _bitand_string;
+    vm.method_names[10] = _bitor_string;
+    vm.method_names[11] = _bitxor_string;
+    vm.method_names[12] = _bitnot_string;
+    vm.method_names[13] = _bitcomp_string;
+}
+
+static void free_method_names() {
+    _init_string = NULL;
+    _new_string = NULL;
+    _add_string = NULL;
+    _sub_string = NULL;
+    _mul_string = NULL;
+    _div_string = NULL;
+    _eq_string = NULL;
+    _neg_string = NULL;
+    _not_string = NULL;
+    _bitand_string = NULL;
+    _bitor_string = NULL;
+    _bitxor_string = NULL;
+    _bitnot_string = NULL;
+    _bitcomp_string = NULL;
+}
+
 static void reset_stack() {
     vm.stack_top = vm.stack;
     vm.frame_count = 0;
@@ -89,10 +153,7 @@ static char *read_file(char *path) {
 }
 
 void init_vm() {
-    if (!read_history("~/.lox_history")) {
-        runtime_error("Could not read history.");
-        exit(1);
-    }
+    read_history(NULL);
 
     init_literals();
 
@@ -109,11 +170,17 @@ void init_vm() {
     init_table(&vm.strings);
     init_table(&vm.modules);
 
+    init_method_names();
+
     vm.current_module = NULL;
     vm.module_count = 0;
 
-    vm.init_string = NULL;
-    vm.init_string = new_string("init", 4);
+    table_set(&vm.globals, AS_OBJ(get_bytes_class()->name), AS_OBJ(get_bytes_class()));
+    table_set(&vm.globals, AS_OBJ(get_float_class()->name), AS_OBJ(get_float_class()));
+    table_set(&vm.globals, AS_OBJ(get_char_class()->name), AS_OBJ(get_char_class()));
+    table_set(&vm.globals, AS_OBJ(get_int_class()->name), AS_OBJ(get_int_class()));
+    table_set(&vm.globals, AS_OBJ(get_list_class()->name), AS_OBJ(get_list_class()));
+    table_set(&vm.globals, AS_OBJ(get_map_class()->name), AS_OBJ(get_map_class()));
 
 #define SET_BLTIN_FN(name, fn)                                                                     \
     table_set(                                                                                     \
@@ -126,8 +193,6 @@ void init_vm() {
     SET_BLTIN_FN("input", input_builtin_function);
     SET_BLTIN_FN("argv", argv_builtin_function);
     SET_BLTIN_FN("run_gc", run_gc_builtin_function);
-    SET_BLTIN_FN("parse_int", parse_int_builtin_function);
-    SET_BLTIN_FN("parse_float", parse_float_builtin_function);
     SET_BLTIN_FN("sleep", sleep_builtin_function);
     SET_BLTIN_FN("type", type_builtin_function);
     SET_BLTIN_FN("repr", repr_builtin_function);
@@ -141,8 +206,6 @@ void free_vm() {
     free_table(&vm.strings);
     free_table(&vm.modules);
 
-    vm.init_string = NULL;
-
     if (vm.current_module != NULL) {
         free(vm.current_module);
     }
@@ -150,15 +213,13 @@ void free_vm() {
     vm.module_count = 0;
 
     free_literals();
-
+    free_method_names();
     free_objects();
 
     if (_source != NULL)
         free(_source);
 
-    if (!write_history("~/.lox_history")) {
-        runtime_error("Could not write history.");
-    }
+    write_history(NULL);
 }
 
 static Table *get_current_global() {
@@ -214,37 +275,24 @@ static int call_object(Obj *callee, int argc, Obj *caller) {
         case OBJ_CLASS:
             {
                 ObjClass *klass = AS_CLASS(callee);
-                ObjInstance *instance = new_instance(klass);
 
-                table_add_all(&klass->fields, &instance->fields);
+                Obj *obj;
+                Obj *new;
+                if (table_get(&klass->statics, AS_OBJ(_new_string), &new)) {
+                    call_object(new, argc, NULL);
+                    obj = pop();
+                } else {
+                    ObjInstance *instance = new_instance(klass);
+                    table_add_all(&klass->fields, &instance->fields);
 
-                vm.stack_top[-argc - 1] = AS_OBJ(instance);
+                    obj = AS_OBJ(instance);
+                }
+
+                vm.stack_top[-argc - 1] = obj;
 
                 Obj *initializer;
-                if (table_get(&klass->methods, AS_OBJ(vm.init_string), &initializer)) {
-                    switch (initializer->type) {
-                        case OBJ_CLOSURE:
-                            return call(AS_CLOSURE(initializer), argc);
-                        case OBJ_BUILTIN_FUNCTION:
-                            {
-                                ObjNativeFunction *builtin = AS_BUILTIN_FUNCTION(initializer);
-                                NativeResult result =
-                                    builtin->method(argc, vm.stack_top - argc, AS_OBJ(instance));
-
-                                if (result.error != NULL) {
-                                    runtime_error(result.error);
-                                    free(result.error);
-                                    return CALL_NATIVE_ERR;
-                                }
-
-                                vm.stack_top -= argc;
-
-                                return CALL_OK;
-                            }
-                        default:
-                            runtime_error("Invalid initializer.");
-                            return CALL_INVALID_OBJ;
-                    }
+                if (table_get(&klass->methods, AS_OBJ(_init_string), &initializer)) {
+                    call_object(initializer, argc, obj);
                 } else if (argc != 0) {
                     runtime_error("Expected 0 arguments but got %d.", argc);
                     return CALL_INVALID_ARGC;
@@ -454,40 +502,41 @@ static InterpretResult run() {
 #define READ_SHORT()    (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
 #define READ_CONSTANT() (frame->closure->function->chunk.constants.values[READ_BYTE()])
 #define READ_STRING()   AS_STRING(READ_CONSTANT())
-#define BINARY_OP(new_func_int, new_func_float, op)                                                \
-    {                                                                                              \
-        if (IS_INT(peek(0)) && IS_INT(peek(1))) {                                                  \
-            Obj *b = pop();                                                                        \
-            Obj *a = pop();                                                                        \
-            push(AS_OBJ(new_func_int(AS_INT(a)->value op AS_INT(b)->value)));                      \
-        } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {                                       \
-            Obj *b = pop();                                                                        \
-            Obj *a = pop();                                                                        \
-            push(AS_OBJ(new_func_float(AS_FLOAT(a)->value op AS_FLOAT(b)->value)));                \
-        } else {                                                                                   \
-            runtime_error(                                                                         \
-                "Unsupported operand types for '%s': '%s' and '%s'.",                              \
-                #op,                                                                               \
-                get_obj_kind(peek(0)),                                                             \
-                get_obj_kind(peek(1)));                                                            \
-            return INTERPRET_RUNTIME_ERROR;                                                        \
-        }                                                                                          \
-    }
-#define BINARY_INT_OP(new_func, op)                                                                \
-    {                                                                                              \
-        if (IS_INT(peek(0)) && IS_INT(peek(1))) {                                                  \
-            Obj *b = pop();                                                                        \
-            Obj *a = pop();                                                                        \
-            push(AS_OBJ(new_func(AS_INT(a)->value op AS_INT(b)->value)));                          \
-        } else {                                                                                   \
-            runtime_error(                                                                         \
-                "Unsupported operand types for '%s': '%s' and '%s'.",                              \
-                #op,                                                                               \
-                get_obj_kind(peek(0)),                                                             \
-                get_obj_kind(peek(1)));                                                            \
-            return INTERPRET_RUNTIME_ERROR;                                                        \
-        }                                                                                          \
-    }
+
+    // #define BINARY_OP(new_func_int, new_func_float, op)
+    //     {
+    //         if (IS_INT(peek(0)) && IS_INT(peek(1))) {
+    //             Obj *b = pop();
+    //             Obj *a = pop();
+    //             push(AS_OBJ(new_func_int(AS_INT(a)->value op AS_INT(b)->value)));
+    //         } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {
+    //             Obj *b = pop();
+    //             Obj *a = pop();
+    //             push(AS_OBJ(new_func_float(AS_FLOAT(a)->value op AS_FLOAT(b)->value)));
+    //         } else {
+    //             runtime_error(
+    //                 "Unsupported operand types for '%s': '%s' and '%s'.",
+    //                 #op,
+    //                 get_obj_kind(peek(0)),
+    //                 get_obj_kind(peek(1)));
+    //             return INTERPRET_RUNTIME_ERROR;
+    //         }
+    //     }
+    // #define BINARY_INT_OP(new_func, op)
+    //     {
+    //         if (IS_INT(peek(0)) && IS_INT(peek(1))) {
+    //             Obj *b = pop();
+    //             Obj *a = pop();
+    //             push(AS_OBJ(new_func(AS_INT(a)->value op AS_INT(b)->value)));
+    //         } else {
+    //             runtime_error(
+    //                 "Unsupported operand types for '%s': '%s' and '%s'.",
+    //                 #op,
+    //                 get_obj_kind(peek(0)),
+    //                 get_obj_kind(peek(1)));
+    //             return INTERPRET_RUNTIME_ERROR;
+    //         }
+    //     }
 
     for (;;) {
 #ifdef DEBUG
@@ -553,7 +602,7 @@ static InterpretResult run() {
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
 
-                                int64_t index = AS_INT(index_obj)->value;
+                                int64_t index = mpz_get_si(AS_INT(index_obj)->value);
                                 ObjList *list = AS_LIST(value);
 
                                 if (index < 0)
@@ -592,7 +641,7 @@ static InterpretResult run() {
                                     return INTERPRET_RUNTIME_ERROR;
                                 }
 
-                                int64_t index = AS_INT(index_obj)->value;
+                                int64_t index = mpz_get_si(AS_INT(index_obj)->value);
                                 ObjString *string = AS_STRING(value);
 
                                 if (index < 0)
@@ -637,7 +686,7 @@ static InterpretResult run() {
                             return INTERPRET_RUNTIME_ERROR;
                         }
 
-                        int64_t index = AS_INT(index_obj)->value;
+                        int64_t index = mpz_get_si(AS_INT(index_obj)->value);
                         ObjList *list = AS_LIST(value);
 
                         if (index >= list->elems.count) {
@@ -903,112 +952,113 @@ static InterpretResult run() {
                     return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_EQUAL:
-                push(AS_OBJ(new_bool(obj_equal(pop(), pop()))));
+                {
+                    Obj *a = peek(1);
+
+                    Obj *op;
+                    table_get(&a->klass->statics, AS_OBJ(new_string("__add", 5)), &op);
+
+                    call_object(op, 2, a);
+                }
+                // TODO
                 break;
             case OP_GREATER:
-                BINARY_OP(new_bool, new_bool, >);
+                // TODO
                 break;
             case OP_LESS:
-                BINARY_OP(new_bool, new_bool, <);
+                // TODO
                 break;
             case OP_ADD:
-                {
-                    if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
-                        ObjString *b = AS_STRING(peek(0));
-                        ObjString *a = AS_STRING(peek(1));
+                // {
+                //     if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
+                //         ObjString *b = AS_STRING(peek(0));
+                //         ObjString *a = AS_STRING(peek(1));
 
-                        int length = a->raw_length + b->raw_length;
-                        char *chars = ALLOCATE(char, length + 1);
-                        memcpy(chars, a->chars, a->raw_length);
-                        memcpy(chars + a->raw_length, b->chars, b->raw_length);
-                        chars[length] = '\0';
+                //         int length = a->raw_length + b->raw_length;
+                //         char *chars = ALLOCATE(char, length + 1);
+                //         memcpy(chars, a->chars, a->raw_length);
+                //         memcpy(chars + a->raw_length, b->chars, b->raw_length);
+                //         chars[length] = '\0';
 
-                        ObjString *result = take_string(chars, length);
-                        pop();
-                        pop();
-                        push(AS_OBJ(result));
-                    } else if (IS_INT(peek(0)) && IS_INT(peek(1))) {
-                        push(AS_OBJ(new_int(AS_INT(pop())->value + AS_INT(pop())->value)));
-                    } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {
-                        push(AS_OBJ(new_float(AS_FLOAT(pop())->value + AS_FLOAT(pop())->value)));
-                    } else {
-                        runtime_error(
-                            "Unsupported operand types for '+', '%s' and '%s'.",
-                            get_obj_kind(peek(0)),
-                            get_obj_kind(peek(1)));
-                        return INTERPRET_RUNTIME_ERROR;
-                    }
-                    break;
-                }
+                //         ObjString *result = take_string(chars, length);
+                //         pop();
+                //         pop();
+                //         push(AS_OBJ(result));
+                //     } else if (IS_INT(peek(0)) && IS_INT(peek(1))) {
+                //         mpz_t _int;
+                //         mpz_init(_int);
+                //         mpz_add(_int, AS_INT(pop())->value, AS_INT(pop())->value);
+                //         push(AS_OBJ(new_int(_int)));
+                //     } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {
+                //         push(AS_OBJ(new_float(AS_FLOAT(pop())->value + AS_FLOAT(pop())->value)));
+                //     } else {
+                //         runtime_error(
+                //             "Unsupported operand types for '+', '%s' and '%s'.",
+                //             get_obj_kind(peek(0)),
+                //             get_obj_kind(peek(1)));
+                //         return INTERPRET_RUNTIME_ERROR;
+                //     }
+                //     break;
+                // }
+                // TODO
+                break;
             case OP_SUBTRACT:
-                {
-                    BINARY_OP(new_int, new_float, -);
-                    break;
-                }
+                // TODO
+                break;
             case OP_BITWISE_AND:
-                {
-                    BINARY_INT_OP(new_int, &);
-                    break;
-                }
+                // TODO
+                break;
             case OP_BITWISE_OR:
-                {
-                    BINARY_INT_OP(new_int, |);
-                    break;
-                }
+                // TODO
+                break;
             case OP_BITWISE_XOR:
-                {
-                    BINARY_INT_OP(new_int, ^);
-                    break;
-                }
+                // TODO
+                break;
             case OP_BITWISE_NOT:
-                {
-                    if (!IS_INT(peek(0))) {
-                        runtime_error(
-                            "Bitwise operations can only be done INTEGERS. got %s.",
-                            get_obj_kind(peek(0)));
-                        return INTERPRET_RUNTIME_ERROR;
-                    }
+                // {
+                //     if (!IS_INT(peek(0))) {
+                //         runtime_error(
+                //             "Bitwise operations can only be done INTEGERS. got %s.",
+                //             get_obj_kind(peek(0)));
+                //         return INTERPRET_RUNTIME_ERROR;
+                //     }
 
-                    vm.stack_top[-1] = AS_OBJ(new_int(~(AS_INT(peek(0))->value)));
-                    break;
-                }
+                //     vm.stack_top[-1] = AS_OBJ(new_int(~(AS_INT(peek(0))->value)));
+                //     break;
+                // }
+                // TODO
+                break;
             case OP_SHIFT_RIGHT:
-                {
-                    BINARY_INT_OP(new_int, >>);
-                    break;
-                }
+                // TODO
+                break;
             case OP_SHIFT_LEFT:
-                {
-                    BINARY_INT_OP(new_int, <<);
-                    break;
-                }
+                // TODO
+                break;
             case OP_MULTIPLY:
-                {
-                    BINARY_OP(new_int, new_float, *);
-                    break;
-                }
+                // TODO
+                break;
             case OP_DIVIDE:
-                {
-                    BINARY_OP(new_int, new_float, /);
-                    break;
-                }
+                // TODO
+                break;
             case OP_NOT:
                 {
                     vm.stack_top[-1] = AS_OBJ(new_bool(is_falsey(peek(0))));
                     break;
                 }
             case OP_NEGATE:
-                {
-                    if (IS_INT(peek(0))) {
-                        vm.stack_top[-1] = AS_OBJ(new_int(-(AS_INT(peek(0))->value)));
-                        break;
-                    } else if (IS_FLOAT(peek(0))) {
-                        vm.stack_top[-1] = AS_OBJ(new_float(-(AS_FLOAT(peek(0))->value)));
-                        break;
-                    }
-                    runtime_error("Cannot negate '%s'.", get_obj_kind(peek(0)));
-                    return INTERPRET_RUNTIME_ERROR;
-                }
+                // {
+                //     if (IS_INT(peek(0))) {
+                //         vm.stack_top[-1] = AS_OBJ(new_int(-(AS_INT(peek(0))->value)));
+                //         break;
+                //     } else if (IS_FLOAT(peek(0))) {
+                //         vm.stack_top[-1] = AS_OBJ(new_float(-(AS_FLOAT(peek(0))->value)));
+                //         break;
+                //     }
+                //     runtime_error("Cannot negate '%s'.", get_obj_kind(peek(0)));
+                //     return INTERPRET_RUNTIME_ERROR;
+                // }
+                // TODO
+                break;
             case OP_JUMP:
                 {
                     uint16_t offset = READ_SHORT();

@@ -38,6 +38,8 @@ static void free_object(Obj *object) {
             }
         case OBJ_INT:
             {
+                ObjInt *integer = AS_INT(object);
+                mpz_clear(integer->value);
                 FREE(ObjInt, object);
                 break;
             }
@@ -151,10 +153,7 @@ void free_objects() {
 }
 
 void mark_object(Obj *object) {
-    if (object == NULL)
-        return;
-
-    if (object->is_marked)
+    if (object == NULL || object->is_marked)
         return;
 
     object->is_marked = true;
@@ -268,7 +267,10 @@ static void mark_roots() {
     mark_table(&vm.modules);
 
     mark_compiler_roots();
-    mark_object(AS_OBJ(vm.init_string));
+
+    for (int i = 0; i < 14; i++) {
+        mark_object(AS_OBJ(vm.method_names[i]));
+    }
 
     Module *module = vm.current_module;
     while (module != NULL) {

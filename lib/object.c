@@ -51,12 +51,29 @@ static ObjString *allocate_string(char *chars, int length, uint32_t hash) {
 
 ObjNil *new_nil() { return _NIL; }
 
-ObjInt *new_int(int64_t value) {
+ObjInt *new_int(mpz_t value) {
     ObjInt *integer = ALLOCATE_OBJ(ObjInt, OBJ_INT);
     integer->obj.klass = get_int_class();
 
-    integer->value = value;
-    integer->obj.hash = (uint64_t)value;
+    mpz_init_set(integer->value, value);
+
+    return integer;
+}
+
+ObjInt *new_int_i(int64_t si) {
+    ObjInt *integer = ALLOCATE_OBJ(ObjInt, OBJ_INT);
+    integer->obj.klass = get_int_class();
+
+    mpz_init_set_si(integer->value, si);
+
+    return integer;
+}
+
+ObjInt *new_int_s(char *str, int base) {
+    ObjInt *integer = ALLOCATE_OBJ(ObjInt, OBJ_INT);
+    integer->obj.klass = get_int_class();
+
+    mpz_init_set_str(integer->value, str, base);
 
     return integer;
 }
@@ -117,11 +134,34 @@ ObjBytes *new_bytes(const uint8_t *inp, int length) {
     return bytes;
 }
 
-ObjFloat *new_float(double value) {
+ObjFloat *new_float(mpfr_t value) {
     ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
     float_->obj.klass = get_float_class();
 
-    float_->value = value;
+    mpfr_init_set(float_->value, value, MPFR_RNDD);
+
+    float_->obj.hash = (uint64_t)value;
+
+    return float_;
+}
+
+ObjFloat *new_float_d(double value) {
+    ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
+    float_->obj.klass = get_float_class();
+
+    mpfr_init_set_d(float_->value, value, MPFR_RNDD);
+
+    float_->obj.hash = (uint64_t)value;
+
+    return float_;
+}
+
+ObjFloat *new_float_s(char *value, int base) {
+    ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
+    float_->obj.klass = get_float_class();
+
+    mpfr_init_set_str(float_->value, value, base, MPFR_RNDD);
+
     float_->obj.hash = (uint64_t)value;
 
     return float_;
@@ -338,16 +378,21 @@ static void print_bytes(ObjBytes *bytes) {
     printf("]");
 }
 
+static void print_float(ObjFloat *f) {
+    mpfr_exp_t e;
+    printf("%s", mpfr_get_str(NULL, &e, 10, 0, f->value, MPFR_RNDN));
+}
+
 void print_object(Obj *obj) {
     switch (obj->type) {
         case OBJ_NIL:
             printf("(nil)");
             break;
         case OBJ_FLOAT:
-            printf("%g", AS_FLOAT(obj)->value);
+            print_float(AS_FLOAT(obj));
             break;
         case OBJ_INT:
-            printf("%ld", AS_INT(obj)->value);
+            printf("%s", mpz_get_str(NULL, 10, AS_INT(obj)->value));
             break;
         case OBJ_CHAR:
             print_char(AS_CHAR(obj)->value, false);

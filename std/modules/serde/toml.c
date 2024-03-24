@@ -24,26 +24,26 @@ static Obj *toml_table_to_obj(toml_table_t *toml_table) {
             value_obj = toml_table_to_obj(table);
         } else if ((array = toml_table_array(toml_table, key)) != NULL) {
             value_obj = toml_array_to_obj(array);
-        } else if ((value = toml_table_timestamp(toml_table, key)).ok) {
-            toml_timestamp_t *ts = value.u.ts;
+            // } else if ((value = toml_table_timestamp(toml_table, key)).ok) {
+            //     toml_timestamp_t *ts = value.u.ts;
 
-            ObjClass *time_class = get_time_time_class();
-            ObjInstance *instance = new_instance(time_class);
+            //     ObjClass *time_class = get_time_time_class();
+            //     ObjInstance *instance = new_instance(time_class);
 
-            SET_INT_FIELD("year", ts->year);
-            SET_INT_FIELD("month", ts->month);
-            SET_INT_FIELD("day", ts->day);
-            SET_INT_FIELD("hour", ts->hour);
-            SET_INT_FIELD("minute", ts->minute);
-            SET_INT_FIELD("second", ts->second);
+            //     SET_INT_FIELD("year", ts->year);
+            //     SET_INT_FIELD("month", ts->month);
+            //     SET_INT_FIELD("day", ts->day);
+            //     SET_INT_FIELD("hour", ts->hour);
+            //     SET_INT_FIELD("minute", ts->minute);
+            //     SET_INT_FIELD("second", ts->second);
 
-            value_obj = AS_OBJ(instance);
+            //     value_obj = AS_OBJ(instance);
         } else if ((value = toml_table_bool(toml_table, key)).ok) {
             value_obj = AS_OBJ(new_bool(value.u.b));
         } else if ((value = toml_table_int(toml_table, key)).ok) {
-            value_obj = AS_OBJ(new_int(value.u.i));
+            value_obj = AS_OBJ(new_int_i(value.u.i));
         } else if ((value = toml_table_double(toml_table, key)).ok) {
-            value_obj = AS_OBJ(new_float(value.u.d));
+            value_obj = AS_OBJ(new_float_d(value.u.d));
         } else if ((value = toml_table_string(toml_table, key)).ok) {
             value_obj = AS_OBJ(new_string(value.u.s, value.u.sl));
         }
@@ -68,26 +68,26 @@ static Obj *toml_array_to_obj(toml_array_t *toml_array) {
             elem_obj = toml_table_to_obj(table);
         } else if ((array = toml_array_array(toml_array, idx)) != NULL) {
             elem_obj = toml_array_to_obj(array);
-        } else if ((value = toml_array_timestamp(toml_array, idx)).ok) {
-            toml_timestamp_t *ts = value.u.ts;
+            // } else if ((value = toml_array_timestamp(toml_array, idx)).ok) {
+            //     toml_timestamp_t *ts = value.u.ts;
 
-            ObjClass *time_class = get_time_time_class();
-            ObjInstance *instance = new_instance(time_class);
+            //     ObjClass *time_class = get_time_time_class();
+            //     ObjInstance *instance = new_instance(time_class);
 
-            SET_INT_FIELD("year", ts->year);
-            SET_INT_FIELD("month", ts->month);
-            SET_INT_FIELD("day", ts->day);
-            SET_INT_FIELD("hour", ts->hour);
-            SET_INT_FIELD("minute", ts->minute);
-            SET_INT_FIELD("second", ts->second);
+            //     SET_INT_FIELD("year", ts->year);
+            //     SET_INT_FIELD("month", ts->month);
+            //     SET_INT_FIELD("day", ts->day);
+            //     SET_INT_FIELD("hour", ts->hour);
+            //     SET_INT_FIELD("minute", ts->minute);
+            //     SET_INT_FIELD("second", ts->second);
 
-            elem_obj = AS_OBJ(instance);
+            //     elem_obj = AS_OBJ(instance);
         } else if ((value = toml_array_bool(toml_array, idx)).ok) {
             elem_obj = AS_OBJ(new_bool(value.u.b));
         } else if ((value = toml_array_int(toml_array, idx)).ok) {
-            elem_obj = AS_OBJ(new_int(value.u.i));
+            elem_obj = AS_OBJ(new_int_i(value.u.i));
         } else if ((value = toml_array_double(toml_array, idx)).ok) {
-            elem_obj = AS_OBJ(new_float(value.u.d));
+            elem_obj = AS_OBJ(new_float_d(value.u.d));
         } else if ((value = toml_array_string(toml_array, idx)).ok) {
             elem_obj = AS_OBJ(new_string(value.u.s, value.u.sl));
         }

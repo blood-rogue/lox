@@ -142,12 +142,12 @@ ObjModule *get_crypto_digest_module() {
         SET_MEMBER("BLAKE2b512", get_crypto_digest_blake2b512_class());
         SET_MEMBER("BLAKE2s256", get_crypto_digest_blake2s256_class());
 
-        SET_INT_MEMBER("SHA2_224", 0);
-        SET_INT_MEMBER("SHA2_256", 1);
-        SET_INT_MEMBER("SHA2_384", 2);
-        SET_INT_MEMBER("SHA2_512", 3);
-        SET_INT_MEMBER("SHA2_512_224", 4);
-        SET_INT_MEMBER("SHA2_512_256", 5);
+        SET_INT_MEMBER("SHA_224", 0);
+        SET_INT_MEMBER("SHA_256", 1);
+        SET_INT_MEMBER("SHA_384", 2);
+        SET_INT_MEMBER("SHA_512", 3);
+        SET_INT_MEMBER("SHA_512_224", 4);
+        SET_INT_MEMBER("SHA_512_256", 5);
 
         _digest_module = module;
     }

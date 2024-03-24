@@ -11,7 +11,7 @@ static NativeResult _fs_dup2(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_TYPE(ObjInt, INT, 0)
     CHECK_ARG_TYPE(ObjInt, INT, 1)
 
-    OK(new_int(dup2(argv_0->value, argv_1->value)));
+    OK(new_int_i(dup2(mpz_get_si(argv_0->value), mpz_get_si(argv_1->value))));
 }
 
 static NativeResult _fs_chown(int argc, Obj **argv, UNUSED(Obj *caller)) {
@@ -20,7 +20,7 @@ static NativeResult _fs_chown(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_TYPE(ObjInt, INT, 1)
     CHECK_ARG_TYPE(ObjInt, INT, 2)
 
-    if (chown(argv_0->chars, argv_1->value, argv_2->value) == 0)
+    if (chown(argv_0->chars, mpz_get_si(argv_1->value), mpz_get_si(argv_2->value)) == 0)
         OK(new_nil());
 
     ERR("Could not change ownership of file '%.*s'", argv_0->raw_length, argv_0->chars)

@@ -1,8 +1,6 @@
 #ifndef lox_builtin_h
 #define lox_builtin_h
 
-#include <math.h>
-
 #include "common.h"
 #include "memory.h"
 #include "object.h"
@@ -41,8 +39,6 @@ BLTIN_FN(print);
 BLTIN_FN(input);
 BLTIN_FN(argv);
 BLTIN_FN(run_gc);
-BLTIN_FN(parse_int);
-BLTIN_FN(parse_float);
 BLTIN_FN(sleep);
 BLTIN_FN(type);
 BLTIN_FN(repr);

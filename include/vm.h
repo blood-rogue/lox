@@ -32,7 +32,7 @@ typedef struct {
     Module *current_module;
     uint8_t module_count;
 
-    ObjString *init_string;
+    ObjString *method_names[14];
     ObjUpvalue *open_upvalues;
 
     size_t bytes_allocated;

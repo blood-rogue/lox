@@ -50,23 +50,22 @@ static NativeResult _digest_sha2_init(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
-    switch (argv_0->value) {
-        case 0:
-            return md_init("SHA2-224", AS_INSTANCE(caller));
-        case 1:
-            return md_init("SHA2-256", AS_INSTANCE(caller));
-        case 2:
-            return md_init("SHA2-384", AS_INSTANCE(caller));
-        case 3:
-            return md_init("SHA2-512", AS_INSTANCE(caller));
-        case 4:
-            return md_init("SHA2-512/224", AS_INSTANCE(caller));
-        case 5:
-            return md_init("SHA2-512/256", AS_INSTANCE(caller));
-        default:
-            ERR("Invalid argument. Can only be of variant 224, 256, 384, 512, 512/224 or "
-                "512/256.")
-    }
+    if (mpz_cmp_si(argv_0->value, 0) == 0)
+        return md_init("SHA2-224", AS_INSTANCE(caller));
+    else if (mpz_cmp_si(argv_0->value, 1) == 0)
+        return md_init("SHA2-256", AS_INSTANCE(caller));
+    else if (mpz_cmp_si(argv_0->value, 2) == 0)
+        return md_init("SHA2-384", AS_INSTANCE(caller));
+    else if (mpz_cmp_si(argv_0->value, 3) == 0)
+        return md_init("SHA2-512", AS_INSTANCE(caller));
+    else if (mpz_cmp_si(argv_0->value, 4) == 0)
+        return md_init("SHA2-512/224", AS_INSTANCE(caller));
+    else if (mpz_cmp_si(argv_0->value, 5) == 0)
+        return md_init("SHA2-512/256", AS_INSTANCE(caller));
+    else
+        ERR("Invalid bit count %s. Can only be of size 224, 256, 384, 512, 512/224 or "
+            "512/256.",
+            mpz_get_str(NULL, 10, argv_0->value))
 }
 
 ObjClass *get_crypto_digest_sha2_class() {
@@ -80,7 +79,7 @@ ObjClass *get_crypto_digest_sha2_class() {
         SET_BUILTIN_FN_STATIC("hash512_224", _digest_sha2_hash512_224);
         SET_BUILTIN_FN_STATIC("hash512_256", _digest_sha2_hash512_256);
 
-        SET_BUILTIN_FN_METHOD("init", _digest_sha2_init);
+        SET_BUILTIN_FN_METHOD("__init", _digest_sha2_init);
         SET_BUILTIN_FN_METHOD("update", md_update);
         SET_BUILTIN_FN_METHOD("finish", md_finish);
 

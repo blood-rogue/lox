@@ -24,7 +24,7 @@ ObjClass *get_db_sqlite3_class() {
     if (_db_sqlite3_class == NULL) {
         ObjClass *klass = new_builtin_class("SQLite3");
 
-        SET_BUILTIN_FN_METHOD("init", _db_sqlite3_class_init);
+        SET_BUILTIN_FN_METHOD("__init", _db_sqlite3_class_init);
 
         _db_sqlite3_class = klass;
     }

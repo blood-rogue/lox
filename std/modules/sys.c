@@ -31,20 +31,20 @@ static NativeResult _sys_getcwd(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller
 static NativeResult _sys_getuid(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(0)
 
-    OK(new_int(getuid()));
+    OK(new_int_i(getuid()));
 }
 
 static NativeResult _sys_getgid(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(0)
 
-    OK(new_int(getgid()));
+    OK(new_int_i(getgid()));
 }
 
 static NativeResult _sys_setuid(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
-    if (setuid(argv_0->value) == 0)
+    if (setuid(mpz_get_ui(argv_0->value)) == 0)
         OK(new_nil());
 
     ERR("Could not set uid.")
@@ -54,7 +54,7 @@ static NativeResult _sys_setgid(int argc, Obj **argv, UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
-    if (setgid(argv_0->value) == 0)
+    if (setgid(mpz_get_ui(argv_0->value)) == 0)
         OK(new_nil());
 
     ERR("Could not set gid.")
@@ -75,7 +75,7 @@ static NativeResult _sys_chdir(int argc, Obj **argv, UNUSED(Obj *caller)) {
 static NativeResult _sys_getpid(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(0)
 
-    OK(new_int(getpid()));
+    OK(new_int_i(getpid()));
 }
 
 ObjModule *get_sys_module(int count, UNUSED(char **parts)) {

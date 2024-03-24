@@ -59,9 +59,9 @@ static json_object *obj_to_json(Obj *obj, char **err) {
         case OBJ_BOOL:
             return json_object_new_boolean(AS_BOOL(obj)->value);
         case OBJ_INT:
-            return json_object_new_int64(AS_INT(obj)->value);
+            return json_object_new_int64(mpz_get_si(AS_INT(obj)->value));
         case OBJ_FLOAT:
-            return json_object_new_double(AS_FLOAT(obj)->value);
+            return json_object_new_double(mpfr_get_d(AS_FLOAT(obj)->value, MPFR_RNDD));
         case OBJ_NIL:
             return json_object_new_null();
         case OBJ_STRING:
@@ -88,7 +88,7 @@ static NativeResult _serde_json_serialize(int argc, Obj **argv, UNUSED(Obj *call
     if (json_obj == NULL)
         ERR("JSON error: %s", err)
 
-    const char *json = json_object_to_json_string_ext(json_obj, argv_1->value);
+    const char *json = json_object_to_json_string_ext(json_obj, mpz_get_si(argv_1->value));
     ObjString *str = new_string(json, strlen(json));
 
     json_object_put(json_obj);
@@ -104,9 +104,9 @@ static Obj *json_to_obj(json_object *json) {
         case json_type_null:
             return AS_OBJ(new_nil());
         case json_type_double:
-            return AS_OBJ(new_float(json_object_get_double(json)));
+            return AS_OBJ(new_float_d(json_object_get_double(json)));
         case json_type_int:
-            return AS_OBJ(new_int(json_object_get_int64(json)));
+            return AS_OBJ(new_int_i(json_object_get_int64(json)));
         case json_type_string:
             return AS_OBJ(
                 new_string(json_object_get_string(json), json_object_get_string_len(json)));

@@ -31,7 +31,7 @@ static NativeResult _sys_group_by_id(int argc, Obj **argv, UNUSED(Obj *caller)) 
     CHECK_ARG_COUNT(1)
     CHECK_ARG_TYPE(ObjInt, INT, 0)
 
-    struct group *grp = getgrgid(argv_0->value);
+    struct group *grp = getgrgid(mpz_get_ui(argv_0->value));
 
     ObjInstance *instance = new_instance(_sys_group_class);
 

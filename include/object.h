@@ -1,6 +1,8 @@
 #ifndef lox_object_h
 #define lox_object_h
 
+#include <gmp.h>
+#include <mpfr.h>
 #include <unitypes.h>
 
 #include "array.h"
@@ -99,7 +101,7 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    int64_t value;
+    mpz_t value;
 } ObjInt;
 
 typedef struct {
@@ -130,7 +132,7 @@ typedef struct {
 
 typedef struct {
     Obj obj;
-    double value;
+    mpfr_t value;
 } ObjFloat;
 
 typedef struct {
@@ -201,13 +203,21 @@ typedef struct {
 } ObjNativeStruct;
 
 ObjNil *new_nil();
-ObjInt *new_int(int64_t);
+
+ObjInt *new_int(mpz_t);
+ObjInt *new_int_i(int64_t);
+ObjInt *new_int_s(char *, int);
+
 ObjMap *new_map(Obj **, int);
 ObjChar *new_char(ucs4_t);
 ObjList *new_list(Obj **, int);
 ObjBool *new_bool(bool);
 ObjBytes *new_bytes(const uint8_t *, int);
-ObjFloat *new_float(double);
+
+ObjFloat *new_float(mpfr_t);
+ObjFloat *new_float_d(double);
+ObjFloat *new_float_s(char *, int);
+
 ObjString *new_string(const char *, int);
 
 ObjClosure *new_closure(ObjFunction *);

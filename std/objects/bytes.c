@@ -2,9 +2,14 @@
 
 #include "builtins.h"
 
+static NativeResult _bytes_new(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
+    CHECK_ARG_COUNT(0)
+    OK(new_bytes(NULL, 0));
+}
+
 static NativeResult _bytes_len(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
-    OK(new_int(AS_BYTES(caller)->length));
+    OK(new_int_i(AS_BYTES(caller)->length));
 }
 
 static NativeResult _bytes_decode(int argc, UNUSED(Obj **argv), Obj *caller) {
@@ -46,6 +51,8 @@ static ObjClass *_bytes_class = NULL;
 ObjClass *get_bytes_class() {
     if (_bytes_class == NULL) {
         ObjClass *klass = new_builtin_class("Bytes");
+
+        SET_BUILTIN_FN_STATIC("__new", _bytes_new);
 
         SET_BUILTIN_FN_METHOD("len", _bytes_len);
         SET_BUILTIN_FN_METHOD("hex_lower", _bytes_hex_lower);

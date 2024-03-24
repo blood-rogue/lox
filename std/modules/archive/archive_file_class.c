@@ -109,7 +109,7 @@ static NativeResult _archive_file_extract(int argc, Obj **argv, Obj *caller) {
     struct archive_entry *entry;
 
     struct archive *ext = archive_write_disk_new();
-    archive_write_disk_set_options(ext, argv_0->value);
+    archive_write_disk_set_options(ext, mpz_get_si(argv_0->value));
     archive_write_disk_set_standard_lookup(ext);
 
     int r;

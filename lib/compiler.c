@@ -1,5 +1,4 @@
 #include <ctype.h>
-#include <math.h>
 #include <unistr.h>
 #include <unitypes.h>
 
@@ -456,8 +455,20 @@ static void index_(bool can_assign) {
         emit_byte(OP_GET_INDEX);
 }
 
-static void float_(bool) { emit_constant(AS_OBJ(new_float(strtod(parser.previous.start, NULL)))); }
-static void int_(bool) { emit_constant(AS_OBJ(new_int(strtol(parser.previous.start, NULL, 10)))); }
+static void float_(bool) {
+    char *s = malloc(parser.previous.length + 1);
+    memcpy(s, parser.previous.start, parser.previous.length);
+    s[parser.previous.length] = '\0';
+
+    emit_constant(AS_OBJ(new_float_s(s, 10)));
+}
+static void int_(bool) {
+    char *s = malloc(parser.previous.length + 1);
+    memcpy(s, parser.previous.start, parser.previous.length);
+    s[parser.previous.length] = '\0';
+
+    emit_constant(AS_OBJ(new_int_s(s, 10)));
+}
 
 static void or (bool) {
     int else_jump = emit_jump(OP_JUMP_IF_FALSE);
@@ -918,7 +929,7 @@ static void method(bool is_static) {
     consume(TOKEN_IDENTIFIER, "Expect method name.");
     uint8_t constant = identifier_constant(&parser.previous);
 
-    if (parser.previous.length == 4 && memcmp(parser.previous.start, "init", 4) == 0) {
+    if (parser.previous.length == 6 && memcmp(parser.previous.start, "__init", 6) == 0) {
         type = TYPE_INITIALIZER;
     }
 

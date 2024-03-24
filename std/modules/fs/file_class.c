@@ -78,7 +78,7 @@ static NativeResult _fs_file_is_a_tty(int argc, UNUSED(Obj **argv), Obj *caller)
     Obj *fd_obj;
     table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
 
-    int64_t fd = AS_INT(fd_obj)->value;
+    int64_t fd = mpz_get_si(AS_INT(fd_obj)->value);
     OK(new_bool(isatty(fd)));
 }
 
@@ -116,10 +116,10 @@ static NativeResult _fs_file_seek(int argc, Obj **argv, Obj *caller) {
     ObjInstance *file_instance = AS_INSTANCE(caller);
     GET_INTERNAL(FILE *, file);
 
-    int64_t offset = argv_0->value;
-    int64_t whence = argv_1->value;
+    int64_t offset = mpz_get_si(argv_0->value);
+    int64_t whence = mpz_get_si(argv_1->value);
 
-    OK(new_int(fseek(file, offset, whence)));
+    OK(new_int_i(fseek(file, offset, whence)));
 }
 
 static NativeResult _fs_file_tell(int argc, UNUSED(Obj **argv), Obj *caller) {
@@ -128,7 +128,7 @@ static NativeResult _fs_file_tell(int argc, UNUSED(Obj **argv), Obj *caller) {
     ObjInstance *file_instance = AS_INSTANCE(caller);
     GET_INTERNAL(FILE *, file);
 
-    OK(new_int(ftell(file)));
+    OK(new_int_i(ftell(file)));
 }
 
 static NativeResult _fs_file_dup(int argc, UNUSED(Obj **argv), Obj *caller) {
@@ -139,9 +139,9 @@ static NativeResult _fs_file_dup(int argc, UNUSED(Obj **argv), Obj *caller) {
     Obj *fd_obj;
     table_get(&instance->fields, AS_OBJ(new_string("fd", 2)), &fd_obj);
 
-    int64_t fd = AS_INT(fd_obj)->value;
+    int64_t fd = mpz_get_si(AS_INT(fd_obj)->value);
 
-    OK(new_int(dup(fd)));
+    OK(new_int_i(dup(fd)));
 }
 
 ObjClass *get_fs_file_class() {

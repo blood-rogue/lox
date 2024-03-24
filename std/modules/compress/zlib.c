@@ -15,7 +15,7 @@ static NativeResult _compress_zlib_compress(int argc, Obj **argv, UNUSED(Obj *ca
     uLong dest_len = compressBound(bytes->length);
     Bytef *dest = malloc(dest_len);
 
-    if (compress2(dest, &dest_len, bytes->bytes, bytes->length, argv_1->value) != Z_OK)
+    if (compress2(dest, &dest_len, bytes->bytes, bytes->length, mpz_get_si(argv_1->value)) != Z_OK)
         ERR("Could not compress data.")
 
     dest = realloc(dest, dest_len);
