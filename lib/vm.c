@@ -5,10 +5,10 @@
 #include <unistr.h>
 #include <unitypes.h>
 
-#include "builtins.h"
 #include "common.h"
 #include "compiler.h"
 #include "memory.h"
+#include "native.h"
 #include "object.h"
 #include "vm.h"
 
@@ -182,23 +182,23 @@ void init_vm() {
     table_set(&vm.globals, AS_OBJ(get_list_class()->name), AS_OBJ(get_list_class()));
     table_set(&vm.globals, AS_OBJ(get_map_class()->name), AS_OBJ(get_map_class()));
 
-#define SET_BLTIN_FN(name, fn)                                                                     \
+#define SET_NATIVE_FN(name, fn)                                                                    \
     table_set(                                                                                     \
         &vm.globals,                                                                               \
         AS_OBJ(new_string(name, strlen(name))),                                                    \
-        AS_OBJ(new_builtin_function(fn, name)))
+        AS_OBJ(new_native_function(fn, name)))
 
-    SET_BLTIN_FN("exit", exit_builtin_function);
-    SET_BLTIN_FN("print", print_builtin_function);
-    SET_BLTIN_FN("input", input_builtin_function);
-    SET_BLTIN_FN("argv", argv_builtin_function);
-    SET_BLTIN_FN("run_gc", run_gc_builtin_function);
-    SET_BLTIN_FN("sleep", sleep_builtin_function);
-    SET_BLTIN_FN("type", type_builtin_function);
-    SET_BLTIN_FN("repr", repr_builtin_function);
-    SET_BLTIN_FN("assert", assert_builtin_function);
+    SET_NATIVE_FN("exit", exit_native_function);
+    SET_NATIVE_FN("print", print_native_function);
+    SET_NATIVE_FN("input", input_native_function);
+    SET_NATIVE_FN("argv", argv_native_function);
+    SET_NATIVE_FN("run_gc", run_gc_native_function);
+    SET_NATIVE_FN("sleep", sleep_native_function);
+    SET_NATIVE_FN("type", type_native_function);
+    SET_NATIVE_FN("repr", repr_native_function);
+    SET_NATIVE_FN("assert", assert_native_function);
 
-#undef SET_BLTIN_FN
+#undef SET_NATIVE_FN
 }
 
 void free_vm() {
@@ -302,10 +302,10 @@ static int call_object(Obj *callee, int argc, Obj *caller) {
             }
         case OBJ_CLOSURE:
             return call(AS_CLOSURE(callee), argc);
-        case OBJ_BUILTIN_FUNCTION:
+        case OBJ_NATIVE_FUNCTION:
             {
-                NativeFn builtin = AS_BUILTIN_FUNCTION(callee)->method;
-                NativeResult result = builtin(argc, vm.stack_top - argc, caller);
+                NativeFn native = AS_NATIVE_FUNCTION(callee)->method;
+                NativeResult result = native(argc, vm.stack_top - argc, caller);
 
                 if (result.error != NULL) {
                     runtime_error(result.error);
@@ -502,41 +502,6 @@ static InterpretResult run() {
 #define READ_SHORT()    (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
 #define READ_CONSTANT() (frame->closure->function->chunk.constants.values[READ_BYTE()])
 #define READ_STRING()   AS_STRING(READ_CONSTANT())
-
-    // #define BINARY_OP(new_func_int, new_func_float, op)
-    //     {
-    //         if (IS_INT(peek(0)) && IS_INT(peek(1))) {
-    //             Obj *b = pop();
-    //             Obj *a = pop();
-    //             push(AS_OBJ(new_func_int(AS_INT(a)->value op AS_INT(b)->value)));
-    //         } else if (IS_FLOAT(peek(0)) && IS_FLOAT(peek(1))) {
-    //             Obj *b = pop();
-    //             Obj *a = pop();
-    //             push(AS_OBJ(new_func_float(AS_FLOAT(a)->value op AS_FLOAT(b)->value)));
-    //         } else {
-    //             runtime_error(
-    //                 "Unsupported operand types for '%s': '%s' and '%s'.",
-    //                 #op,
-    //                 get_obj_kind(peek(0)),
-    //                 get_obj_kind(peek(1)));
-    //             return INTERPRET_RUNTIME_ERROR;
-    //         }
-    //     }
-    // #define BINARY_INT_OP(new_func, op)
-    //     {
-    //         if (IS_INT(peek(0)) && IS_INT(peek(1))) {
-    //             Obj *b = pop();
-    //             Obj *a = pop();
-    //             push(AS_OBJ(new_func(AS_INT(a)->value op AS_INT(b)->value)));
-    //         } else {
-    //             runtime_error(
-    //                 "Unsupported operand types for '%s': '%s' and '%s'.",
-    //                 #op,
-    //                 get_obj_kind(peek(0)),
-    //                 get_obj_kind(peek(1)));
-    //             return INTERPRET_RUNTIME_ERROR;
-    //         }
-    //     }
 
     for (;;) {
 #ifdef DEBUG
@@ -883,9 +848,9 @@ static InterpretResult run() {
                     if (IS_INSTANCE(peek(1))) {
                         ObjInstance *instance = AS_INSTANCE(peek(1));
 
-                        if (instance->obj.klass->is_builtin) {
+                        if (instance->obj.klass->is_native) {
                             runtime_error(
-                                "Cannot set property of instance of builtin class '%s'.",
+                                "Cannot set property of instance of native class '%s'.",
                                 instance->obj.klass->name->chars);
                             return INTERPRET_RUNTIME_ERROR;
                         }
@@ -900,9 +865,9 @@ static InterpretResult run() {
                     } else if (IS_CLASS(peek(1))) {
                         ObjClass *klass = AS_CLASS(peek(1));
 
-                        if (klass->is_builtin) {
+                        if (klass->is_native) {
                             runtime_error(
-                                "Cannot set property of builtin class '%.*s'.",
+                                "Cannot set property of native class '%.*s'.",
                                 klass->name->raw_length,
                                 klass->name->chars);
                             return INTERPRET_RUNTIME_ERROR;
@@ -956,11 +921,16 @@ static InterpretResult run() {
                     Obj *a = peek(1);
 
                     Obj *op;
-                    table_get(&a->klass->statics, AS_OBJ(new_string("__add", 5)), &op);
-
-                    call_object(op, 2, a);
+                    if (table_get(&a->klass->statics, AS_OBJ(_eq_string), &op)) {
+                        if (!call_object(op, 2, a)) {
+                            runtime_error("Invalid method signature.");
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
+                    } else {
+                        runtime_error("Invalid operation.");
+                        return INTERPRET_RUNTIME_ERROR;
+                    }
                 }
-                // TODO
                 break;
             case OP_GREATER:
                 // TODO

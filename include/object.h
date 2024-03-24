@@ -10,47 +10,47 @@
 #include "common.h"
 #include "table.h"
 
-#define NUM_OBJS                 18
+#define NUM_OBJS                18
 
-#define AS_OBJ(obj)              ((Obj *)(obj))
+#define AS_OBJ(obj)             ((Obj *)(obj))
 
-#define IS_NIL(obj)              (obj->type == OBJ_NIL)
-#define IS_INT(obj)              (obj->type == OBJ_INT)
-#define IS_MAP(obj)              (obj->type == OBJ_MAP)
-#define IS_CHAR(obj)             (obj->type == OBJ_CHAR)
-#define IS_LIST(obj)             (obj->type == OBJ_LIST)
-#define IS_BOOL(obj)             (obj->type == OBJ_BOOL)
-#define IS_BYTES(obj)            (obj->type == OBJ_BYTES)
-#define IS_FLOAT(obj)            (obj->type == OBJ_FLOAT)
-#define IS_STRING(obj)           (obj->type == OBJ_STRING)
-#define IS_CLOSURE(obj)          (obj->type == OBJ_CLOSURE)
-#define IS_FUNCTION(obj)         (obj->type == OBJ_FUNCTION)
-#define IS_UPVALUE(obj)          (obj->type == OBJ_UPVALUE)
-#define IS_CLASS(obj)            (obj->type == OBJ_CLASS)
-#define IS_INSTANCE(obj)         (obj->type == OBJ_INSTANCE)
-#define IS_BOUND_METHOD(obj)     (obj->type == OBJ_BOUND_METHOD)
-#define IS_MODULE(obj)           (obj->type == OBJ_MODULE)
-#define IS_BUILTIN_FUNCTION(obj) (obj->type == OBJ_BUILTIN_FUNCTION)
-#define IS_NATIVE_STRUCT(obj)    (obj->type == OBJ_NATIVE_STRUCT)
+#define IS_NIL(obj)             (obj->type == OBJ_NIL)
+#define IS_INT(obj)             (obj->type == OBJ_INT)
+#define IS_MAP(obj)             (obj->type == OBJ_MAP)
+#define IS_CHAR(obj)            (obj->type == OBJ_CHAR)
+#define IS_LIST(obj)            (obj->type == OBJ_LIST)
+#define IS_BOOL(obj)            (obj->type == OBJ_BOOL)
+#define IS_BYTES(obj)           (obj->type == OBJ_BYTES)
+#define IS_FLOAT(obj)           (obj->type == OBJ_FLOAT)
+#define IS_STRING(obj)          (obj->type == OBJ_STRING)
+#define IS_CLOSURE(obj)         (obj->type == OBJ_CLOSURE)
+#define IS_FUNCTION(obj)        (obj->type == OBJ_FUNCTION)
+#define IS_UPVALUE(obj)         (obj->type == OBJ_UPVALUE)
+#define IS_CLASS(obj)           (obj->type == OBJ_CLASS)
+#define IS_INSTANCE(obj)        (obj->type == OBJ_INSTANCE)
+#define IS_BOUND_METHOD(obj)    (obj->type == OBJ_BOUND_METHOD)
+#define IS_MODULE(obj)          (obj->type == OBJ_MODULE)
+#define IS_NATIVE_FUNCTION(obj) (obj->type == OBJ_NATIVE_FUNCTION)
+#define IS_NATIVE_STRUCT(obj)   (obj->type == OBJ_NATIVE_STRUCT)
 
-#define AS_NIL(obj)              ((ObjNil *)(obj))
-#define AS_INT(obj)              ((ObjInt *)(obj))
-#define AS_MAP(obj)              ((ObjMap *)(obj))
-#define AS_CHAR(obj)             ((ObjChar *)(obj))
-#define AS_LIST(obj)             ((ObjList *)(obj))
-#define AS_BOOL(obj)             ((ObjBool *)(obj))
-#define AS_BYTES(obj)            ((ObjBytes *)(obj))
-#define AS_FLOAT(obj)            ((ObjFloat *)(obj))
-#define AS_STRING(obj)           ((ObjString *)(obj))
-#define AS_CLOSURE(obj)          ((ObjClosure *)(obj))
-#define AS_FUNCTION(obj)         ((ObjFunction *)(obj))
-#define AS_UPVALUE(obj)          ((ObjUpvalue *)(obj))
-#define AS_CLASS(obj)            ((ObjClass *)(obj))
-#define AS_INSTANCE(obj)         ((ObjInstance *)(obj))
-#define AS_BOUND_METHOD(obj)     ((ObjBoundMethod *)(obj))
-#define AS_MODULE(obj)           ((ObjModule *)(obj))
-#define AS_BUILTIN_FUNCTION(obj) ((ObjNativeFunction *)(obj))
-#define AS_NATIVE_STRUCT(obj)    ((ObjNativeStruct *)(obj))
+#define AS_NIL(obj)             ((ObjNil *)(obj))
+#define AS_INT(obj)             ((ObjInt *)(obj))
+#define AS_MAP(obj)             ((ObjMap *)(obj))
+#define AS_CHAR(obj)            ((ObjChar *)(obj))
+#define AS_LIST(obj)            ((ObjList *)(obj))
+#define AS_BOOL(obj)            ((ObjBool *)(obj))
+#define AS_BYTES(obj)           ((ObjBytes *)(obj))
+#define AS_FLOAT(obj)           ((ObjFloat *)(obj))
+#define AS_STRING(obj)          ((ObjString *)(obj))
+#define AS_CLOSURE(obj)         ((ObjClosure *)(obj))
+#define AS_FUNCTION(obj)        ((ObjFunction *)(obj))
+#define AS_UPVALUE(obj)         ((ObjUpvalue *)(obj))
+#define AS_CLASS(obj)           ((ObjClass *)(obj))
+#define AS_INSTANCE(obj)        ((ObjInstance *)(obj))
+#define AS_BOUND_METHOD(obj)    ((ObjBoundMethod *)(obj))
+#define AS_MODULE(obj)          ((ObjModule *)(obj))
+#define AS_NATIVE_FUNCTION(obj) ((ObjNativeFunction *)(obj))
+#define AS_NATIVE_STRUCT(obj)   ((ObjNativeStruct *)(obj))
 
 typedef enum {
     OBJ_NIL = 1 << 0,
@@ -73,7 +73,7 @@ typedef enum {
 
     OBJ_MODULE = 1 << 15,
 
-    OBJ_BUILTIN_FUNCTION = 1 << 16,
+    OBJ_NATIVE_FUNCTION = 1 << 16,
     OBJ_NATIVE_STRUCT = 1 << 17
 } ObjType;
 
@@ -167,7 +167,7 @@ typedef struct {
 typedef struct ObjClass {
     Obj obj;
     ObjString *name;
-    bool is_builtin;
+    bool is_native;
     Table fields;
     Table methods;
     Table statics;
@@ -229,13 +229,13 @@ ObjInstance *new_instance(ObjClass *);
 ObjBoundMethod *new_bound_method(Obj *, Obj *);
 ObjModule *new_module(const char *);
 
-ObjNativeFunction *new_builtin_function(NativeFn, char *);
+ObjNativeFunction *new_native_function(NativeFn, char *);
 ObjNativeStruct *new_native_struct(void *, FreeFn);
 
 ObjList *argv_list(int, const char **);
 ObjBytes *take_bytes(uint8_t *, int);
 ObjString *take_string(char *, int);
-ObjClass *new_builtin_class(char *);
+ObjClass *new_native_class(char *);
 
 int utf_strlen(char *);
 

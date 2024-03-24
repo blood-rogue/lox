@@ -2,7 +2,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjModule *_fs_module = NULL;
 
@@ -118,12 +118,12 @@ ObjModule *get_fs_module(int count, UNUSED(char **parts)) {
         SET_INT_MEMBER("SEEK_SET", SEEK_SET);
         SET_INT_MEMBER("SEEK_CUR", SEEK_CUR);
 
-        SET_BUILTIN_FN_MEMBER("dup2", _fs_dup2);
-        SET_BUILTIN_FN_MEMBER("chown", _fs_chown);
-        SET_BUILTIN_FN_MEMBER("link", _fs_link);
-        SET_BUILTIN_FN_MEMBER("unlink", _fs_unlink);
-        SET_BUILTIN_FN_MEMBER("symlink", _fs_symlink);
-        SET_BUILTIN_FN_MEMBER("rmdir", _fs_rmdir);
+        SET_NATIVE_FN_MEMBER("dup2", _fs_dup2);
+        SET_NATIVE_FN_MEMBER("chown", _fs_chown);
+        SET_NATIVE_FN_MEMBER("link", _fs_link);
+        SET_NATIVE_FN_MEMBER("unlink", _fs_unlink);
+        SET_NATIVE_FN_MEMBER("symlink", _fs_symlink);
+        SET_NATIVE_FN_MEMBER("rmdir", _fs_rmdir);
 
         SET_MEMBER("STDIN", set_file_instance(stdin, new_instance(get_fs_file_class())));
         SET_MEMBER("STDOUT", set_file_instance(stdout, new_instance(get_fs_file_class())));

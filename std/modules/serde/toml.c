@@ -1,5 +1,5 @@
 #include "toml.h"
-#include "builtins.h"
+#include "native.h"
 
 static ObjModule *_serde_toml_module = NULL;
 
@@ -115,7 +115,7 @@ ObjModule *get_serde_toml_module() {
     if (_serde_toml_module == NULL) {
         ObjModule *module = new_module("toml");
 
-        SET_BUILTIN_FN_MEMBER("deserialize", _serde_toml_deserialize);
+        SET_NATIVE_FN_MEMBER("deserialize", _serde_toml_deserialize);
 
         _serde_toml_module = module;
     }

@@ -1,4 +1,4 @@
-#include "builtins.h"
+#include "native.h"
 
 static NativeResult _map_len(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
@@ -44,13 +44,13 @@ static ObjClass *_map_class = NULL;
 
 ObjClass *get_map_class() {
     if (_map_class == NULL) {
-        ObjClass *klass = new_builtin_class("Map");
+        ObjClass *klass = new_native_class("Map");
 
-        SET_BUILTIN_FN_STATIC("__new", _map_new);
+        SET_NATIVE_FN_STATIC("__new", _map_new);
 
-        SET_BUILTIN_FN_METHOD("len", _map_len);
-        SET_BUILTIN_FN_METHOD("keys", _map_keys);
-        SET_BUILTIN_FN_METHOD("values", _map_values);
+        SET_NATIVE_FN_METHOD("len", _map_len);
+        SET_NATIVE_FN_METHOD("keys", _map_keys);
+        SET_NATIVE_FN_METHOD("values", _map_values);
 
         _map_class = klass;
     }

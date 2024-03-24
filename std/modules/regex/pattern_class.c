@@ -2,7 +2,7 @@
 
 #include <pcre2.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjClass *_regex_pattern_class = NULL;
 
@@ -140,11 +140,11 @@ static NativeResult _regex_pattern_free(int argc, UNUSED(Obj **argv), Obj *calle
 
 ObjClass *get_regex_pattern_class() {
     if (_regex_pattern_class == NULL) {
-        ObjClass *klass = new_builtin_class("Pattern");
+        ObjClass *klass = new_native_class("Pattern");
 
-        SET_BUILTIN_FN_METHOD("search", _regex_pattern_search);
-        SET_BUILTIN_FN_METHOD("findall", _regex_pattern_findall);
-        SET_BUILTIN_FN_METHOD("free", _regex_pattern_free);
+        SET_NATIVE_FN_METHOD("search", _regex_pattern_search);
+        SET_NATIVE_FN_METHOD("findall", _regex_pattern_findall);
+        SET_NATIVE_FN_METHOD("free", _regex_pattern_free);
 
         _regex_pattern_class = klass;
     }

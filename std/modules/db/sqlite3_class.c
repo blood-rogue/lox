@@ -1,6 +1,6 @@
 #include <sqlite3.h>
 
-#include "builtins.h"
+#include "native.h"
 
 ObjClass *_db_sqlite3_class = NULL;
 
@@ -22,9 +22,9 @@ static NativeResult _db_sqlite3_class_init(int argc, Obj **argv, Obj *caller) {
 
 ObjClass *get_db_sqlite3_class() {
     if (_db_sqlite3_class == NULL) {
-        ObjClass *klass = new_builtin_class("SQLite3");
+        ObjClass *klass = new_native_class("SQLite3");
 
-        SET_BUILTIN_FN_METHOD("__init", _db_sqlite3_class_init);
+        SET_NATIVE_FN_METHOD("__init", _db_sqlite3_class_init);
 
         _db_sqlite3_class = klass;
     }

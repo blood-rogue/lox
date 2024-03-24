@@ -1,7 +1,7 @@
 #include <unicase.h>
 #include <unistr.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static NativeResult _string_to_upper(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
@@ -68,15 +68,15 @@ static ObjClass *_string_class = NULL;
 
 ObjClass *get_string_class() {
     if (_string_class == NULL) {
-        ObjClass *klass = new_builtin_class("String");
+        ObjClass *klass = new_native_class("String");
 
-        SET_BUILTIN_FN_STATIC("__new", _string_new);
+        SET_NATIVE_FN_STATIC("__new", _string_new);
 
-        SET_BUILTIN_FN_METHOD("to_upper", _string_to_upper);
-        SET_BUILTIN_FN_METHOD("to_lower", _string_to_lower);
-        SET_BUILTIN_FN_METHOD("to_title", _string_to_title);
-        SET_BUILTIN_FN_METHOD("len", _string_len);
-        SET_BUILTIN_FN_METHOD("find", _string_find);
+        SET_NATIVE_FN_METHOD("to_upper", _string_to_upper);
+        SET_NATIVE_FN_METHOD("to_lower", _string_to_lower);
+        SET_NATIVE_FN_METHOD("to_title", _string_to_title);
+        SET_NATIVE_FN_METHOD("len", _string_len);
+        SET_NATIVE_FN_METHOD("find", _string_find);
 
         _string_class = klass;
     }

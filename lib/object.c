@@ -1,7 +1,7 @@
 #include <unistr.h>
 
-#include "builtins.h"
 #include "memory.h"
+#include "native.h"
 #include "object.h"
 #include "vm.h"
 
@@ -138,7 +138,7 @@ ObjFloat *new_float(mpfr_t value) {
     ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
     float_->obj.klass = get_float_class();
 
-    mpfr_init_set(float_->value, value, MPFR_RNDD);
+    mpfr_init_set(float_->value, value, MPFR_RNDN);
 
     float_->obj.hash = (uint64_t)value;
 
@@ -149,7 +149,7 @@ ObjFloat *new_float_d(double value) {
     ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
     float_->obj.klass = get_float_class();
 
-    mpfr_init_set_d(float_->value, value, MPFR_RNDD);
+    mpfr_init_set_d(float_->value, value, MPFR_RNDN);
 
     float_->obj.hash = (uint64_t)value;
 
@@ -160,7 +160,7 @@ ObjFloat *new_float_s(char *value, int base) {
     ObjFloat *float_ = ALLOCATE_OBJ(ObjFloat, OBJ_FLOAT);
     float_->obj.klass = get_float_class();
 
-    mpfr_init_set_str(float_->value, value, base, MPFR_RNDD);
+    mpfr_init_set_str(float_->value, value, base, MPFR_RNDN);
 
     float_->obj.hash = (uint64_t)value;
 
@@ -218,7 +218,7 @@ ObjUpvalue *new_upvalue(Obj **slot) {
 ObjClass *new_class(ObjString *name) {
     ObjClass *klass = ALLOCATE_OBJ(ObjClass, OBJ_CLASS);
     klass->name = name;
-    klass->is_builtin = false;
+    klass->is_native = false;
     init_table(&klass->methods);
     init_table(&klass->statics);
     init_table(&klass->fields);
@@ -251,13 +251,13 @@ ObjModule *new_module(const char *name) {
     return module;
 }
 
-ObjNativeFunction *new_builtin_function(NativeFn fn, char *name) {
-    ObjNativeFunction *builtin = ALLOCATE_OBJ(ObjNativeFunction, OBJ_BUILTIN_FUNCTION);
+ObjNativeFunction *new_native_function(NativeFn fn, char *name) {
+    ObjNativeFunction *native = ALLOCATE_OBJ(ObjNativeFunction, OBJ_NATIVE_FUNCTION);
 
-    builtin->method = fn;
-    builtin->name = name;
+    native->method = fn;
+    native->name = name;
 
-    return builtin;
+    return native;
 }
 
 ObjNativeStruct *new_native_struct(void *ptr, FreeFn free_fn) {
@@ -307,9 +307,9 @@ ObjString *take_string(char *chars, int length) {
     return allocate_string(chars, length, hash);
 }
 
-ObjClass *new_builtin_class(char *name) {
+ObjClass *new_native_class(char *name) {
     ObjClass *klass = new_class(new_string(name, strlen(name)));
-    klass->is_builtin = true;
+    klass->is_native = true;
 
     return klass;
 }
@@ -378,18 +378,13 @@ static void print_bytes(ObjBytes *bytes) {
     printf("]");
 }
 
-static void print_float(ObjFloat *f) {
-    mpfr_exp_t e;
-    printf("%s", mpfr_get_str(NULL, &e, 10, 0, f->value, MPFR_RNDN));
-}
-
 void print_object(Obj *obj) {
     switch (obj->type) {
         case OBJ_NIL:
             printf("(nil)");
             break;
         case OBJ_FLOAT:
-            print_float(AS_FLOAT(obj));
+            mpfr_printf("%.5Rg", AS_FLOAT(obj)->value);
             break;
         case OBJ_INT:
             printf("%s", mpz_get_str(NULL, 10, AS_INT(obj)->value));
@@ -424,8 +419,8 @@ void print_object(Obj *obj) {
         case OBJ_INSTANCE:
             printf("<'%.*s' instance>", obj->klass->name->raw_length, obj->klass->name->chars);
             break;
-        case OBJ_BUILTIN_FUNCTION:
-            printf("<builtin fn '%s'>", AS_BUILTIN_FUNCTION(obj)->name);
+        case OBJ_NATIVE_FUNCTION:
+            printf("<native fn '%s'>", AS_NATIVE_FUNCTION(obj)->name);
             break;
         case OBJ_FUNCTION:
             print_function(AS_FUNCTION(obj));
@@ -543,7 +538,7 @@ static char *_OBJ_NAMES[] = {
     "INSTANCE",
     "BOUND_METHOD",
     "MODULE",
-    "BUILTIN_METHOD",
+    "NATIVE_METHOD",
     "NATIVE_STRUCT"};
 
 struct {

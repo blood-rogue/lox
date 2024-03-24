@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjModule *_sys_module = NULL;
 
@@ -91,14 +91,14 @@ ObjModule *get_sys_module(int count, UNUSED(char **parts)) {
         }
 
         SET_MEMBER("ENVIRON", _sys_environ);
-        SET_BUILTIN_FN_MEMBER("getenv", _sys_getenv);
-        SET_BUILTIN_FN_MEMBER("getcwd", _sys_getcwd);
-        SET_BUILTIN_FN_MEMBER("getuid", _sys_getuid);
-        SET_BUILTIN_FN_MEMBER("getgid", _sys_getgid);
-        SET_BUILTIN_FN_MEMBER("setuid", _sys_setuid);
-        SET_BUILTIN_FN_MEMBER("setgid", _sys_setgid);
-        SET_BUILTIN_FN_MEMBER("chdir", _sys_chdir);
-        SET_BUILTIN_FN_MEMBER("getpid", _sys_getpid);
+        SET_NATIVE_FN_MEMBER("getenv", _sys_getenv);
+        SET_NATIVE_FN_MEMBER("getcwd", _sys_getcwd);
+        SET_NATIVE_FN_MEMBER("getuid", _sys_getuid);
+        SET_NATIVE_FN_MEMBER("getgid", _sys_getgid);
+        SET_NATIVE_FN_MEMBER("setuid", _sys_setuid);
+        SET_NATIVE_FN_MEMBER("setgid", _sys_setgid);
+        SET_NATIVE_FN_MEMBER("chdir", _sys_chdir);
+        SET_NATIVE_FN_MEMBER("getpid", _sys_getpid);
 
         SET_MEMBER("User", get_sys_user_class());
         SET_MEMBER("Group", get_sys_group_class());

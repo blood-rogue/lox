@@ -1,6 +1,6 @@
 #include <yaml.h>
 
-#include "builtins.h"
+#include "native.h"
 
 ObjModule *_serde_yaml_module = NULL;
 
@@ -26,7 +26,7 @@ ObjModule *get_serde_yaml_module() {
     if (_serde_yaml_module == NULL) {
         ObjModule *module = new_module("yaml");
 
-        SET_BUILTIN_FN_MEMBER("deserialize", _serde_yaml_deserialize);
+        SET_NATIVE_FN_MEMBER("deserialize", _serde_yaml_deserialize);
 
         _serde_yaml_module = module;
     }

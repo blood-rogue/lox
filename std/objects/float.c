@@ -1,4 +1,4 @@
-#include "builtins.h"
+#include "native.h"
 
 static NativeResult _float_is_nan(int argc, UNUSED(Obj **argv), Obj *caller) {
     CHECK_ARG_COUNT(0)
@@ -24,13 +24,13 @@ static ObjClass *_float_class = NULL;
 
 ObjClass *get_float_class() {
     if (_float_class == NULL) {
-        ObjClass *klass = new_builtin_class("Float");
+        ObjClass *klass = new_native_class("Float");
 
-        SET_BUILTIN_FN_STATIC("__new", _float_new);
+        SET_NATIVE_FN_STATIC("__new", _float_new);
 
-        SET_BUILTIN_FN_METHOD("is_nan", _float_is_nan);
-        SET_BUILTIN_FN_METHOD("is_finite", _float_is_finite);
-        SET_BUILTIN_FN_METHOD("is_infinite", _float_is_infinite);
+        SET_NATIVE_FN_METHOD("is_nan", _float_is_nan);
+        SET_NATIVE_FN_METHOD("is_finite", _float_is_finite);
+        SET_NATIVE_FN_METHOD("is_infinite", _float_is_infinite);
 
         _float_class = klass;
     }

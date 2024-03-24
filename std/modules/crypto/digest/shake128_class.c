@@ -1,6 +1,6 @@
 #include <openssl/evp.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjClass *_digest_shake128_class = NULL;
 
@@ -19,13 +19,13 @@ static NativeResult _digest_shake128_init(int argc, UNUSED(Obj **argv), Obj *cal
 
 ObjClass *get_crypto_digest_shake128_class() {
     if (_digest_shake128_class == NULL) {
-        ObjClass *klass = new_builtin_class("Shake128");
+        ObjClass *klass = new_native_class("Shake128");
 
-        SET_BUILTIN_FN_STATIC("hash", _digest_shake128_hash);
+        SET_NATIVE_FN_STATIC("hash", _digest_shake128_hash);
 
-        SET_BUILTIN_FN_METHOD("__init", _digest_shake128_init);
-        SET_BUILTIN_FN_METHOD("update", md_update);
-        SET_BUILTIN_FN_METHOD("finish", md_finish);
+        SET_NATIVE_FN_METHOD("__init", _digest_shake128_init);
+        SET_NATIVE_FN_METHOD("update", md_update);
+        SET_NATIVE_FN_METHOD("finish", md_finish);
 
         _digest_shake128_class = klass;
     }

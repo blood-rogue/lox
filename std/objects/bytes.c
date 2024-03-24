@@ -1,6 +1,6 @@
 #include <unistr.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static NativeResult _bytes_new(int argc, UNUSED(Obj **argv), UNUSED(Obj *caller)) {
     CHECK_ARG_COUNT(0)
@@ -50,14 +50,14 @@ static ObjClass *_bytes_class = NULL;
 
 ObjClass *get_bytes_class() {
     if (_bytes_class == NULL) {
-        ObjClass *klass = new_builtin_class("Bytes");
+        ObjClass *klass = new_native_class("Bytes");
 
-        SET_BUILTIN_FN_STATIC("__new", _bytes_new);
+        SET_NATIVE_FN_STATIC("__new", _bytes_new);
 
-        SET_BUILTIN_FN_METHOD("len", _bytes_len);
-        SET_BUILTIN_FN_METHOD("hex_lower", _bytes_hex_lower);
-        SET_BUILTIN_FN_METHOD("hex_upper", _bytes_hex_upper);
-        SET_BUILTIN_FN_METHOD("decode", _bytes_decode);
+        SET_NATIVE_FN_METHOD("len", _bytes_len);
+        SET_NATIVE_FN_METHOD("hex_lower", _bytes_hex_lower);
+        SET_NATIVE_FN_METHOD("hex_upper", _bytes_hex_upper);
+        SET_NATIVE_FN_METHOD("decode", _bytes_decode);
 
         _bytes_class = klass;
     }

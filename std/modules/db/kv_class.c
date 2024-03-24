@@ -1,6 +1,6 @@
 #include <leveldb/c.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjClass *_db_kv_class = NULL;
 
@@ -94,13 +94,13 @@ static NativeResult _db_kv_close(int argc, UNUSED(Obj **argv), Obj *caller) {
 
 ObjClass *get_db_kv_class() {
     if (_db_kv_class == NULL) {
-        ObjClass *klass = new_builtin_class("KV");
+        ObjClass *klass = new_native_class("KV");
 
-        SET_BUILTIN_FN_METHOD("__init", _db_kv_init);
-        SET_BUILTIN_FN_METHOD("set", _db_kv_set);
-        SET_BUILTIN_FN_METHOD("get", _db_kv_get);
-        SET_BUILTIN_FN_METHOD("delete", _db_kv_delete);
-        SET_BUILTIN_FN_METHOD("close", _db_kv_close);
+        SET_NATIVE_FN_METHOD("__init", _db_kv_init);
+        SET_NATIVE_FN_METHOD("set", _db_kv_set);
+        SET_NATIVE_FN_METHOD("get", _db_kv_get);
+        SET_NATIVE_FN_METHOD("delete", _db_kv_delete);
+        SET_NATIVE_FN_METHOD("close", _db_kv_close);
 
         _db_kv_class = klass;
     }

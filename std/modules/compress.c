@@ -1,4 +1,4 @@
-#include "builtins.h"
+#include "native.h"
 
 static ObjModule *_compress_module = NULL;
 

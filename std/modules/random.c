@@ -1,4 +1,4 @@
-#include "builtins.h"
+#include "native.h"
 
 static ObjModule *_random_module = NULL;
 static gmp_randstate_t rstate;
@@ -30,8 +30,8 @@ ObjModule *get_random_module(int count, UNUSED(char **parts)) {
 
         gmp_randinit_mt(rstate);
 
-        SET_BUILTIN_FN_MEMBER("seed", _random_seed);
-        SET_BUILTIN_FN_MEMBER("randint", _random_randint);
+        SET_NATIVE_FN_MEMBER("seed", _random_seed);
+        SET_NATIVE_FN_MEMBER("randint", _random_randint);
         SET_INT_MEMBER("MAX_RANDOM", RAND_MAX);
 
         _random_module = module;

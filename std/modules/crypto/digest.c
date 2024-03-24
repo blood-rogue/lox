@@ -1,6 +1,6 @@
 #include <openssl/evp.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjModule *_digest_module = NULL;
 

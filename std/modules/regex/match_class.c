@@ -1,4 +1,4 @@
-#include "builtins.h"
+#include "native.h"
 
 static ObjClass *_regex_match_class = NULL;
 
@@ -27,9 +27,9 @@ static NativeResult _regex_match_group(int argc, Obj **argv, Obj *caller) {
 
 ObjClass *get_regex_match_class() {
     if (_regex_match_class == NULL) {
-        ObjClass *klass = new_builtin_class("Match");
+        ObjClass *klass = new_native_class("Match");
 
-        SET_BUILTIN_FN_METHOD("group", _regex_match_group);
+        SET_NATIVE_FN_METHOD("group", _regex_match_group);
 
         _regex_match_class = klass;
     }

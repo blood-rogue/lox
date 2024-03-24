@@ -116,7 +116,7 @@ static void free_object(Obj *object) {
                 FREE(ObjUpvalue, object);
                 break;
             }
-        case OBJ_BUILTIN_FUNCTION:
+        case OBJ_NATIVE_FUNCTION:
             {
                 FREE(ObjNativeFunction, object);
                 break;
@@ -237,7 +237,7 @@ static void blacken_object(Obj *object) {
                 mark_table(&module->globals);
                 break;
             }
-        case OBJ_BUILTIN_FUNCTION:
+        case OBJ_NATIVE_FUNCTION:
         case OBJ_NATIVE_STRUCT:
         case OBJ_STRING:
         case OBJ_BYTES:

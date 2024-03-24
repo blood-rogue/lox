@@ -1,6 +1,6 @@
 #include <openssl/evp.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjClass *_digest_sha2_class = NULL;
 
@@ -70,18 +70,18 @@ static NativeResult _digest_sha2_init(int argc, Obj **argv, Obj *caller) {
 
 ObjClass *get_crypto_digest_sha2_class() {
     if (_digest_sha2_class == NULL) {
-        ObjClass *klass = new_builtin_class("SHA2");
+        ObjClass *klass = new_native_class("SHA2");
 
-        SET_BUILTIN_FN_STATIC("hash224", _digest_sha2_hash224);
-        SET_BUILTIN_FN_STATIC("hash256", _digest_sha2_hash256);
-        SET_BUILTIN_FN_STATIC("hash384", _digest_sha2_hash384);
-        SET_BUILTIN_FN_STATIC("hash512", _digest_sha2_hash512);
-        SET_BUILTIN_FN_STATIC("hash512_224", _digest_sha2_hash512_224);
-        SET_BUILTIN_FN_STATIC("hash512_256", _digest_sha2_hash512_256);
+        SET_NATIVE_FN_STATIC("hash224", _digest_sha2_hash224);
+        SET_NATIVE_FN_STATIC("hash256", _digest_sha2_hash256);
+        SET_NATIVE_FN_STATIC("hash384", _digest_sha2_hash384);
+        SET_NATIVE_FN_STATIC("hash512", _digest_sha2_hash512);
+        SET_NATIVE_FN_STATIC("hash512_224", _digest_sha2_hash512_224);
+        SET_NATIVE_FN_STATIC("hash512_256", _digest_sha2_hash512_256);
 
-        SET_BUILTIN_FN_METHOD("__init", _digest_sha2_init);
-        SET_BUILTIN_FN_METHOD("update", md_update);
-        SET_BUILTIN_FN_METHOD("finish", md_finish);
+        SET_NATIVE_FN_METHOD("__init", _digest_sha2_init);
+        SET_NATIVE_FN_METHOD("update", md_update);
+        SET_NATIVE_FN_METHOD("finish", md_finish);
 
         _digest_sha2_class = klass;
     }

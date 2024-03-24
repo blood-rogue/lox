@@ -1,6 +1,6 @@
 #include <zlib.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjModule *_compress_zlib_module = NULL;
 
@@ -43,8 +43,8 @@ ObjModule *get_compress_zlib_module() {
     if (_compress_zlib_module == NULL) {
         ObjModule *module = new_module("zlib");
 
-        SET_BUILTIN_FN_MEMBER("compress", _compress_zlib_compress);
-        SET_BUILTIN_FN_MEMBER("decompress", _compress_zlib_decompress);
+        SET_NATIVE_FN_MEMBER("compress", _compress_zlib_compress);
+        SET_NATIVE_FN_MEMBER("decompress", _compress_zlib_decompress);
 
         _compress_zlib_module = module;
     }

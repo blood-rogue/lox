@@ -2,7 +2,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjClass *_fs_file_class = NULL;
 
@@ -146,18 +146,18 @@ static NativeResult _fs_file_dup(int argc, UNUSED(Obj **argv), Obj *caller) {
 
 ObjClass *get_fs_file_class() {
     if (_fs_file_class == NULL) {
-        ObjClass *klass = new_builtin_class("File");
+        ObjClass *klass = new_native_class("File");
 
-        SET_BUILTIN_FN_STATIC("open", _fs_file_open);
-        SET_BUILTIN_FN_STATIC("create", _fs_file_create);
+        SET_NATIVE_FN_STATIC("open", _fs_file_open);
+        SET_NATIVE_FN_STATIC("create", _fs_file_create);
 
-        SET_BUILTIN_FN_METHOD("read", _fs_file_read);
-        SET_BUILTIN_FN_METHOD("write", _fs_file_write);
-        SET_BUILTIN_FN_METHOD("close", _fs_file_close);
-        SET_BUILTIN_FN_METHOD("tell", _fs_file_tell);
-        SET_BUILTIN_FN_METHOD("seek", _fs_file_seek);
-        SET_BUILTIN_FN_METHOD("is_a_tty", _fs_file_is_a_tty);
-        SET_BUILTIN_FN_METHOD("dup", _fs_file_dup);
+        SET_NATIVE_FN_METHOD("read", _fs_file_read);
+        SET_NATIVE_FN_METHOD("write", _fs_file_write);
+        SET_NATIVE_FN_METHOD("close", _fs_file_close);
+        SET_NATIVE_FN_METHOD("tell", _fs_file_tell);
+        SET_NATIVE_FN_METHOD("seek", _fs_file_seek);
+        SET_NATIVE_FN_METHOD("is_a_tty", _fs_file_is_a_tty);
+        SET_NATIVE_FN_METHOD("dup", _fs_file_dup);
 
         _fs_file_class = klass;
     }

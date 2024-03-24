@@ -1,15 +1,15 @@
 #ifndef lox_modules_h
 #define lox_modules_h
 
-#include "builtins.h"
 #include "crypto.h"
+#include "native.h"
 
 #define SET_MEMBER(name, value)                                                                    \
     table_set(&module->globals, AS_OBJ(new_string(name, (int)strlen(name))), AS_OBJ(value))
 
-#define SET_INT_MEMBER(name, value)        SET_MEMBER(name, new_int_i(value))
-#define SET_FLOAT_MEMBER(name, value)      SET_MEMBER(name, new_float(value))
-#define SET_BUILTIN_FN_MEMBER(name, value) SET_MEMBER(name, new_builtin_function(value, name))
+#define SET_INT_MEMBER(name, value)       SET_MEMBER(name, new_int_i(value))
+#define SET_FLOAT_MEMBER(name, value)     SET_MEMBER(name, new_float(value))
+#define SET_NATIVE_FN_MEMBER(name, value) SET_MEMBER(name, new_native_function(value, name))
 
 #define SET_FIELD(name, value)                                                                     \
     table_set(&instance->fields, AS_OBJ(new_string(name, (int)strlen(name))), AS_OBJ(value))
@@ -22,12 +22,12 @@
 #define SET_STATIC(name, value)                                                                    \
     table_set(&klass->statics, AS_OBJ(new_string(name, (int)strlen(name))), AS_OBJ(value))
 
-#define SET_BUILTIN_FN_STATIC(name, value) SET_STATIC(name, new_builtin_function(value, name))
+#define SET_NATIVE_FN_STATIC(name, value) SET_STATIC(name, new_native_function(value, name))
 
 #define SET_METHOD(name, value)                                                                    \
     table_set(&klass->methods, AS_OBJ(new_string(name, (int)strlen(name))), AS_OBJ(value))
 
-#define SET_BUILTIN_FN_METHOD(name, value) SET_METHOD(name, new_builtin_function(value, name))
+#define SET_NATIVE_FN_METHOD(name, value) SET_METHOD(name, new_native_function(value, name))
 
 #define CHECK_PART_COUNT                                                                           \
     if (count != 0)                                                                                \
@@ -36,6 +36,7 @@
 ObjModule *get_module(int, char **);
 
 ObjModule *get_random_module(int, char **);
+ObjModule *get_math_module(int, char **);
 
 ObjModule *get_regex_module(int, char **);
 ObjClass *get_regex_match_class();

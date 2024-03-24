@@ -1,7 +1,7 @@
 #include <json-c/json.h>
 #include <unistr.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjModule *_serde_json_module = NULL;
 
@@ -61,7 +61,7 @@ static json_object *obj_to_json(Obj *obj, char **err) {
         case OBJ_INT:
             return json_object_new_int64(mpz_get_si(AS_INT(obj)->value));
         case OBJ_FLOAT:
-            return json_object_new_double(mpfr_get_d(AS_FLOAT(obj)->value, MPFR_RNDD));
+            return json_object_new_double(mpfr_get_d(AS_FLOAT(obj)->value, MPFR_RNDN));
         case OBJ_NIL:
             return json_object_new_null();
         case OBJ_STRING:
@@ -154,8 +154,8 @@ ObjModule *get_serde_json_module() {
     if (_serde_json_module == NULL) {
         ObjModule *module = new_module("json");
 
-        SET_BUILTIN_FN_MEMBER("serialize", _serde_json_serialize);
-        SET_BUILTIN_FN_MEMBER("deserialize", _serde_json_deserialize);
+        SET_NATIVE_FN_MEMBER("serialize", _serde_json_serialize);
+        SET_NATIVE_FN_MEMBER("deserialize", _serde_json_deserialize);
 
         SET_INT_MEMBER("TO_STRING_PLAIN", JSON_C_TO_STRING_PLAIN);
         SET_INT_MEMBER("TO_STRING_SPACED", JSON_C_TO_STRING_SPACED);

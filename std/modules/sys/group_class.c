@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjClass *_sys_group_class = NULL;
 
@@ -50,10 +50,10 @@ static NativeResult _sys_group_by_id(int argc, Obj **argv, UNUSED(Obj *caller)) 
 
 ObjClass *get_sys_group_class() {
     if (_sys_group_class == NULL) {
-        ObjClass *klass = new_builtin_class("Group");
+        ObjClass *klass = new_native_class("Group");
 
-        SET_BUILTIN_FN_STATIC("by_name", _sys_group_by_name);
-        SET_BUILTIN_FN_STATIC("by_id", _sys_group_by_id);
+        SET_NATIVE_FN_STATIC("by_name", _sys_group_by_name);
+        SET_NATIVE_FN_STATIC("by_id", _sys_group_by_id);
 
         _sys_group_class = klass;
     }

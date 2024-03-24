@@ -2,7 +2,7 @@
 
 #include <pcre2.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjModule *_regex_module = NULL;
 
@@ -205,11 +205,11 @@ ObjModule *get_regex_module(int count, UNUSED(char **parts)) {
     if (_regex_module == NULL) {
         ObjModule *module = new_module("regex");
 
-        SET_BUILTIN_FN_MEMBER("search", _regex_search);
-        SET_BUILTIN_FN_MEMBER("match", _regex_match);
-        SET_BUILTIN_FN_MEMBER("fullmatch", _regex_fullmatch);
-        SET_BUILTIN_FN_MEMBER("findall", _regex_findall);
-        SET_BUILTIN_FN_MEMBER("compile", _regex_compile);
+        SET_NATIVE_FN_MEMBER("search", _regex_search);
+        SET_NATIVE_FN_MEMBER("match", _regex_match);
+        SET_NATIVE_FN_MEMBER("fullmatch", _regex_fullmatch);
+        SET_NATIVE_FN_MEMBER("findall", _regex_findall);
+        SET_NATIVE_FN_MEMBER("compile", _regex_compile);
 
         _regex_module = module;
     }

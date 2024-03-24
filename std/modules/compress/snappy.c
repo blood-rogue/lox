@@ -1,6 +1,6 @@
 #include <snappy-c.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjModule *_compress_snappy_module = NULL;
 
@@ -40,8 +40,8 @@ ObjModule *get_compress_snappy_module() {
     if (_compress_snappy_module == NULL) {
         ObjModule *module = new_module("snappy");
 
-        SET_BUILTIN_FN_MEMBER("compress", _compress_snappy_compress);
-        SET_BUILTIN_FN_MEMBER("decompress", _compress_snappy_decompress);
+        SET_NATIVE_FN_MEMBER("compress", _compress_snappy_compress);
+        SET_NATIVE_FN_MEMBER("decompress", _compress_snappy_decompress);
 
         _compress_snappy_module = module;
     }

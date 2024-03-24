@@ -1,7 +1,7 @@
 #include <archive.h>
 #include <archive_entry.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjClass *_archive_file_class = NULL;
 
@@ -194,12 +194,12 @@ static NativeResult _archive_file_next_entry(int argc, UNUSED(Obj **argv), Obj *
 
 ObjClass *get_archive_file_class() {
     if (_archive_file_class == NULL) {
-        ObjClass *klass = new_builtin_class("ArchiveFile");
+        ObjClass *klass = new_native_class("ArchiveFile");
 
-        SET_BUILTIN_FN_METHOD("list_entries", _archive_file_list_entries);
-        SET_BUILTIN_FN_METHOD("extract", _archive_file_extract);
-        SET_BUILTIN_FN_METHOD("close", _archive_file_close);
-        SET_BUILTIN_FN_METHOD("next_entry", _archive_file_next_entry);
+        SET_NATIVE_FN_METHOD("list_entries", _archive_file_list_entries);
+        SET_NATIVE_FN_METHOD("extract", _archive_file_extract);
+        SET_NATIVE_FN_METHOD("close", _archive_file_close);
+        SET_NATIVE_FN_METHOD("next_entry", _archive_file_next_entry);
 
         _archive_file_class = klass;
     }

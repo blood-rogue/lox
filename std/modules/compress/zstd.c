@@ -1,6 +1,6 @@
 #include <zstd.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjModule *_compress_zstd_module = NULL;
 
@@ -140,8 +140,8 @@ ObjModule *get_compress_zstd_module() {
     if (_compress_zstd_module == NULL) {
         ObjModule *module = new_module("zstd");
 
-        SET_BUILTIN_FN_MEMBER("compress", _compress_zstd_compress);
-        SET_BUILTIN_FN_MEMBER("decompress", _compress_zstd_decompress);
+        SET_NATIVE_FN_MEMBER("compress", _compress_zstd_compress);
+        SET_NATIVE_FN_MEMBER("decompress", _compress_zstd_decompress);
 
         _compress_zstd_module = module;
     }

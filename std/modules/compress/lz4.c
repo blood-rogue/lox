@@ -1,6 +1,6 @@
 #include <lz4.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjModule *_compress_lz4_module = NULL;
 
@@ -42,8 +42,8 @@ ObjModule *get_compress_lz4_module() {
     if (_compress_lz4_module == NULL) {
         ObjModule *module = new_module("lz4");
 
-        SET_BUILTIN_FN_MEMBER("compress", _compress_lz4_compress);
-        SET_BUILTIN_FN_MEMBER("decompress", _compress_lz4_decompress);
+        SET_NATIVE_FN_MEMBER("compress", _compress_lz4_compress);
+        SET_NATIVE_FN_MEMBER("decompress", _compress_lz4_decompress);
 
         _compress_lz4_module = module;
     }

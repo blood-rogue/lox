@@ -1,4 +1,4 @@
-#include "builtins.h"
+#include "native.h"
 
 static NativeResult _list_append(int argc, Obj **argv, Obj *caller) {
     CHECK_ARG_COUNT(1)
@@ -69,21 +69,18 @@ static ObjClass *_list_class = NULL;
 
 ObjClass *get_list_class() {
     if (_list_class == NULL) {
-        printf("here why?\n");
-        ObjClass *klass = new_builtin_class("List");
+        ObjClass *klass = new_native_class("List");
 
-        SET_BUILTIN_FN_STATIC("__new", _list_new);
+        SET_NATIVE_FN_STATIC("__new", _list_new);
 
-        SET_BUILTIN_FN_METHOD("len", _list_len);
-        SET_BUILTIN_FN_METHOD("append", _list_append);
-        SET_BUILTIN_FN_METHOD("remove", _list_remove);
-        SET_BUILTIN_FN_METHOD("insert", _list_insert);
-        SET_BUILTIN_FN_METHOD("map", _list_map);
+        SET_NATIVE_FN_METHOD("len", _list_len);
+        SET_NATIVE_FN_METHOD("append", _list_append);
+        SET_NATIVE_FN_METHOD("remove", _list_remove);
+        SET_NATIVE_FN_METHOD("insert", _list_insert);
+        SET_NATIVE_FN_METHOD("map", _list_map);
 
         _list_class = klass;
     }
-
-    printf("name of list object class = %s\n", _list_class->name->chars);
 
     return _list_class;
 }

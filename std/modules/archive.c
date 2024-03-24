@@ -1,7 +1,7 @@
 #include <archive.h>
 #include <archive_entry.h>
 
-#include "builtins.h"
+#include "native.h"
 
 static ObjModule *_archive_module = NULL;
 
@@ -36,7 +36,7 @@ ObjModule *get_archive_module(int count, UNUSED(char **parts)) {
     if (_archive_module == NULL) {
         ObjModule *module = new_module("archive");
 
-        SET_BUILTIN_FN_MEMBER("open", _archive_open);
+        SET_NATIVE_FN_MEMBER("open", _archive_open);
 
         SET_INT_MEMBER("SYMLINK_TYPE_DIRECTORY", AE_SYMLINK_TYPE_DIRECTORY);
         SET_INT_MEMBER("SYMLINK_TYPE_FILE", AE_SYMLINK_TYPE_FILE);
