@@ -168,8 +168,6 @@ static char *read_file(char *path) {
 void init_vm() {
     read_history(NULL);
 
-    init_literals();
-
     reset_stack();
     vm.objects = NULL;
     vm.bytes_allocated = 0;
@@ -179,6 +177,7 @@ void init_vm() {
     vm.gray_capacity = 0;
     vm.gray_stack = NULL;
 
+    init_literals();
     init_table(&vm.globals);
     init_table(&vm.strings);
     init_table(&vm.modules);
@@ -296,7 +295,8 @@ static int call_object(Obj *callee, int argc, Obj *caller) {
                 Obj *obj;
                 Obj *new;
                 if (table_get(&klass->statics, AS_OBJ(_new_string), &new)) {
-                    call_object(new, argc, NULL);
+                    push(AS_OBJ(new_nil()));
+                    call_object(new, 0, AS_OBJ(klass));
                     obj = pop();
                 } else {
                     ObjInstance *instance = new_instance(klass);
@@ -310,6 +310,7 @@ static int call_object(Obj *callee, int argc, Obj *caller) {
                 Obj *initializer;
                 if (table_get(&klass->methods, AS_OBJ(_init_string), &initializer)) {
                     call_object(initializer, argc, obj);
+                    pop();
                 } else if (argc != 0) {
                     runtime_error("Expected 0 arguments but got %d.", argc);
                     return CALL_INVALID_ARGC;
@@ -330,13 +331,13 @@ static int call_object(Obj *callee, int argc, Obj *caller) {
                     return CALL_NATIVE_ERR;
                 }
 
-                vm.stack_top -= argc + !caller; // Add 1 if caller is NULL else add 0;
+                vm.stack_top -= argc + 1;
                 push(result.value);
 
                 return CALL_OK;
             }
         default:
-            runtime_error("Cannot call %s", get_obj_kind(callee));
+            runtime_error("Cannot call '%s'", get_obj_kind(callee));
             return CALL_INVALID_OBJ;
     }
 }
@@ -519,7 +520,11 @@ static InterpretResult run() {
 #define READ_STRING()   AS_STRING(READ_CONSTANT())
 #define BINARY_OP(op_str)                                                                          \
     {                                                                                              \
-        Obj *a = peek(1);                                                                          \
+        Obj *b = pop();                                                                            \
+        Obj *a = pop();                                                                            \
+        push(AS_OBJ(a->klass));                                                                    \
+        push(a);                                                                                   \
+        push(b);                                                                                   \
         Obj *op;                                                                                   \
         if (table_get(&a->klass->statics, AS_OBJ(op_str), &op)) {                                  \
             if (call_object(op, 2, a) != CALL_OK) {                                                \
@@ -534,7 +539,9 @@ static InterpretResult run() {
     }
 #define UNARY_OP(op_str)                                                                           \
     {                                                                                              \
-        Obj *a = peek(0);                                                                          \
+        Obj *a = pop();                                                                            \
+        push(AS_OBJ(a->klass));                                                                    \
+        push(a);                                                                                   \
         Obj *op;                                                                                   \
         if (table_get(&a->klass->statics, AS_OBJ(op_str), &op)) {                                  \
             if (call_object(op, 1, a) != CALL_OK) {                                                \
@@ -1144,7 +1151,6 @@ static InterpretResult run() {
                     }
 
                     frame = &vm.frames[vm.frame_count - 1];
-
                     break;
                 }
             case OP_CLASS:
@@ -1215,7 +1221,17 @@ static InterpretResult run() {
                         } else
                             push(AS_OBJ(std_module));
                     } else if (is_foreign_import(import_path)) {
+                        void *handle = dlopen(import_path->chars + 8, RTLD_LAZY);
+                        if (!handle) {
+                            runtime_error("No foreign import library found.");
+                            return INTERPRET_RUNTIME_ERROR;
+                        }
 
+                        struct {
+                            ObjModule *(*init)(void);
+                        } *foreign_module = dlsym(handle, "get_module");
+
+                        push(AS_OBJ(foreign_module->init()));
                     } else {
                         char *source = read_file(import_path->chars);
 

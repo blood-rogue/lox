@@ -13,17 +13,21 @@ static NativeResult _int_eq(int argc, Obj **argv, UNUSED(Obj *caller)) {
     OK(new_bool(mpz_cmp(argv_0->value, argv_1->value) == 0));
 }
 
-static NativeResult _int_init(int argc, Obj **argv, UNUSED(Obj *caller)) {
+static NativeResult _int_init(int argc, Obj **argv, Obj *caller) {
     if (argc == 0) {
     } else if (argc == 1) {
         switch (argv[0]->type) {
             case OBJ_INT:
+                break;
+            case OBJ_FLOAT:
+                mpfr_get_z(AS_INT(caller)->value, AS_FLOAT(argv[0])->value, MPFR_RNDN);
                 break;
             default:
                 ERR("Cannot parse '%s' into Int.", get_obj_kind(argv[0]));
         }
     } else
         ERR("Expected 0 or 1 argument(s) but got %d", argc)
+
     OK(new_nil());
 }
 
@@ -179,7 +183,6 @@ ObjClass *get_int_class() {
     if (_int_class == NULL) {
         ObjClass *klass = new_native_class("Int");
 
-        SET_NATIVE_FN_STATIC("__init", _int_init);
         SET_NATIVE_FN_STATIC("__new", _int_new);
         SET_NATIVE_FN_STATIC("__add", _int_add);
         SET_NATIVE_FN_STATIC("__sub", _int_sub);
@@ -195,6 +198,8 @@ ObjClass *get_int_class() {
         SET_NATIVE_FN_STATIC("__bitor", _int_bitor);
         SET_NATIVE_FN_STATIC("__bitxor", _int_bitxor);
         SET_NATIVE_FN_STATIC("__bitcomp", _int_bitcomp);
+
+        SET_NATIVE_FN_METHOD("__init", _int_init);
 
         _int_class = klass;
     }

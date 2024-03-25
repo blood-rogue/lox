@@ -188,6 +188,8 @@ ObjClosure *new_closure(ObjFunction *function) {
     }
 
     ObjClosure *closure = ALLOCATE_OBJ(ObjClosure, OBJ_CLOSURE);
+    closure->obj.klass = get_closure_class();
+
     closure->function = function;
 
     closure->upvalues = upvalues;
@@ -198,6 +200,8 @@ ObjClosure *new_closure(ObjFunction *function) {
 
 ObjFunction *new_function() {
     ObjFunction *function = ALLOCATE_OBJ(ObjFunction, OBJ_FUNCTION);
+    function->obj.klass = get_function_class();
+
     function->arity = 0;
     function->name = NULL;
     function->upvalue_count = 0;
@@ -208,6 +212,8 @@ ObjFunction *new_function() {
 
 ObjUpvalue *new_upvalue(Obj **slot) {
     ObjUpvalue *upvalue = ALLOCATE_OBJ(ObjUpvalue, OBJ_UPVALUE);
+    upvalue->obj.klass = get_upvalue_class();
+
     upvalue->closed = AS_OBJ(new_nil());
     upvalue->location = slot;
 
@@ -229,6 +235,7 @@ ObjClass *new_class(ObjString *name) {
 ObjInstance *new_instance(ObjClass *klass) {
     ObjInstance *instance = ALLOCATE_OBJ(ObjInstance, OBJ_INSTANCE);
     instance->obj.klass = klass;
+
     init_table(&instance->fields);
 
     return instance;
@@ -236,6 +243,8 @@ ObjInstance *new_instance(ObjClass *klass) {
 
 ObjBoundMethod *new_bound_method(Obj *receiver, Obj *method) {
     ObjBoundMethod *bound = ALLOCATE_OBJ(ObjBoundMethod, OBJ_BOUND_METHOD);
+    bound->obj.klass = get_bound_method_class();
+
     bound->receiver = receiver;
     bound->method = method;
 
@@ -244,6 +253,7 @@ ObjBoundMethod *new_bound_method(Obj *receiver, Obj *method) {
 
 ObjModule *new_module(const char *name) {
     ObjModule *module = ALLOCATE_OBJ(ObjModule, OBJ_MODULE);
+    module->obj.klass = get_module_class();
 
     init_table(&module->globals);
     module->name = name;
@@ -253,6 +263,7 @@ ObjModule *new_module(const char *name) {
 
 ObjNativeFunction *new_native_function(NativeFn fn, char *name) {
     ObjNativeFunction *native = ALLOCATE_OBJ(ObjNativeFunction, OBJ_NATIVE_FUNCTION);
+    native->obj.klass = get_native_function_class();
 
     native->method = fn;
     native->name = name;
@@ -262,6 +273,7 @@ ObjNativeFunction *new_native_function(NativeFn fn, char *name) {
 
 ObjNativeStruct *new_native_struct(void *ptr, FreeFn free_fn) {
     ObjNativeStruct *native = ALLOCATE_OBJ(ObjNativeStruct, OBJ_NATIVE_STRUCT);
+    native->obj.klass = get_native_struct_class();
 
     native->ptr = ptr;
     native->free_fn = free_fn;
@@ -505,15 +517,17 @@ void init_literals() {
 
     _NIL->obj.type = OBJ_NIL;
     _NIL->obj.is_marked = false;
+    _NIL->obj.klass = get_nil_class();
 
     _TRUE->obj.type = OBJ_BOOL;
     _TRUE->obj.is_marked = false;
     _TRUE->obj.hash = 1;
-
+    _TRUE->obj.klass = get_bool_class();
     _TRUE->value = true;
 
     _FALSE->obj.type = OBJ_BOOL;
     _FALSE->obj.is_marked = false;
+    _FALSE->obj.klass = get_bool_class();
     _FALSE->value = false;
 }
 
