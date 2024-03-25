@@ -432,7 +432,7 @@ void print_object(Obj *obj) {
             printf("<module '%s'>", AS_MODULE(obj)->name);
             break;
         case OBJ_NATIVE_STRUCT:
-            printf("<C struct at %p>", AS_NATIVE_STRUCT(obj)->ptr);
+            printf("<native struct at %p>", AS_NATIVE_STRUCT(obj)->ptr);
             break;
     }
 }
@@ -468,9 +468,11 @@ bool obj_equal(Obj *a, Obj *b) {
         case OBJ_NIL:
             return true;
         case OBJ_INT:
-            return AS_INT(a)->value == AS_INT(b)->value;
+            return mpz_cmp(AS_INT(a)->value, AS_INT(b)->value) == 0;
         case OBJ_CHAR:
             return AS_CHAR(a)->value == AS_CHAR(b)->value;
+        case OBJ_FLOAT:
+            return mpfr_cmp(AS_FLOAT(a)->value, AS_FLOAT(b)->value);
         case OBJ_STRING:
             {
                 ObjString *str_a = AS_STRING(a);
@@ -521,30 +523,4 @@ void free_literals() {
     free(_FALSE);
 }
 
-static char *_OBJ_NAMES[] = {
-    "NIL",
-    "INT",
-    "MAP",
-    "CHAR",
-    "LIST",
-    "BOOL",
-    "BYTES",
-    "FLOAT",
-    "STRING",
-    "CLOSURE",
-    "FUNCTION",
-    "UPVALUE",
-    "CLASS",
-    "INSTANCE",
-    "BOUND_METHOD",
-    "MODULE",
-    "NATIVE_METHOD",
-    "NATIVE_STRUCT"};
-
-struct {
-    char _;
-    int : (((sizeof(_OBJ_NAMES) / 8) == NUM_OBJS) -
-           1); // Compile time check so that we don't forget to add obj name here
-} _;
-
-char *get_obj_kind(Obj *obj) { return _OBJ_NAMES[__builtin_ctz(obj->type)]; }
+char *get_obj_kind(Obj *obj) { return obj->klass->name->chars; }

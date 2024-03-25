@@ -6,12 +6,10 @@
 
 #include "common.h"
 
-char *completions[] = {"and",        "class",       "else",     "false",     "for",   "fun",
-                       "if",         "nil",         "or",       "return",    "super", "true",
-                       "var",        "while",       "this",     "static",    "map",   "import",
-                       "as",         "break",       "continue", "exit",      "print", "input",
-                       "argv",       "run_gc",      "sleep",    "type",      "repr",  "std/fs",
-                       "std/random", "std/process", "std/sys",  "std/regex", NULL};
+char *completions[] = {"and",  "class",  "else",  "false", "for",      "fun",   "if",    "nil",
+                       "or",   "return", "super", "true",  "var",      "while", "this",  "static",
+                       "map",  "import", "as",    "break", "continue", "exit",  "print", "input",
+                       "argv", "run_gc", "sleep", "type",  "repr",     NULL};
 
 static char *dupstr(char *s) {
     char *r = malloc(strlen(s) + 1);

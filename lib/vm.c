@@ -1,3 +1,4 @@
+#include <dlfcn.h>
 #include <readline/history.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -28,10 +29,13 @@ static ObjString *_div_string = NULL;
 static ObjString *_eq_string = NULL;
 static ObjString *_neg_string = NULL;
 static ObjString *_not_string = NULL;
+static ObjString *_lt_string = NULL;
+static ObjString *_gt_string = NULL;
+static ObjString *_bitshr_string = NULL;
+static ObjString *_bitshl_string = NULL;
 static ObjString *_bitand_string = NULL;
 static ObjString *_bitor_string = NULL;
 static ObjString *_bitxor_string = NULL;
-static ObjString *_bitnot_string = NULL;
 static ObjString *_bitcomp_string = NULL;
 
 static void init_method_names() {
@@ -44,10 +48,13 @@ static void init_method_names() {
     _eq_string = new_string("__eq", (int)strlen("__eq"));
     _neg_string = new_string("__neg", (int)strlen("__neg"));
     _not_string = new_string("__not", (int)strlen("__not"));
+    _lt_string = new_string("__lt", (int)strlen("__lt"));
+    _gt_string = new_string("__gt", (int)strlen("__gt"));
     _bitand_string = new_string("__bitand", (int)strlen("__bitand"));
     _bitor_string = new_string("__bitor", (int)strlen("__bitor"));
+    _bitshr_string = new_string("__bitshr", (int)strlen("__bitshr"));
+    _bitshl_string = new_string("__bitshl", (int)strlen("__bitshl"));
     _bitxor_string = new_string("__bitxor", (int)strlen("__bitxor"));
-    _bitnot_string = new_string("__bitnot", (int)strlen("__bitnot"));
     _bitcomp_string = new_string("__bitcomp", (int)strlen("__bitcomp"));
 
     vm.method_names[0] = _init_string;
@@ -59,11 +66,14 @@ static void init_method_names() {
     vm.method_names[6] = _eq_string;
     vm.method_names[7] = _neg_string;
     vm.method_names[8] = _not_string;
-    vm.method_names[9] = _bitand_string;
-    vm.method_names[10] = _bitor_string;
-    vm.method_names[11] = _bitxor_string;
-    vm.method_names[12] = _bitnot_string;
-    vm.method_names[13] = _bitcomp_string;
+    vm.method_names[9] = _lt_string;
+    vm.method_names[10] = _gt_string;
+    vm.method_names[11] = _bitshr_string;
+    vm.method_names[12] = _bitshl_string;
+    vm.method_names[13] = _bitand_string;
+    vm.method_names[14] = _bitor_string;
+    vm.method_names[15] = _bitxor_string;
+    vm.method_names[16] = _bitcomp_string;
 }
 
 static void free_method_names() {
@@ -76,10 +86,13 @@ static void free_method_names() {
     _eq_string = NULL;
     _neg_string = NULL;
     _not_string = NULL;
+    _lt_string = NULL;
+    _gt_string = NULL;
+    _bitshr_string = NULL;
+    _bitshl_string = NULL;
     _bitand_string = NULL;
     _bitor_string = NULL;
     _bitxor_string = NULL;
-    _bitnot_string = NULL;
     _bitcomp_string = NULL;
 }
 
@@ -235,7 +248,11 @@ static Table *get_current_global() {
 }
 
 static bool is_std_import(ObjString *path) {
-    return path->raw_length > 6 && memcmp(path->chars, "@std/", 5) == 0;
+    return path->raw_length > 5 && memcmp(path->chars, "std:", 4) == 0;
+}
+
+static bool is_foreign_import(ObjString *path) {
+    return path->raw_length > 9 && memcmp(path->chars, "foreign:", 8) == 0;
 }
 
 #define CALL_OK             0
@@ -313,7 +330,7 @@ static int call_object(Obj *callee, int argc, Obj *caller) {
                     return CALL_NATIVE_ERR;
                 }
 
-                vm.stack_top -= argc + 1;
+                vm.stack_top -= argc + !caller; // Add 1 if caller is NULL else add 0;
                 push(result.value);
 
                 return CALL_OK;
@@ -491,9 +508,7 @@ static void define_method(ObjString *name, bool is_static) {
     pop();
 }
 
-static bool is_falsey(Obj *value) {
-    return IS_NIL(value) || (IS_BOOL(value) && !(AS_BOOL(value)->value));
-}
+static bool is_false(Obj *value) { return (IS_BOOL(value) && !(AS_BOOL(value)->value)); }
 
 static InterpretResult run() {
     CallFrame *frame = &vm.frames[vm.frame_count - 1];
@@ -502,8 +517,39 @@ static InterpretResult run() {
 #define READ_SHORT()    (frame->ip += 2, (uint16_t)((frame->ip[-2] << 8) | frame->ip[-1]))
 #define READ_CONSTANT() (frame->closure->function->chunk.constants.values[READ_BYTE()])
 #define READ_STRING()   AS_STRING(READ_CONSTANT())
+#define BINARY_OP(op_str)                                                                          \
+    {                                                                                              \
+        Obj *a = peek(1);                                                                          \
+        Obj *op;                                                                                   \
+        if (table_get(&a->klass->statics, AS_OBJ(op_str), &op)) {                                  \
+            if (call_object(op, 2, a) != CALL_OK) {                                                \
+                runtime_error("Invalid method signature.");                                        \
+                return INTERPRET_RUNTIME_ERROR;                                                    \
+            }                                                                                      \
+        } else {                                                                                   \
+            runtime_error("Invalid operation.");                                                   \
+            return INTERPRET_RUNTIME_ERROR;                                                        \
+        }                                                                                          \
+        break;                                                                                     \
+    }
+#define UNARY_OP(op_str)                                                                           \
+    {                                                                                              \
+        Obj *a = peek(0);                                                                          \
+        Obj *op;                                                                                   \
+        if (table_get(&a->klass->statics, AS_OBJ(op_str), &op)) {                                  \
+            if (call_object(op, 1, a) != CALL_OK) {                                                \
+                runtime_error("Invalid method signature.");                                        \
+                return INTERPRET_RUNTIME_ERROR;                                                    \
+            }                                                                                      \
+        } else {                                                                                   \
+            runtime_error("Invalid operation.");                                                   \
+            return INTERPRET_RUNTIME_ERROR;                                                        \
+        }                                                                                          \
+        break;                                                                                     \
+    }
 
     for (;;) {
+
 #ifdef DEBUG
         printf("          ");
         for (Obj **slot = vm.stack; slot < vm.stack_top; slot++) {
@@ -917,27 +963,11 @@ static InterpretResult run() {
                     return INTERPRET_RUNTIME_ERROR;
                 }
             case OP_EQUAL:
-                {
-                    Obj *a = peek(1);
-
-                    Obj *op;
-                    if (table_get(&a->klass->statics, AS_OBJ(_eq_string), &op)) {
-                        if (!call_object(op, 2, a)) {
-                            runtime_error("Invalid method signature.");
-                            return INTERPRET_RUNTIME_ERROR;
-                        }
-                    } else {
-                        runtime_error("Invalid operation.");
-                        return INTERPRET_RUNTIME_ERROR;
-                    }
-                }
-                break;
+                BINARY_OP(_eq_string)
             case OP_GREATER:
-                // TODO
-                break;
+                BINARY_OP(_gt_string)
             case OP_LESS:
-                // TODO
-                break;
+                BINARY_OP(_lt_string)
             case OP_ADD:
                 // {
                 //     if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
@@ -970,65 +1000,29 @@ static InterpretResult run() {
                 //     }
                 //     break;
                 // }
-                // TODO
-                break;
+                BINARY_OP(_add_string)
             case OP_SUBTRACT:
-                // TODO
-                break;
+                BINARY_OP(_sub_string)
             case OP_BITWISE_AND:
-                // TODO
-                break;
+                BINARY_OP(_bitand_string)
             case OP_BITWISE_OR:
-                // TODO
-                break;
+                BINARY_OP(_bitor_string)
             case OP_BITWISE_XOR:
-                // TODO
-                break;
+                BINARY_OP(_bitxor_string)
             case OP_BITWISE_NOT:
-                // {
-                //     if (!IS_INT(peek(0))) {
-                //         runtime_error(
-                //             "Bitwise operations can only be done INTEGERS. got %s.",
-                //             get_obj_kind(peek(0)));
-                //         return INTERPRET_RUNTIME_ERROR;
-                //     }
-
-                //     vm.stack_top[-1] = AS_OBJ(new_int(~(AS_INT(peek(0))->value)));
-                //     break;
-                // }
-                // TODO
-                break;
+                UNARY_OP(_bitcomp_string)
             case OP_SHIFT_RIGHT:
-                // TODO
-                break;
+                BINARY_OP(_bitshr_string)
             case OP_SHIFT_LEFT:
-                // TODO
-                break;
+                BINARY_OP(_bitshl_string)
             case OP_MULTIPLY:
-                // TODO
-                break;
+                BINARY_OP(_mul_string)
             case OP_DIVIDE:
-                // TODO
-                break;
+                BINARY_OP(_div_string)
             case OP_NOT:
-                {
-                    vm.stack_top[-1] = AS_OBJ(new_bool(is_falsey(peek(0))));
-                    break;
-                }
+                UNARY_OP(_not_string)
             case OP_NEGATE:
-                // {
-                //     if (IS_INT(peek(0))) {
-                //         vm.stack_top[-1] = AS_OBJ(new_int(-(AS_INT(peek(0))->value)));
-                //         break;
-                //     } else if (IS_FLOAT(peek(0))) {
-                //         vm.stack_top[-1] = AS_OBJ(new_float(-(AS_FLOAT(peek(0))->value)));
-                //         break;
-                //     }
-                //     runtime_error("Cannot negate '%s'.", get_obj_kind(peek(0)));
-                //     return INTERPRET_RUNTIME_ERROR;
-                // }
-                // TODO
-                break;
+                UNARY_OP(_neg_string)
             case OP_JUMP:
                 {
                     uint16_t offset = READ_SHORT();
@@ -1038,7 +1032,7 @@ static InterpretResult run() {
             case OP_JUMP_IF_FALSE:
                 {
                     uint16_t offset = READ_SHORT();
-                    if (is_falsey(peek(0)))
+                    if (is_false(peek(0)))
                         frame->ip += offset;
                     break;
                 }
@@ -1192,18 +1186,18 @@ static InterpretResult run() {
                     }
 
                     if (is_std_import(import_path)) {
-                        int part_count = 0;
-                        for (int i = 0; i < import_path->raw_length; i++)
+                        int part_count = 1;
+                        for (int i = 4; i < import_path->raw_length; i++)
                             if (import_path->chars[i] == '/')
                                 part_count++;
 
                         char **parts = malloc(part_count * sizeof(char *));
-                        char *temp = malloc(import_path->raw_length + 1);
+                        char *temp = malloc(import_path->raw_length - 3);
 
-                        strcpy(temp, import_path->chars);
-                        strtok(temp, "/");
+                        strcpy(temp, import_path->chars + 4);
 
-                        for (int i = 0; i < part_count; i++) {
+                        parts[0] = strtok(temp, "/");
+                        for (int i = 1; i < part_count; i++) {
                             parts[i] = strtok(NULL, "/");
                         }
 
@@ -1220,6 +1214,8 @@ static InterpretResult run() {
                             return INTERPRET_RUNTIME_ERROR;
                         } else
                             push(AS_OBJ(std_module));
+                    } else if (is_foreign_import(import_path)) {
+
                     } else {
                         char *source = read_file(import_path->chars);
 
@@ -1255,7 +1251,8 @@ static InterpretResult run() {
 #undef READ_SHORT
 #undef READ_CONSTANT
 #undef READ_STRING
-#undef BINARY_OP_OBJ
+#undef BINARY_OP
+#undef UNARY_OP
 }
 
 InterpretResult interpret(char *source) {

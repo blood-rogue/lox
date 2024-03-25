@@ -3,6 +3,7 @@
 
 #include "object.h"
 
+ObjClass *get_bool_class();
 ObjClass *get_float_class();
 ObjClass *get_int_class();
 ObjClass *get_char_class();

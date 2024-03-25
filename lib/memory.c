@@ -268,7 +268,7 @@ static void mark_roots() {
 
     mark_compiler_roots();
 
-    for (int i = 0; i < 14; i++) {
+    for (int i = 0; i < 17; i++) {
         mark_object(AS_OBJ(vm.method_names[i]));
     }
 
